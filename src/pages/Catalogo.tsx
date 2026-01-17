@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, X } from "lucide-react";
+import { Search, Filter, X, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
@@ -8,81 +8,83 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useProducts } from "@/hooks/useProducts";
+import { useWishlist } from "@/hooks/useWishlist";
 
-// Sample products data
-const allProducts = [
+// Fallback sample products when database is empty
+const sampleProducts = [
   {
-    id: "1",
+    id: "sample-1",
     name: "LEGO City Estación de Bomberos",
-    imageUrl: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
+    image_url: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
     theme: "City",
-    ageRange: "6-12 años",
-    pieceCount: 509,
-    skillBoost: "Motricidad fina, trabajo en equipo"
+    age_range: "6-12 años",
+    piece_count: 509,
+    skill_boost: ["Motricidad fina", "trabajo en equipo"],
+    description: null,
+    created_at: "",
+    updated_at: "",
   },
   {
-    id: "2", 
+    id: "sample-2", 
     name: "LEGO Technic Excavadora Pesada",
-    imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+    image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
     theme: "Technic",
-    ageRange: "9-16 años",
-    pieceCount: 834,
-    skillBoost: "Lógica, mecánica"
+    age_range: "9-16 años",
+    piece_count: 834,
+    skill_boost: ["Lógica", "mecánica"],
+    description: null,
+    created_at: "",
+    updated_at: "",
   },
   {
-    id: "3",
+    id: "sample-3",
     name: "LEGO Creator Casa Familiar Moderna",
-    imageUrl: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&h=400&fit=crop",
+    image_url: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&h=400&fit=crop",
     theme: "Creator",
-    ageRange: "8-12 años",
-    pieceCount: 728,
-    skillBoost: "Creatividad, visión espacial"
+    age_range: "8-12 años",
+    piece_count: 728,
+    skill_boost: ["Creatividad", "visión espacial"],
+    description: null,
+    created_at: "",
+    updated_at: "",
   },
   {
-    id: "4",
+    id: "sample-4",
     name: "LEGO Friends Centro Comercial",
-    imageUrl: "https://images.unsplash.com/photo-1599623560574-39d485900c95?w=400&h=400&fit=crop",
+    image_url: "https://images.unsplash.com/photo-1599623560574-39d485900c95?w=400&h=400&fit=crop",
     theme: "Friends",
-    ageRange: "7-12 años",
-    pieceCount: 446,
-    skillBoost: "Imaginación, juego social"
+    age_range: "7-12 años",
+    piece_count: 446,
+    skill_boost: ["Imaginación", "juego social"],
+    description: null,
+    created_at: "",
+    updated_at: "",
   },
   {
-    id: "5",
+    id: "sample-5",
     name: "LEGO Star Wars Halcón Milenario",
-    imageUrl: "https://images.unsplash.com/photo-1518946222227-364f22132616?w=400&h=400&fit=crop",
+    image_url: "https://images.unsplash.com/photo-1518946222227-364f22132616?w=400&h=400&fit=crop",
     theme: "Star Wars",
-    ageRange: "10-16 años",
-    pieceCount: 1353,
-    skillBoost: "Paciencia, concentración"
+    age_range: "10-16 años",
+    piece_count: 1353,
+    skill_boost: ["Paciencia", "concentración"],
+    description: null,
+    created_at: "",
+    updated_at: "",
   },
   {
-    id: "6",
+    id: "sample-6",
     name: "LEGO City Comisaría de Policía",
-    imageUrl: "https://images.unsplash.com/photo-1560961911-ba7ef651a56c?w=400&h=400&fit=crop",
+    image_url: "https://images.unsplash.com/photo-1560961911-ba7ef651a56c?w=400&h=400&fit=crop",
     theme: "City",
-    ageRange: "6-12 años",
-    pieceCount: 668,
-    skillBoost: "Narrativa, juego de roles"
+    age_range: "6-12 años",
+    piece_count: 668,
+    skill_boost: ["Narrativa", "juego de roles"],
+    description: null,
+    created_at: "",
+    updated_at: "",
   },
-  {
-    id: "7",
-    name: "LEGO Technic Coche de Carreras",
-    imageUrl: "https://images.unsplash.com/photo-1594787318286-3d835c1d207f?w=400&h=400&fit=crop",
-    theme: "Technic",
-    ageRange: "8-14 años",
-    pieceCount: 579,
-    skillBoost: "Mecánica, velocidad"
-  },
-  {
-    id: "8",
-    name: "LEGO Creator Dragón de Fuego",
-    imageUrl: "https://images.unsplash.com/photo-1558618047-f4b511f101cf?w=400&h=400&fit=crop",
-    theme: "Creator",
-    ageRange: "7-12 años",
-    pieceCount: 234,
-    skillBoost: "Imaginación, motricidad"
-  }
 ];
 
 const themes = ["City", "Technic", "Creator", "Friends", "Star Wars"];
@@ -95,11 +97,16 @@ const pieceRanges = [
 ];
 
 const Catalogo = () => {
+  const { products: dbProducts, isLoading: productsLoading } = useProducts();
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   const [selectedAges, setSelectedAges] = useState<string[]>([]);
   const [selectedPieces, setSelectedPieces] = useState<typeof pieceRanges>([]);
-  const [wishlist, setWishlist] = useState<string[]>([]);
+
+  // Use database products if available, otherwise use sample
+  const allProducts = dbProducts.length > 0 ? dbProducts : sampleProducts;
 
   const toggleTheme = (theme: string) => {
     setSelectedThemes(prev => 
@@ -121,12 +128,6 @@ const Catalogo = () => {
     );
   };
 
-  const toggleWishlist = (id: string) => {
-    setWishlist(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  };
-
   const clearFilters = () => {
     setSelectedThemes([]);
     setSelectedAges([]);
@@ -137,9 +138,9 @@ const Catalogo = () => {
   const filteredProducts = allProducts.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTheme = selectedThemes.length === 0 || selectedThemes.includes(product.theme);
-    const matchesAge = selectedAges.length === 0 || selectedAges.includes(product.ageRange);
+    const matchesAge = selectedAges.length === 0 || selectedAges.includes(product.age_range);
     const matchesPieces = selectedPieces.length === 0 || selectedPieces.some(
-      range => product.pieceCount >= range.min && product.pieceCount <= range.max
+      range => product.piece_count >= range.min && product.piece_count <= range.max
     );
     return matchesSearch && matchesTheme && matchesAge && matchesPieces;
   });
@@ -290,7 +291,11 @@ const Catalogo = () => {
 
             {/* Products Grid */}
             <div className="flex-1">
-              {filteredProducts.length > 0 ? (
+              {productsLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : filteredProducts.length > 0 ? (
                 <>
                   <p className="text-sm text-muted-foreground mb-6">
                     {filteredProducts.length} {filteredProducts.length === 1 ? 'set encontrado' : 'sets encontrados'}
@@ -299,8 +304,14 @@ const Catalogo = () => {
                     {filteredProducts.map((product) => (
                       <ProductCard 
                         key={product.id}
-                        {...product}
-                        isWishlisted={wishlist.includes(product.id)}
+                        id={product.id}
+                        name={product.name}
+                        imageUrl={product.image_url || "/placeholder.svg"}
+                        theme={product.theme}
+                        ageRange={product.age_range}
+                        pieceCount={product.piece_count}
+                        skillBoost={Array.isArray(product.skill_boost) ? product.skill_boost.join(", ") : ""}
+                        isWishlisted={isWishlisted(product.id)}
                         onWishlistToggle={toggleWishlist}
                       />
                     ))}
