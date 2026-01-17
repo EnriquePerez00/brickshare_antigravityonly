@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
-import { Heart } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   id: string;
@@ -11,7 +14,7 @@ interface ProductCardProps {
   pieceCount: number;
   skillBoost: string;
   isWishlisted?: boolean;
-  onWishlistToggle?: (id: string) => void;
+  onWishlistToggle?: (id: string) => Promise<boolean> | void;
 }
 
 const ProductCard = ({
@@ -25,6 +28,23 @@ const ProductCard = ({
   isWishlisted = false,
   onWishlistToggle
 }: ProductCardProps) => {
+  const [isToggling, setIsToggling] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleWishlistClick = async () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    
+    if (onWishlistToggle) {
+      setIsToggling(true);
+      await onWishlistToggle(id);
+      setIsToggling(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -43,7 +63,8 @@ const ProductCard = ({
         
         {/* Wishlist Button */}
         <button
-          onClick={() => onWishlistToggle?.(id)}
+          onClick={handleWishlistClick}
+          disabled={isToggling}
           className={cn(
             "absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-all",
             isWishlisted 
@@ -51,7 +72,11 @@ const ProductCard = ({
               : "bg-background/80 backdrop-blur-sm text-muted-foreground hover:bg-background hover:text-destructive"
           )}
         >
-          <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
+          {isToggling ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
+          )}
         </button>
 
         {/* Theme Badge */}
@@ -77,9 +102,11 @@ const ProductCard = ({
           </span>
         </div>
         
-        <p className="text-xs text-muted-foreground">
-          <span className="font-medium">Desarrolla:</span> {skillBoost}
-        </p>
+        {skillBoost && (
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium">Desarrolla:</span> {skillBoost}
+          </p>
+        )}
       </div>
     </motion.div>
   );
