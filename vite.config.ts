@@ -5,7 +5,9 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/bricksahre/' : '/',
+  // GitHub Pages uses a subpath, Vercel typically uses root.
+  // We detect GITHUB_ACTIONS env to set the base path for Pages.
+  base: process.env.GITHUB_ACTIONS && !process.env.VERCEL ? '/bricksahre/' : '/',
   server: {
     host: "::",
     port: 8080,
