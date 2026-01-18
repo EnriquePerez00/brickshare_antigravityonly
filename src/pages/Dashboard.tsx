@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Heart, Award, Loader2, Trash2 } from "lucide-react";
+import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { useProducts } from "@/hooks/useProducts";
 
 const Dashboard = () => {
-  const { user, profile, isLoading: authLoading } = useAuth();
+  const { user, profile, isLoading: authLoading, deleteUserAccount } = useAuth();
   const { wishlistIds, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
   const { products, isLoading: productsLoading } = useProducts();
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -126,7 +126,7 @@ const Dashboard = () => {
                   Tu impacto este mes
                 </h3>
                 <p className="text-muted-foreground">
-                  Con tu suscripción has apoyado <span className="font-semibold text-primary">{impactHours} horas</span> de trabajo inclusivo. 
+                  Con tu suscripción has apoyado <span className="font-semibold text-primary">{impactHours} horas</span> de trabajo inclusivo.
                   Gracias a ti, personas con discapacidad tienen una ocupación digna preparando tus sets de LEGO.
                 </p>
               </div>
@@ -197,6 +197,49 @@ const Dashboard = () => {
                 </Button>
               </div>
             )}
+          </motion.div>
+
+          {/* Security & Data Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-16 pt-8 border-t border-border"
+          >
+            <div className="flex items-center gap-2 mb-6">
+              <Shield className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-xl font-display font-bold text-foreground">
+                Seguridad y Datos
+              </h2>
+            </div>
+
+            <div className="bg-destructive/5 rounded-2xl p-6 border border-destructive/20 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex gap-4">
+                <div className="p-3 rounded-xl bg-destructive/10 text-destructive h-fit">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1">Zona de Peligro</h3>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    Al eliminar tu cuenta, todos tus datos personales, wishlist e historial de suscripción se borrarán de forma permanente. Esta acción no se puede deshacer.
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="destructive"
+                onClick={async () => {
+                  if (confirm("¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es irreversible.")) {
+                    const { error } = await deleteUserAccount();
+                    if (error) {
+                      alert("Error al eliminar la cuenta: " + error.message);
+                    }
+                  }
+                }}
+                className="shrink-0"
+              >
+                Eliminar Cuenta Permanente
+              </Button>
+            </div>
           </motion.div>
         </div>
       </main>
