@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Product {
@@ -11,41 +11,21 @@ export interface Product {
   piece_count: number;
   skill_boost: string[] | null;
   created_at: string;
-  updated_at: string;
 }
 
-export const useProducts = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export const useProducts = (limit = 20, offset = 0) => {
+  return useQuery({
+    queryKey: ["products", limit, offset],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, description, image_url, theme, age_range, piece_count, skill_boost, created_at")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
 
-  const fetchProducts = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    const { data, error: fetchError } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (fetchError) {
-      setError(fetchError);
-      console.error("Error fetching products:", fetchError);
-    } else {
-      setProducts(data || []);
-    }
-    
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  return {
-    products,
-    isLoading,
-    error,
-    refreshProducts: fetchProducts,
-  };
+      if (error) throw error;
+      return data as Product[];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+  });
 };

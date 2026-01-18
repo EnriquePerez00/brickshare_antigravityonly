@@ -26,7 +26,7 @@ const sampleProducts = [
     updated_at: "",
   },
   {
-    id: "sample-2", 
+    id: "sample-2",
     name: "LEGO Technic Excavadora Pesada",
     image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
     theme: "Technic",
@@ -97,9 +97,9 @@ const pieceRanges = [
 ];
 
 const Catalogo = () => {
-  const { products: dbProducts, isLoading: productsLoading } = useProducts();
+  const { data: dbProducts = [], isLoading: productsLoading } = useProducts(100); // Load more for initial catalog
   const { isWishlisted, toggleWishlist } = useWishlist();
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   const [selectedAges, setSelectedAges] = useState<string[]>([]);
@@ -109,21 +109,21 @@ const Catalogo = () => {
   const allProducts = dbProducts.length > 0 ? dbProducts : sampleProducts;
 
   const toggleTheme = (theme: string) => {
-    setSelectedThemes(prev => 
+    setSelectedThemes(prev =>
       prev.includes(theme) ? prev.filter(t => t !== theme) : [...prev, theme]
     );
   };
 
   const toggleAge = (age: string) => {
-    setSelectedAges(prev => 
+    setSelectedAges(prev =>
       prev.includes(age) ? prev.filter(a => a !== age) : [...prev, age]
     );
   };
 
   const togglePieces = (range: typeof pieceRanges[0]) => {
-    setSelectedPieces(prev => 
-      prev.some(p => p.label === range.label) 
-        ? prev.filter(p => p.label !== range.label) 
+    setSelectedPieces(prev =>
+      prev.some(p => p.label === range.label)
+        ? prev.filter(p => p.label !== range.label)
         : [...prev, range]
     );
   };
@@ -155,7 +155,7 @@ const Catalogo = () => {
         <div className="space-y-3">
           {themes.map(theme => (
             <label key={theme} className="flex items-center gap-3 cursor-pointer group">
-              <Checkbox 
+              <Checkbox
                 checked={selectedThemes.includes(theme)}
                 onCheckedChange={() => toggleTheme(theme)}
               />
@@ -173,7 +173,7 @@ const Catalogo = () => {
         <div className="space-y-3">
           {ageRanges.map(age => (
             <label key={age} className="flex items-center gap-3 cursor-pointer group">
-              <Checkbox 
+              <Checkbox
                 checked={selectedAges.includes(age)}
                 onCheckedChange={() => toggleAge(age)}
               />
@@ -191,7 +191,7 @@ const Catalogo = () => {
         <div className="space-y-3">
           {pieceRanges.map(range => (
             <label key={range.label} className="flex items-center gap-3 cursor-pointer group">
-              <Checkbox 
+              <Checkbox
                 checked={selectedPieces.some(p => p.label === range.label)}
                 onCheckedChange={() => togglePieces(range)}
               />
@@ -215,7 +215,7 @@ const Catalogo = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
@@ -250,7 +250,7 @@ const Catalogo = () => {
                 className="pl-10"
               />
             </div>
-            
+
             {/* Mobile Filter Button */}
             <Sheet>
               <SheetTrigger asChild>
@@ -302,7 +302,7 @@ const Catalogo = () => {
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredProducts.map((product) => (
-                      <ProductCard 
+                      <ProductCard
                         key={product.id}
                         id={product.id}
                         name={product.name}

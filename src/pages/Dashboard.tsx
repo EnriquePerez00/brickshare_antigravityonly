@@ -12,7 +12,7 @@ import { useProducts } from "@/hooks/useProducts";
 const Dashboard = () => {
   const { user, profile, isLoading: authLoading, deleteUserAccount } = useAuth();
   const { wishlistIds, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
-  const { products, isLoading: productsLoading } = useProducts();
+  const { data: products = [], isLoading: productsLoading } = useProducts(100);
   const navigate = useNavigate();
 
   useEffect(() => {
