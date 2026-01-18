@@ -21,6 +21,9 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updateUserPassword: (password: string) => Promise<{ error: Error | null }>;
+  deleteUserAccount: () => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -131,6 +134,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAdmin(false);
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?type=recovery`,
+    });
+    return { error: error as Error | null };
+  };
+
+  const updateUserPassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error: error as Error | null };
+  };
+
+  const deleteUserAccount = async () => {
+    if (!user) return { error: new Error("No user logged in") };
+    
+    // In Supabase, the user can delete their own profile via RLS (if configured)
+    // but actual auth.users deletion usually requires an edge function or admin API.
+    // For now, we will perform a sign-out and inform the user or call a function if exists.
+    const { error } = await supabase.from('profiles').delete().eq('user_id', user.id);
+    if (!error) {
+        await signOut();
+    }
+    return { error: error as Error | null };
+  };
+
   const refreshProfile = async () => {
     if (user) {
       await fetchProfile(user.id);
@@ -149,6 +177,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signIn,
         signOut,
         refreshProfile,
+        resetPassword,
+        updateUserPassword,
+        deleteUserAccount,
       }}
     >
       {children}
