@@ -1,27 +1,38 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { Blocks, Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { Blocks, Mail, Lock, User, Eye, EyeOff, Loader2, ArrowLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Email no válido");
-const passwordSchema = z.string().min(6, "La contraseña debe tener al menos 6 caracteres");
+const passwordSchema = z.string()
+  .min(8, "La contraseña debe tener al menos 8 caracteres")
+  .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
+  .regex(/[0-9]/, "Debe contener al menos un número");
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const type = searchParams.get("type");
+
+  const [mode, setMode] = useState<"login" | "signup" | "forgot-password" | "update-password">(
+    type === "recovery" ? "update-password" : "login"
+  );
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [policyAccepted, setPolicyAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  
-  const { signIn, signUp, user } = useAuth();
+  const [errors, setErrors] = useState<{ email?: string; password?: string; policy?: string }>({});
+
+  const { signIn, signUp, resetPassword, updateUserPassword, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -33,36 +44,44 @@ const Auth = () => {
   }, [user, navigate]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
-    
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0].message;
+    const newErrors: { email?: string; password?: string; policy?: string } = {};
+
+    if (mode !== "update-password") {
+      const emailResult = emailSchema.safeParse(email);
+      if (!emailResult.success) {
+        newErrors.email = emailResult.error.errors[0].message;
+      }
     }
-    
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
+
+    if (mode !== "forgot-password") {
+      const passwordResult = passwordSchema.safeParse(password);
+      if (!passwordResult.success) {
+        newErrors.password = passwordResult.error.errors[0].message;
+      }
     }
-    
+
+    if (mode === "signup" && !policyAccepted) {
+      newErrors.policy = "Debes aceptar la política de privacidad";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
-    
-    if (isLogin) {
+
+    if (mode === "login") {
       const { error } = await signIn(email, password);
       if (error) {
         toast({
           title: "Error al iniciar sesión",
-          description: error.message === "Invalid login credentials" 
-            ? "Credenciales incorrectas" 
+          description: error.message === "Invalid login credentials"
+            ? "Credenciales incorrectas"
             : error.message,
           variant: "destructive",
         });
@@ -73,7 +92,7 @@ const Auth = () => {
         });
         navigate("/");
       }
-    } else {
+    } else if (mode === "signup") {
       const { error } = await signUp(email, password, fullName);
       if (error) {
         let errorMessage = error.message;
@@ -88,12 +107,42 @@ const Auth = () => {
       } else {
         toast({
           title: "¡Cuenta creada!",
-          description: "Tu cuenta ha sido creada correctamente",
+          description: "Revisa tu email para confirmar la cuenta",
+        });
+        setMode("login");
+      }
+    } else if (mode === "forgot-password") {
+      const { error } = await resetPassword(email);
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Email enviado",
+          description: "Revisa tu bandeja de entrada para recuperar tu contraseña",
+        });
+        setMode("login");
+      }
+    } else if (mode === "update-password") {
+      const { error } = await updateUserPassword(password);
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Contraseña actualizada",
+          description: "Tu contraseña ha sido cambiada correctamente",
         });
         navigate("/");
       }
     }
-    
+
     setIsSubmitting(false);
   };
 
@@ -120,16 +169,20 @@ const Auth = () => {
         {/* Form Card */}
         <div className="bg-card rounded-2xl shadow-card p-8">
           <h1 className="text-2xl font-display font-bold text-foreground text-center mb-2">
-            {isLogin ? "Iniciar sesión" : "Crear cuenta"}
+            {mode === "login" && "Iniciar sesión"}
+            {mode === "signup" && "Crear cuenta"}
+            {mode === "forgot-password" && "Recuperar contraseña"}
+            {mode === "update-password" && "Nueva contraseña"}
           </h1>
           <p className="text-muted-foreground text-center mb-6">
-            {isLogin 
-              ? "Accede a tu cuenta para gestionar tu wishlist" 
-              : "Únete a Brickshare y comienza a jugar"}
+            {mode === "login" && "Accede a tu cuenta para gestionar tu wishlist"}
+            {mode === "signup" && "Únete a Brickshare y comienza a jugar"}
+            {mode === "forgot-password" && "Te enviaremos un email para restablecer tu acceso"}
+            {mode === "update-password" && "Introduce tu nueva contraseña segura"}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
+            {mode === "signup" && (
               <div className="space-y-2">
                 <Label htmlFor="fullName">Nombre completo</Label>
                 <div className="relative">
@@ -141,63 +194,111 @@ const Auth = () => {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="pl-10"
+                    required
                   />
                 </div>
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setErrors((prev) => ({ ...prev, email: undefined }));
-                  }}
-                  className={`pl-10 ${errors.email ? "border-destructive" : ""}`}
-                />
+            {mode !== "update-password" && (
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setErrors((prev) => ({ ...prev, email: undefined }));
+                    }}
+                    className={`pl-10 ${errors.email ? "border-destructive" : ""}`}
+                    required
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-xs text-destructive">{errors.email}</p>
+                )}
               </div>
-              {errors.email && (
-                <p className="text-xs text-destructive">{errors.email}</p>
-              )}
-            </div>
+            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setErrors((prev) => ({ ...prev, password: undefined }));
-                  }}
-                  className={`pl-10 pr-10 ${errors.password ? "border-destructive" : ""}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
+            {mode !== "forgot-password" && (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="password">
+                    {mode === "update-password" ? "Nueva contraseña" : "Contraseña"}
+                  </Label>
+                  {mode === "login" && (
+                    <button
+                      type="button"
+                      onClick={() => setMode("forgot-password")}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </button>
                   )}
-                </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setErrors((prev) => ({ ...prev, password: undefined }));
+                    }}
+                    className={`pl-10 pr-10 ${errors.password ? "border-destructive" : ""}`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-xs text-destructive">{errors.password}</p>
+                )}
               </div>
-              {errors.password && (
-                <p className="text-xs text-destructive">{errors.password}</p>
-              )}
-            </div>
+            )}
+
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id="policy"
+                    checked={policyAccepted}
+                    onCheckedChange={(checked) => {
+                      setPolicyAccepted(checked === true);
+                      setErrors(prev => ({ ...prev, policy: undefined }));
+                    }}
+                  />
+                  <label
+                    htmlFor="policy"
+                    className="text-xs leading-none text-muted-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    He leído y acepto la{" "}
+                    <Link to="/privacidad" className="text-primary hover:underline">
+                      Política de Privacidad
+                    </Link>
+                    .
+                  </label>
+                </div>
+                {errors.policy && (
+                  <p className="text-xs text-destructive">{errors.policy}</p>
+                )}
+              </div>
+            )}
 
             <Button
               type="submit"
@@ -205,23 +306,39 @@ const Auth = () => {
               className="w-full gradient-hero"
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLogin ? "Iniciar sesión" : "Crear cuenta"}
+              {mode === "login" && "Iniciar sesión"}
+              {mode === "signup" && "Crear cuenta"}
+              {mode === "forgot-password" && "Enviar instrucciones"}
+              {mode === "update-password" && "Actualizar contraseña"}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setErrors({});
-              }}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              {isLogin 
-                ? "¿No tienes cuenta? Regístrate" 
-                : "¿Ya tienes cuenta? Inicia sesión"}
-            </button>
+            {mode === "forgot-password" ? (
+              <button
+                type="button"
+                onClick={() => setMode("login")}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Volver al inicio de sesión
+              </button>
+            ) : mode === "update-password" ? (
+              null
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === "login" ? "signup" : "login");
+                  setErrors({});
+                }}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                {mode === "login"
+                  ? "¿No tienes cuenta? Regístrate"
+                  : "¿Ya tienes cuenta? Inicia sesión"}
+              </button>
+            )}
           </div>
         </div>
       </motion.div>
