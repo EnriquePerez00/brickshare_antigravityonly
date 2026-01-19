@@ -149,14 +149,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const deleteUserAccount = async () => {
     if (!user) return { error: new Error("No user logged in") };
     
-    // In Supabase, the user can delete their own profile via RLS (if configured)
-    // but actual auth.users deletion usually requires an edge function or admin API.
-    // For now, we will perform a sign-out and inform the user or call a function if exists.
-    const { error } = await supabase.from('profiles').delete().eq('user_id', user.id);
-    if (!error) {
-        await signOut();
+    try {
+      // Call the edge function that properly deletes all user data and auth record
+      const { data, error } = await supabase.functions.invoke('delete-user');
+      
+      if (error) {
+        console.error('Error deleting account:', error);
+        return { error: new Error(error.message || 'Failed to delete account') };
+      }
+      
+      if (data?.error) {
+        return { error: new Error(data.error) };
+      }
+      
+      // Clear local state after successful deletion
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setIsAdmin(false);
+      
+      return { error: null };
+    } catch (err) {
+      console.error('Unexpected error deleting account:', err);
+      return { error: err as Error };
     }
-    return { error: error as Error | null };
   };
 
   const refreshProfile = async () => {
