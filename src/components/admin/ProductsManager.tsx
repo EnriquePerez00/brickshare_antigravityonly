@@ -28,47 +28,60 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-const productSchema = z.object({
+const setSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  lego_ref: z.string().optional(),
   description: z.string().optional(),
   theme: z.string().min(1, "Theme is required"),
   age_range: z.string().min(1, "Age range is required"),
   piece_count: z.coerce.number().min(1, "Piece count must be at least 1"),
   image_url: z.string().url().optional().or(z.literal("")),
   skill_boost: z.string().optional(),
+  year: z.coerce.number().min(1900, "Valid year required").optional(),
+  catalogue_visibility: z.string().default("yes"),
 });
 
-type ProductFormData = z.infer<typeof productSchema>;
+type SetFormData = z.infer<typeof setSchema>;
 
 const ProductsManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingSet, setEditingSet] = useState<any>(null);
   const queryClient = useQueryClient();
 
-  const form = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+  const form = useForm<SetFormData>({
+    resolver: zodResolver(setSchema),
     defaultValues: {
       name: "",
+      lego_ref: "",
       description: "",
       theme: "",
       age_range: "",
       piece_count: 0,
       image_url: "",
       skill_boost: "",
+      year: new Date().getFullYear(),
+      catalogue_visibility: "yes",
     },
   });
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["admin-products"],
+  const { data: sets, isLoading } = useQuery({
+    queryKey: ["admin-sets"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("products")
+        .from("sets")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -77,96 +90,105 @@ const ProductsManager = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: ProductFormData) => {
+    mutationFn: async (data: SetFormData) => {
       const skillBoostArray = data.skill_boost
         ? data.skill_boost.split(",").map((s) => s.trim())
         : null;
 
-      const { error } = await supabase.from("products").insert({
+      const { error } = await supabase.from("sets").insert({
         name: data.name,
+        lego_ref: data.lego_ref || null,
         description: data.description || null,
         theme: data.theme,
         age_range: data.age_range,
         piece_count: data.piece_count,
         image_url: data.image_url || null,
         skill_boost: skillBoostArray,
+        year: data.year,
+        catalogue_visibility: data.catalogue_visibility === "yes",
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      toast.success("Product created successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-sets"] });
+      toast.success("Set created successfully");
       setIsDialogOpen(false);
       form.reset();
     },
     onError: (error) => {
-      toast.error("Failed to create product: " + error.message);
+      toast.error("Failed to create set: " + error.message);
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: ProductFormData }) => {
+    mutationFn: async ({ id, data }: { id: string; data: SetFormData }) => {
       const skillBoostArray = data.skill_boost
         ? data.skill_boost.split(",").map((s) => s.trim())
         : null;
 
       const { error } = await supabase
-        .from("products")
+        .from("sets")
         .update({
           name: data.name,
+          lego_ref: data.lego_ref || null,
           description: data.description || null,
           theme: data.theme,
           age_range: data.age_range,
           piece_count: data.piece_count,
           image_url: data.image_url || null,
           skill_boost: skillBoostArray,
+          year: data.year,
+          catalogue_visibility: data.catalogue_visibility === "yes",
         })
         .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      toast.success("Product updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-sets"] });
+      toast.success("Set updated successfully");
       setIsDialogOpen(false);
-      setEditingProduct(null);
+      setEditingSet(null);
       form.reset();
     },
     onError: (error) => {
-      toast.error("Failed to update product: " + error.message);
+      toast.error("Failed to update set: " + error.message);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("products").delete().eq("id", id);
+      const { error } = await supabase.from("sets").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      toast.success("Product deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-sets"] });
+      toast.success("Set deleted successfully");
     },
     onError: (error) => {
-      toast.error("Failed to delete product: " + error.message);
+      toast.error("Failed to delete set: " + error.message);
     },
   });
 
-  const handleEdit = (product: any) => {
-    setEditingProduct(product);
+  const handleEdit = (set: any) => {
+    setEditingSet(set);
     form.reset({
-      name: product.name,
-      description: product.description || "",
-      theme: product.theme,
-      age_range: product.age_range,
-      piece_count: product.piece_count,
-      image_url: product.image_url || "",
-      skill_boost: product.skill_boost?.join(", ") || "",
+      name: set.name,
+      lego_ref: set.lego_ref || "",
+      description: set.description || "",
+      theme: set.theme,
+      age_range: set.age_range,
+      piece_count: set.piece_count,
+      image_url: set.image_url || "",
+      skill_boost: set.skill_boost?.join(", ") || "",
+      year: set.year,
+      catalogue_visibility: set.catalogue_visibility ? "yes" : "no",
     });
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (data: ProductFormData) => {
-    if (editingProduct) {
-      updateMutation.mutate({ id: editingProduct.id, data });
+  const handleSubmit = (data: SetFormData) => {
+    if (editingSet) {
+      updateMutation.mutate({ id: editingSet.id, data });
     } else {
       createMutation.mutate(data);
     }
@@ -174,30 +196,30 @@ const ProductsManager = () => {
 
   const handleDialogClose = () => {
     setIsDialogOpen(false);
-    setEditingProduct(null);
+    setEditingSet(null);
     form.reset();
   };
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Products Management</CardTitle>
+        <CardTitle>Sets Management</CardTitle>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button
               onClick={() => {
-                setEditingProduct(null);
+                setEditingSet(null);
                 form.reset();
               }}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Product
+              Add Set
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingProduct ? "Edit Product" : "Add New Product"}
+                {editingSet ? "Edit Set" : "Add New Set"}
               </DialogTitle>
             </DialogHeader>
             <Form {...form}>
@@ -213,6 +235,19 @@ const ProductsManager = () => {
                       <FormLabel>Name</FormLabel>
                       <FormControl>
                         <Input placeholder="LEGO City Police" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lego_ref"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lego Reference</FormLabel>
+                      <FormControl>
+                        <Input placeholder="75192" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -262,15 +297,55 @@ const ProductsManager = () => {
                     )}
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="piece_count"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Piece Count</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="500" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="year"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Year</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="2023" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <FormField
                   control={form.control}
-                  name="piece_count"
+                  name="catalogue_visibility"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Piece Count</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="500" {...field} />
-                      </FormControl>
+                      <FormLabel>Catalogue Visibility</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Show in catalogue?" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="yes">Yes</SelectItem>
+                          <SelectItem value="no">No</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -321,7 +396,7 @@ const ProductsManager = () => {
                       createMutation.isPending || updateMutation.isPending
                     }
                   >
-                    {editingProduct ? "Update" : "Create"}
+                    {editingSet ? "Update" : "Create"}
                   </Button>
                 </div>
               </form>
@@ -334,42 +409,44 @@ const ProductsManager = () => {
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : products?.length === 0 ? (
+        ) : sets?.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            No products yet. Add your first LEGO set!
+            No sets yet. Add your first LEGO set!
           </p>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Ref</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Theme</TableHead>
-                  <TableHead>Age</TableHead>
-                  <TableHead>Pieces</TableHead>
+                  <TableHead>Year</TableHead>
+                  <TableHead>Visible</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products?.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.theme}</TableCell>
-                    <TableCell>{product.age_range}</TableCell>
-                    <TableCell>{product.piece_count}</TableCell>
+                {sets?.map((set) => (
+                  <TableRow key={set.id}>
+                    <TableCell className="font-medium">{set.lego_ref || "-"}</TableCell>
+                    <TableCell>{set.name}</TableCell>
+                    <TableCell>{set.theme}</TableCell>
+                    <TableCell>{set.year || "-"}</TableCell>
+                    <TableCell>{set.catalogue_visibility ? "Yes" : "No"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleEdit(product)}
+                          onClick={() => handleEdit(set)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => deleteMutation.mutate(product.id)}
+                          onClick={() => deleteMutation.mutate(set.id)}
                           disabled={deleteMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />

@@ -41,10 +41,13 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
 const inventorySchema = z.object({
-  product_id: z.string().min(1, "Product is required"),
+  set_id: z.string().min(1, "Set is required"),
   total_stock: z.coerce.number().min(0, "Total stock must be 0 or more"),
   available_stock: z.coerce.number().min(0, "Available stock must be 0 or more"),
-  rented_count: z.coerce.number().min(0, "Rented count must be 0 or more"),
+  shipping_count: z.coerce.number().min(0, "Shipping count must be 0 or more"),
+  being_used_count: z.coerce.number().min(0, "In use count must be 0 or more"),
+  returning_count: z.coerce.number().min(0, "Returning count must be 0 or more"),
+  being_completed_count: z.coerce.number().min(0, "Completing count must be 0 or more"),
 });
 
 type InventoryFormData = z.infer<typeof inventorySchema>;
@@ -57,10 +60,13 @@ const InventoryManager = () => {
   const form = useForm<InventoryFormData>({
     resolver: zodResolver(inventorySchema),
     defaultValues: {
-      product_id: "",
+      set_id: "",
       total_stock: 0,
       available_stock: 0,
-      rented_count: 0,
+      shipping_count: 0,
+      being_used_count: 0,
+      returning_count: 0,
+      being_completed_count: 0,
     },
   });
 
@@ -71,7 +77,7 @@ const InventoryManager = () => {
         .from("inventory")
         .select(`
           *,
-          products (
+          sets (
             id,
             name,
             theme
@@ -83,11 +89,11 @@ const InventoryManager = () => {
     },
   });
 
-  const { data: products } = useQuery({
-    queryKey: ["admin-products-for-inventory"],
+  const { data: sets } = useQuery({
+    queryKey: ["admin-sets-for-inventory"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("products")
+        .from("sets")
         .select("id, name")
         .order("name");
       if (error) throw error;
@@ -95,18 +101,21 @@ const InventoryManager = () => {
     },
   });
 
-  // Get products that don't have inventory yet
-  const availableProducts = products?.filter(
-    (p) => !inventory?.some((i) => i.product_id === p.id) || editingInventory?.product_id === p.id
+  // Get sets that don't have inventory yet
+  const availableSets = sets?.filter(
+    (s) => !inventory?.some((i) => i.set_id === s.id) || editingInventory?.set_id === s.id
   );
 
   const createMutation = useMutation({
     mutationFn: async (data: InventoryFormData) => {
       const { error } = await supabase.from("inventory").insert({
-        product_id: data.product_id,
+        set_id: data.set_id,
         total_stock: data.total_stock,
         available_stock: data.available_stock,
-        rented_count: data.rented_count,
+        shipping_count: data.shipping_count,
+        being_used_count: data.being_used_count,
+        returning_count: data.returning_count,
+        being_completed_count: data.being_completed_count,
       });
       if (error) throw error;
     },
@@ -128,7 +137,10 @@ const InventoryManager = () => {
         .update({
           total_stock: data.total_stock,
           available_stock: data.available_stock,
-          rented_count: data.rented_count,
+          shipping_count: data.shipping_count,
+          being_used_count: data.being_used_count,
+          returning_count: data.returning_count,
+          being_completed_count: data.being_completed_count,
         })
         .eq("id", id);
       if (error) throw error;
@@ -148,10 +160,13 @@ const InventoryManager = () => {
   const handleEdit = (item: any) => {
     setEditingInventory(item);
     form.reset({
-      product_id: item.product_id,
+      set_id: item.set_id,
       total_stock: item.total_stock,
       available_stock: item.available_stock,
-      rented_count: item.rented_count,
+      shipping_count: item.shipping_count,
+      being_used_count: item.being_used_count,
+      returning_count: item.returning_count,
+      being_completed_count: item.being_completed_count,
     });
     setIsDialogOpen(true);
   };
@@ -187,7 +202,7 @@ const InventoryManager = () => {
             form.reset();
             setIsDialogOpen(true);
           }}
-          disabled={!availableProducts?.length && !editingInventory}
+          disabled={!availableSets?.length && !editingInventory}
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Inventory
@@ -202,7 +217,7 @@ const InventoryManager = () => {
           <div className="text-center py-8">
             <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              No inventory records. Add stock for your products!
+              No inventory records. Add stock for your sets!
             </p>
           </div>
         ) : (
@@ -210,11 +225,13 @@ const InventoryManager = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Theme</TableHead>
+                  <TableHead>Set</TableHead>
                   <TableHead className="text-center">Total</TableHead>
                   <TableHead className="text-center">Available</TableHead>
-                  <TableHead className="text-center">Rented</TableHead>
+                  <TableHead className="text-center">Shipping</TableHead>
+                  <TableHead className="text-center">In Use</TableHead>
+                  <TableHead className="text-center">Returning</TableHead>
+                  <TableHead className="text-center">Completing</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -228,9 +245,8 @@ const InventoryManager = () => {
                   return (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
-                        {item.products?.name || "Unknown"}
+                        {item.sets?.name || "Unknown"}
                       </TableCell>
-                      <TableCell>{item.products?.theme}</TableCell>
                       <TableCell className="text-center">
                         {item.total_stock}
                       </TableCell>
@@ -238,7 +254,16 @@ const InventoryManager = () => {
                         {item.available_stock}
                       </TableCell>
                       <TableCell className="text-center">
-                        {item.rented_count}
+                        {item.shipping_count}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.being_used_count}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.returning_count}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.being_completed_count}
                       </TableCell>
                       <TableCell>
                         <Badge variant={status.variant}>{status.label}</Badge>
@@ -261,7 +286,7 @@ const InventoryManager = () => {
         )}
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingInventory ? "Edit Inventory" : "Add Inventory"}
@@ -274,10 +299,10 @@ const InventoryManager = () => {
               >
                 <FormField
                   control={form.control}
-                  name="product_id"
+                  name="set_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Product</FormLabel>
+                      <FormLabel>Set</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
@@ -285,14 +310,14 @@ const InventoryManager = () => {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a product" />
+                            <SelectValue placeholder="Select a set" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {(editingInventory ? products : availableProducts)?.map(
-                            (product) => (
-                              <SelectItem key={product.id} value={product.id}>
-                                {product.name}
+                          {(editingInventory ? sets : availableSets)?.map(
+                            (set) => (
+                              <SelectItem key={set.id} value={set.id}>
+                                {set.name}
                               </SelectItem>
                             )
                           )}
@@ -302,7 +327,7 @@ const InventoryManager = () => {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="total_stock"
@@ -321,7 +346,22 @@ const InventoryManager = () => {
                     name="available_stock"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Available</FormLabel>
+                        <FormLabel>Available Stock</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="shipping_count"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Shipping</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} />
                         </FormControl>
@@ -331,10 +371,10 @@ const InventoryManager = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="rented_count"
+                    name="being_used_count"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Rented</FormLabel>
+                        <FormLabel>In Use</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} />
                         </FormControl>
@@ -343,7 +383,35 @@ const InventoryManager = () => {
                     )}
                   />
                 </div>
-                <div className="flex gap-2 justify-end">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="returning_count"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Returning</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="being_completed_count"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Completing</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex gap-2 justify-end pt-4">
                   <Button
                     type="button"
                     variant="outline"

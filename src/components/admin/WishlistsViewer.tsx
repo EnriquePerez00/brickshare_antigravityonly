@@ -16,14 +16,14 @@ const WishlistsViewer = () => {
   const { data: wishlists, isLoading } = useQuery({
     queryKey: ["admin-wishlists"],
     queryFn: async () => {
-      // Fetch wishlists with product details
+      // Fetch wishlists with set details
       const { data: wishlistData, error: wishlistError } = await supabase
         .from("wishlist")
         .select(`
           id,
           user_id,
           created_at,
-          products (
+          sets (
             id,
             name,
             theme,
@@ -101,25 +101,28 @@ const WishlistsViewer = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Product</TableHead>
+                      <TableHead>Set</TableHead>
                       <TableHead>Theme</TableHead>
                       <TableHead>Age Range</TableHead>
                       <TableHead>Added</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {userWishlist.items.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          {item.products?.name || "Unknown Product"}
-                        </TableCell>
-                        <TableCell>{item.products?.theme}</TableCell>
-                        <TableCell>{item.products?.age_range}</TableCell>
-                        <TableCell>
-                          {format(new Date(item.created_at), "MMM d, yyyy")}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {userWishlist.items.map((item) => {
+                      const setData = (item as any).sets;
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">
+                            {setData?.name || "Unknown Set"}
+                          </TableCell>
+                          <TableCell>{setData?.theme}</TableCell>
+                          <TableCell>{setData?.age_range}</TableCell>
+                          <TableCell>
+                            {format(new Date(item.created_at), "MMM d, yyyy")}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

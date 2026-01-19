@@ -7,12 +7,12 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWishlist } from "@/hooks/useWishlist";
-import { useProducts } from "@/hooks/useProducts";
+import { useSets } from "@/hooks/useProducts";
 
 const Dashboard = () => {
   const { user, profile, isLoading: authLoading, deleteUserAccount } = useAuth();
   const { wishlistIds, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
-  const { data: products = [], isLoading: productsLoading } = useProducts(100);
+  const { data: sets = [], isLoading: setsLoading } = useSets(100);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,7 +33,7 @@ const Dashboard = () => {
     return null;
   }
 
-  const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id));
+  const wishlistSets = sets.filter((s) => wishlistIds.includes(s.id));
   const impactPoints = profile?.impact_points || 0;
   const impactHours = Math.floor(impactPoints / 10); // 10 points = 1 hour
 
@@ -143,40 +143,40 @@ const Dashboard = () => {
               Mi Wishlist
             </h2>
 
-            {wishlistLoading || productsLoading ? (
+            {wishlistLoading || setsLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : wishlistProducts.length > 0 ? (
+            ) : wishlistSets.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {wishlistProducts.map((product) => (
+                {wishlistSets.map((set) => (
                   <div
-                    key={product.id}
+                    key={set.id}
                     className="bg-card rounded-2xl overflow-hidden shadow-card"
                   >
                     <div className="aspect-video bg-secondary/50 overflow-hidden">
                       <img
-                        src={product.image_url || "/placeholder.svg"}
-                        alt={product.name}
+                        src={set.image_url || "/placeholder.svg"}
+                        alt={set.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="p-5">
                       <h3 className="font-display font-semibold text-foreground mb-2">
-                        {product.name}
+                        {set.name}
                       </h3>
                       <div className="flex flex-wrap gap-2 mb-4">
                         <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
-                          {product.theme}
+                          {set.theme}
                         </span>
                         <span className="px-2 py-1 rounded-md text-xs font-medium bg-accent/10 text-accent">
-                          {product.piece_count} piezas
+                          {set.piece_count} piezas
                         </span>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => toggleWishlist(product.id)}
+                        onClick={() => toggleWishlist(set.id)}
                         className="w-full text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />

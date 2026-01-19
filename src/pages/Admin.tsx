@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Users, Boxes } from "lucide-react";
-import ProductsManager from "@/components/admin/ProductsManager";
+import SetsManager from "@/components/admin/ProductsManager";
 import WishlistsViewer from "@/components/admin/WishlistsViewer";
 import InventoryManager from "@/components/admin/InventoryManager";
 
@@ -33,17 +33,17 @@ const Admin = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Admin Panel</h1>
+          <h1 className="text-3xl font-bold text-foreground">Panel de Administración</h1>
           <p className="text-muted-foreground mt-2">
-            Manage LEGO sets, inventory, and view user wishlists
+            Gestiona los sets de LEGO, el inventario y consulta las wishlists de los usuarios
           </p>
         </div>
 
-        <Tabs defaultValue="products" className="space-y-6">
+        <Tabs defaultValue="sets" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-            <TabsTrigger value="products" className="flex items-center gap-2">
+            <TabsTrigger value="sets" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
-              Products
+              Sets
             </TabsTrigger>
             <TabsTrigger value="wishlists" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -51,12 +51,12 @@ const Admin = () => {
             </TabsTrigger>
             <TabsTrigger value="inventory" className="flex items-center gap-2">
               <Boxes className="h-4 w-4" />
-              Inventory
+              Inventario
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="products">
-            <ProductsManager />
+          <TabsContent value="sets">
+            <SetsManager />
           </TabsContent>
 
           <TabsContent value="wishlists">

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-interface ProductCardProps {
+interface SetCardProps {
   id: string;
   name: string;
   imageUrl: string;
@@ -27,7 +27,7 @@ const ProductCard = ({
   skillBoost,
   isWishlisted = false,
   onWishlistToggle
-}: ProductCardProps) => {
+}: SetCardProps) => {
   const [isToggling, setIsToggling] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ const ProductCard = ({
       navigate("/auth");
       return;
     }
-    
+
     if (onWishlistToggle) {
       setIsToggling(true);
       await onWishlistToggle(id);
@@ -55,20 +55,20 @@ const ProductCard = ({
     >
       {/* Image Container */}
       <div className="relative aspect-square bg-secondary/50 overflow-hidden">
-        <img 
-          src={imageUrl} 
+        <img
+          src={imageUrl}
           alt={name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        
+
         {/* Wishlist Button */}
         <button
           onClick={handleWishlistClick}
           disabled={isToggling}
           className={cn(
             "absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-all",
-            isWishlisted 
-              ? "bg-destructive text-primary-foreground shadow-lg" 
+            isWishlisted
+              ? "bg-destructive text-primary-foreground shadow-lg"
               : "bg-background/80 backdrop-blur-sm text-muted-foreground hover:bg-background hover:text-destructive"
           )}
         >
@@ -92,7 +92,7 @@ const ProductCard = ({
         <h3 className="font-display font-semibold text-foreground mb-3 line-clamp-2 group-hover:text-primary transition-colors">
           {name}
         </h3>
-        
+
         <div className="flex flex-wrap gap-2 mb-3">
           <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
             {ageRange}
@@ -101,7 +101,7 @@ const ProductCard = ({
             {pieceCount} piezas
           </span>
         </div>
-        
+
         {skillBoost && (
           <p className="text-xs text-muted-foreground">
             <span className="font-medium">Desarrolla:</span> {skillBoost}

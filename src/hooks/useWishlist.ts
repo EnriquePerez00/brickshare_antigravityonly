@@ -18,13 +18,13 @@ export const useWishlist = () => {
     setIsLoading(true);
     const { data, error } = await supabase
       .from("wishlist")
-      .select("product_id")
+      .select("set_id")
       .eq("user_id", user.id);
 
     if (error) {
       console.error("Error fetching wishlist:", error);
     } else {
-      setWishlistIds(data.map((item) => item.product_id));
+      setWishlistIds(data.map((item) => item.set_id));
     }
     setIsLoading(false);
   }, [user]);
@@ -33,23 +33,23 @@ export const useWishlist = () => {
     fetchWishlist();
   }, [fetchWishlist]);
 
-  const toggleWishlist = async (productId: string): Promise<boolean> => {
+  const toggleWishlist = async (setId: string): Promise<boolean> => {
     if (!user) {
       toast({
         title: "Inicia sesión",
-        description: "Debes iniciar sesión para añadir productos a tu wishlist",
+        description: "Debes iniciar sesión para añadir sets a tu wishlist",
         variant: "destructive",
       });
       return false;
     }
 
-    const isCurrentlyWishlisted = wishlistIds.includes(productId);
+    const isCurrentlyWishlisted = wishlistIds.includes(setId);
 
     // Optimistic update
     if (isCurrentlyWishlisted) {
-      setWishlistIds((prev) => prev.filter((id) => id !== productId));
+      setWishlistIds((prev) => prev.filter((id) => id !== setId));
     } else {
-      setWishlistIds((prev) => [...prev, productId]);
+      setWishlistIds((prev) => [...prev, setId]);
     }
 
     if (isCurrentlyWishlisted) {
@@ -57,11 +57,11 @@ export const useWishlist = () => {
         .from("wishlist")
         .delete()
         .eq("user_id", user.id)
-        .eq("product_id", productId);
+        .eq("set_id", setId);
 
       if (error) {
         // Rollback on error
-        setWishlistIds((prev) => [...prev, productId]);
+        setWishlistIds((prev) => [...prev, setId]);
         toast({
           title: "Error",
           description: "No se pudo eliminar de la wishlist",
@@ -69,19 +69,19 @@ export const useWishlist = () => {
         });
         return false;
       }
-      
+
       toast({
         title: "Eliminado",
-        description: "Producto eliminado de tu wishlist",
+        description: "Set eliminado de tu wishlist",
       });
     } else {
       const { error } = await supabase
         .from("wishlist")
-        .insert({ user_id: user.id, product_id: productId });
+        .insert({ user_id: user.id, set_id: setId });
 
       if (error) {
         // Rollback on error
-        setWishlistIds((prev) => prev.filter((id) => id !== productId));
+        setWishlistIds((prev) => prev.filter((id) => id !== setId));
         toast({
           title: "Error",
           description: "No se pudo añadir a la wishlist",
@@ -89,17 +89,17 @@ export const useWishlist = () => {
         });
         return false;
       }
-      
+
       toast({
         title: "Añadido",
-        description: "Producto añadido a tu wishlist",
+        description: "Set añadido a tu wishlist",
       });
     }
 
     return true;
   };
 
-  const isWishlisted = (productId: string) => wishlistIds.includes(productId);
+  const isWishlisted = (setId: string) => wishlistIds.includes(setId);
 
   return {
     wishlistIds,

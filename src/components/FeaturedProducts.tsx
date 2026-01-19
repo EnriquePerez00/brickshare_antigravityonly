@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
 
-// Sample products for preview
-const sampleProducts = [
+// Sample sets for preview
+const sampleSets = [
   {
     id: "1",
     name: "City - Estación de Bomberos",
@@ -16,8 +16,8 @@ const sampleProducts = [
     skillBoost: "Motricidad fina, trabajo en equipo"
   },
   {
-    id: "2", 
-    name: "Technic - Excavadora",
+    id: "2",
+    name: "LEGO Technic Excavadora",
     imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
     theme: "Technic",
     ageRange: "9-16 años",
@@ -69,7 +69,7 @@ const FeaturedProducts = () => {
               Explora algunos de nuestros sets más populares
             </motion.p>
           </div>
-          
+
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -86,10 +86,10 @@ const FeaturedProducts = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {sampleProducts.map((product) => (
-            <ProductCard 
-              key={product.id}
-              {...product}
+          {sampleSets.map((setData) => (
+            <ProductCard
+              key={setData.id}
+              {...setData}
             />
           ))}
         </div>

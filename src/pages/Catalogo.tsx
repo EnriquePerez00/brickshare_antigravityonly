@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useProducts } from "@/hooks/useProducts";
+import { useSets } from "@/hooks/useProducts";
 import { useWishlist } from "@/hooks/useWishlist";
 
-// Fallback sample products when database is empty
-const sampleProducts = [
+// Fallback sample sets when database is empty
+const sampleSets = [
   {
     id: "sample-1",
     name: "City - Estación de Bomberos",
@@ -23,7 +23,8 @@ const sampleProducts = [
     skill_boost: ["Motricidad fina", "trabajo en equipo"],
     description: null,
     created_at: "",
-    updated_at: "",
+    year: 2023,
+    catalogue_visibility: true,
   },
   {
     id: "sample-2",
@@ -35,7 +36,8 @@ const sampleProducts = [
     skill_boost: ["Lógica", "mecánica"],
     description: null,
     created_at: "",
-    updated_at: "",
+    year: 2022,
+    catalogue_visibility: true,
   },
   {
     id: "sample-3",
@@ -47,7 +49,8 @@ const sampleProducts = [
     skill_boost: ["Creatividad", "visión espacial"],
     description: null,
     created_at: "",
-    updated_at: "",
+    year: 2023,
+    catalogue_visibility: true,
   },
   {
     id: "sample-4",
@@ -59,7 +62,8 @@ const sampleProducts = [
     skill_boost: ["Imaginación", "juego social"],
     description: null,
     created_at: "",
-    updated_at: "",
+    year: 2021,
+    catalogue_visibility: true,
   },
   {
     id: "sample-5",
@@ -71,7 +75,8 @@ const sampleProducts = [
     skill_boost: ["Paciencia", "concentración"],
     description: null,
     created_at: "",
-    updated_at: "",
+    year: 2023,
+    catalogue_visibility: true,
   },
   {
     id: "sample-6",
@@ -83,7 +88,8 @@ const sampleProducts = [
     skill_boost: ["Narrativa", "juego de roles"],
     description: null,
     created_at: "",
-    updated_at: "",
+    year: 2022,
+    catalogue_visibility: true,
   },
 ];
 
@@ -97,7 +103,7 @@ const pieceRanges = [
 ];
 
 const Catalogo = () => {
-  const { data: dbProducts = [], isLoading: productsLoading } = useProducts(100); // Load more for initial catalog
+  const { data: dbSets = [], isLoading: setsLoading } = useSets(100);
   const { isWishlisted, toggleWishlist } = useWishlist();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,8 +111,8 @@ const Catalogo = () => {
   const [selectedAges, setSelectedAges] = useState<string[]>([]);
   const [selectedPieces, setSelectedPieces] = useState<typeof pieceRanges>([]);
 
-  // Use database products if available, otherwise use sample
-  const allProducts = dbProducts.length > 0 ? dbProducts : sampleProducts;
+  // Use database sets if available, otherwise use sample
+  const allSets = dbSets.length > 0 ? dbSets : sampleSets;
 
   const toggleTheme = (theme: string) => {
     setSelectedThemes(prev =>
@@ -135,12 +141,12 @@ const Catalogo = () => {
     setSearchQuery("");
   };
 
-  const filteredProducts = allProducts.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTheme = selectedThemes.length === 0 || selectedThemes.includes(product.theme);
-    const matchesAge = selectedAges.length === 0 || selectedAges.includes(product.age_range);
+  const filteredSets = allSets.filter(set => {
+    const matchesSearch = set.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTheme = selectedThemes.length === 0 || selectedThemes.includes(set.theme);
+    const matchesAge = selectedAges.length === 0 || selectedAges.includes(set.age_range);
     const matchesPieces = selectedPieces.length === 0 || selectedPieces.some(
-      range => product.piece_count >= range.min && product.piece_count <= range.max
+      range => set.piece_count >= range.min && set.piece_count <= range.max
     );
     return matchesSearch && matchesTheme && matchesAge && matchesPieces;
   });
@@ -289,29 +295,29 @@ const Catalogo = () => {
               </div>
             </motion.aside>
 
-            {/* Products Grid */}
+            {/* Sets Grid */}
             <div className="flex-1">
-              {productsLoading ? (
+              {setsLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              ) : filteredProducts.length > 0 ? (
+              ) : filteredSets.length > 0 ? (
                 <>
                   <p className="text-sm text-muted-foreground mb-6">
-                    {filteredProducts.length} {filteredProducts.length === 1 ? 'set encontrado' : 'sets encontrados'}
+                    {filteredSets.length} {filteredSets.length === 1 ? 'set encontrado' : 'sets encontrados'}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredProducts.map((product) => (
+                    {filteredSets.map((setData) => (
                       <ProductCard
-                        key={product.id}
-                        id={product.id}
-                        name={product.name}
-                        imageUrl={product.image_url || "/placeholder.svg"}
-                        theme={product.theme}
-                        ageRange={product.age_range}
-                        pieceCount={product.piece_count}
-                        skillBoost={Array.isArray(product.skill_boost) ? product.skill_boost.join(", ") : ""}
-                        isWishlisted={isWishlisted(product.id)}
+                        key={setData.id}
+                        id={setData.id}
+                        name={setData.name}
+                        imageUrl={setData.image_url || "/placeholder.svg"}
+                        theme={setData.theme}
+                        ageRange={setData.age_range}
+                        pieceCount={setData.piece_count}
+                        skillBoost={Array.isArray(setData.skill_boost) ? setData.skill_boost.join(", ") : ""}
+                        isWishlisted={isWishlisted(setData.id)}
                         onWishlistToggle={toggleWishlist}
                       />
                     ))}

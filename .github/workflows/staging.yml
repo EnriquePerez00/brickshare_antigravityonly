@@ -35,4 +35,4 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
-          branch: gh-pages # Despliega a la rama gh-pages
+          branch: brickshare_staging # Despliega a la rama brickshare_staging

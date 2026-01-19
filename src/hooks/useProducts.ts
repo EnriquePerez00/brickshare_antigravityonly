@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface Product {
+export interface SetData {
   id: string;
   name: string;
   description: string | null;
@@ -11,20 +11,23 @@ export interface Product {
   piece_count: number;
   skill_boost: string[] | null;
   created_at: string;
+  year: number | null;
+  catalogue_visibility: boolean;
 }
 
-export const useProducts = (limit = 20, offset = 0) => {
+export const useSets = (limit = 20, offset = 0) => {
   return useQuery({
-    queryKey: ["products", limit, offset],
+    queryKey: ["sets", limit, offset],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("products")
-        .select("id, name, description, image_url, theme, age_range, piece_count, skill_boost, created_at")
+        .from("sets")
+        .select("id, name, description, image_url, theme, age_range, piece_count, skill_boost, created_at, year, catalogue_visibility")
+        .eq("catalogue_visibility", true)
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
 
       if (error) throw error;
-      return data as Product[];
+      return data as SetData[];
     },
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
