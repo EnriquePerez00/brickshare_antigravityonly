@@ -15,7 +15,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 const sampleProducts = [
   {
     id: "sample-1",
-    name: "LEGO City Estación de Bomberos",
+    name: "City - Estación de Bomberos",
     image_url: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
     theme: "City",
     age_range: "6-12 años",
@@ -27,7 +27,7 @@ const sampleProducts = [
   },
   {
     id: "sample-2",
-    name: "LEGO Technic Excavadora Pesada",
+    name: "Technic - Excavadora Pesada",
     image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
     theme: "Technic",
     age_range: "9-16 años",
@@ -39,7 +39,7 @@ const sampleProducts = [
   },
   {
     id: "sample-3",
-    name: "LEGO Creator Casa Familiar Moderna",
+    name: "Creator - Casa Familiar Moderna",
     image_url: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&h=400&fit=crop",
     theme: "Creator",
     age_range: "8-12 años",
@@ -51,7 +51,7 @@ const sampleProducts = [
   },
   {
     id: "sample-4",
-    name: "LEGO Friends Centro Comercial",
+    name: "Friends - Centro Comercial",
     image_url: "https://images.unsplash.com/photo-1599623560574-39d485900c95?w=400&h=400&fit=crop",
     theme: "Friends",
     age_range: "7-12 años",
@@ -63,9 +63,9 @@ const sampleProducts = [
   },
   {
     id: "sample-5",
-    name: "LEGO Star Wars Halcón Milenario",
+    name: "Space Adventures - Nave Estelar",
     image_url: "https://images.unsplash.com/photo-1518946222227-364f22132616?w=400&h=400&fit=crop",
-    theme: "Star Wars",
+    theme: "Space",
     age_range: "10-16 años",
     piece_count: 1353,
     skill_boost: ["Paciencia", "concentración"],
@@ -75,7 +75,7 @@ const sampleProducts = [
   },
   {
     id: "sample-6",
-    name: "LEGO City Comisaría de Policía",
+    name: "City - Comisaría de Policía",
     image_url: "https://images.unsplash.com/photo-1560961911-ba7ef651a56c?w=400&h=400&fit=crop",
     theme: "City",
     age_range: "6-12 años",
@@ -87,7 +87,7 @@ const sampleProducts = [
   },
 ];
 
-const themes = ["City", "Technic", "Creator", "Friends", "Star Wars"];
+const themes = ["City", "Technic", "Creator", "Friends", "Space", "Architecture"];
 const ageRanges = ["5-7 años", "6-12 años", "7-12 años", "8-12 años", "8-14 años", "9-16 años", "10-16 años"];
 const pieceRanges = [
   { label: "Menos de 300", min: 0, max: 299 },

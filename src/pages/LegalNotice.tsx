@@ -37,8 +37,34 @@ const LegalNotice = () => {
                                 <h2 className="text-xl font-semibold text-foreground">Propiedad Intelectual</h2>
                                 <p>
                                     Todos los contenidos del sitio web (logos, textos, diseños) son propiedad de
-                                    Brickshare o cuentan con licencia de uso. LEGO® es una marca registrada de
-                                    The LEGO Group, que no patrocina ni autoriza este sitio.
+                                    Brickshare o cuentan con licencia de uso.
+                                </p>
+                            </section>
+
+                            <section className="space-y-4">
+                                <h2 className="text-xl font-semibold text-foreground">Aviso sobre Marcas Registradas</h2>
+                                <p>
+                                    LEGO® es una marca registrada de The LEGO Group of Companies (TLG). 
+                                    <strong> Brickshare S.L. no está patrocinado, autorizado, ni respaldado por The LEGO Group.</strong>
+                                </p>
+                                <p>
+                                    Este servicio consiste en el alquiler de productos LEGO® originales, adquiridos legalmente 
+                                    en el mercado. No fabricamos, modificamos ni distribuimos productos bajo la marca LEGO®.
+                                </p>
+                                <p>
+                                    El uso de la palabra "LEGO" en este sitio es meramente descriptivo para indicar 
+                                    la compatibilidad y naturaleza de los productos disponibles en nuestro servicio de alquiler, 
+                                    amparado bajo el principio de uso nominativo de marcas (nominative fair use).
+                                </p>
+                            </section>
+
+                            <section className="space-y-4">
+                                <h2 className="text-xl font-semibold text-foreground">Naturaleza del Servicio</h2>
+                                <p>
+                                    Brickshare es un servicio de alquiler y economía circular que permite a las familias 
+                                    acceder temporalmente a sets de construcción LEGO® originales. Este modelo de negocio 
+                                    está protegido por el principio de agotamiento del derecho de marca (doctrina de la primera venta), 
+                                    que permite la reventa y alquiler de productos de marca adquiridos legítimamente.
                                 </p>
                             </section>
                         </div>

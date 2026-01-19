@@ -71,7 +71,7 @@ const SobreNosotros = () => {
                 </h2>
                 <div className="space-y-4 text-muted-foreground">
                   <p>
-                    <span className="text-foreground font-medium">¿Cuántas veces montan realmente mis hijos un set de LEGO?</span> Esta 
+                    <span className="text-foreground font-medium">¿Cuántas veces montan realmente mis hijos un set de construcción?</span> Esta 
                     pregunta fue el punto de partida de todo. Como padre, observé cómo los juguetes de construcción 
                     se montaban con ilusión... y luego quedaban guardados en una estantería, acumulando polvo.
                   </p>
@@ -98,7 +98,7 @@ const SobreNosotros = () => {
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                   <img 
                     src={familyImage} 
-                    alt="Familia jugando con LEGO" 
+                    alt="Familia jugando con bloques de construcción"
                     className="w-full h-auto"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />

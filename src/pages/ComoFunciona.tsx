@@ -95,13 +95,13 @@ const ComoFunciona = () => {
               transition={{ duration: 0.6 }}
               className="text-center max-w-3xl mx-auto"
             >
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-                ¿Cómo Funciona?
-              </h1>
-              <p className="text-lg text-muted-foreground">
-                Alquilar sets de LEGO nunca fue tan fácil. Descubre cómo funciona 
-                nuestro servicio de suscripción y empieza a construir sin límites.
-              </p>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+              ¿Cómo Funciona?
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Alquilar sets de construcción nunca fue tan fácil. Descubre cómo funciona 
+              nuestro servicio de suscripción y empieza a construir sin límites.
+            </p>
             </motion.div>
           </div>
         </section>
@@ -167,7 +167,7 @@ const ComoFunciona = () => {
                 Preguntas Frecuentes
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Todo lo que necesitas saber sobre nuestro servicio de alquiler de LEGO
+                Todo lo que necesitas saber sobre nuestro servicio de alquiler de sets de construcción
               </p>
             </motion.div>
 
@@ -217,7 +217,7 @@ const ComoFunciona = () => {
                 ¿Listo para empezar?
               </h2>
               <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-                Explora nuestro catálogo y crea tu wishlist. ¡Tu próxima aventura LEGO te espera!
+                Explora nuestro catálogo y crea tu wishlist. ¡Tu próxima aventura de construcción te espera!
               </p>
               <a
                 href="/catalogo"
