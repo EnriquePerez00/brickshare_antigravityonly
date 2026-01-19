@@ -44,7 +44,7 @@ const CTASection = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto"
               >
-                Únete a miles de familias que ya disfrutan de LEGO sin acumular, 
+                Únete a miles de familias que ya disfrutan de sets de construcción sin acumular, 
                 mientras generan impacto social positivo.
               </motion.p>
 

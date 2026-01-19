@@ -8,7 +8,7 @@ import ProductCard from "./ProductCard";
 const sampleProducts = [
   {
     id: "1",
-    name: "LEGO City Estación de Bomberos",
+    name: "City - Estación de Bomberos",
     imageUrl: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
     theme: "City",
     ageRange: "6-12 años",
@@ -17,7 +17,7 @@ const sampleProducts = [
   },
   {
     id: "2", 
-    name: "LEGO Technic Excavadora",
+    name: "Technic - Excavadora",
     imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
     theme: "Technic",
     ageRange: "9-16 años",
@@ -26,7 +26,7 @@ const sampleProducts = [
   },
   {
     id: "3",
-    name: "LEGO Creator Casa Familiar",
+    name: "Creator - Casa Familiar",
     imageUrl: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&h=400&fit=crop",
     theme: "Creator",
     ageRange: "8-12 años",
@@ -35,7 +35,7 @@ const sampleProducts = [
   },
   {
     id: "4",
-    name: "LEGO Friends Centro Comercial",
+    name: "Friends - Centro Comercial",
     imageUrl: "https://images.unsplash.com/photo-1599623560574-39d485900c95?w=400&h=400&fit=crop",
     theme: "Friends",
     ageRange: "7-12 años",

@@ -11,7 +11,7 @@ const HeroSection = () => {
       <div className="absolute inset-0 z-0">
         <img 
           src={heroImage} 
-          alt="LEGO bricks floating" 
+          alt="Bloques de construcción coloridos"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/40" />
@@ -48,7 +48,7 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-8 max-w-2xl"
           >
-            Suscripción circular de LEGO que impulsa el desarrollo infantil y la inclusión social. 
+            Suscripción circular de sets de construcción que impulsa el desarrollo infantil y la inclusión social. 
             Sets ilimitados, sin acumular, con propósito.
           </motion.p>
 
