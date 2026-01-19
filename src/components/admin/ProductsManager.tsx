@@ -50,7 +50,8 @@ const setSchema = z.object({
   piece_count: z.coerce.number().min(1, "Piece count must be at least 1"),
   image_url: z.string().url().optional().or(z.literal("")),
   skill_boost: z.string().optional(),
-  year: z.coerce.number().min(1900, "Valid year required").optional(),
+  year_released: z.coerce.number().min(1900, "Valid year required").optional(),
+  weight_set: z.coerce.number().optional().or(z.literal(0)),
   catalogue_visibility: z.string().default("yes"),
 });
 
@@ -72,7 +73,8 @@ const ProductsManager = () => {
       piece_count: 0,
       image_url: "",
       skill_boost: "",
-      year: new Date().getFullYear(),
+      year_released: new Date().getFullYear(),
+      weight_set: 0,
       catalogue_visibility: "yes",
     },
   });
@@ -104,7 +106,8 @@ const ProductsManager = () => {
         piece_count: data.piece_count,
         image_url: data.image_url || null,
         skill_boost: skillBoostArray,
-        year: data.year,
+        year_released: data.year_released,
+        weight_set: data.weight_set || null,
         catalogue_visibility: data.catalogue_visibility === "yes",
       });
       if (error) throw error;
@@ -137,7 +140,8 @@ const ProductsManager = () => {
           piece_count: data.piece_count,
           image_url: data.image_url || null,
           skill_boost: skillBoostArray,
-          year: data.year,
+          year_released: data.year_released,
+          weight_set: data.weight_set || null,
           catalogue_visibility: data.catalogue_visibility === "yes",
         })
         .eq("id", id);
@@ -180,7 +184,8 @@ const ProductsManager = () => {
       piece_count: set.piece_count,
       image_url: set.image_url || "",
       skill_boost: set.skill_boost?.join(", ") || "",
-      year: set.year,
+      year_released: set.year_released,
+      weight_set: set.weight_set || 0,
       catalogue_visibility: set.catalogue_visibility ? "yes" : "no",
     });
     setIsDialogOpen(true);
@@ -313,10 +318,10 @@ const ProductsManager = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="year"
+                    name="year_released"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Year</FormLabel>
+                        <FormLabel>Year Released</FormLabel>
                         <FormControl>
                           <Input type="number" placeholder="2023" {...field} />
                         </FormControl>
@@ -325,6 +330,19 @@ const ProductsManager = () => {
                     )}
                   />
                 </div>
+                <FormField
+                  control={form.control}
+                  name="weight_set"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Weight (grams)</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="1000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="catalogue_visibility"
@@ -422,6 +440,7 @@ const ProductsManager = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Theme</TableHead>
                   <TableHead>Year</TableHead>
+                  <TableHead>Weight (g)</TableHead>
                   <TableHead>Visible</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -432,7 +451,8 @@ const ProductsManager = () => {
                     <TableCell className="font-medium">{set.lego_ref || "-"}</TableCell>
                     <TableCell>{set.name}</TableCell>
                     <TableCell>{set.theme}</TableCell>
-                    <TableCell>{set.year || "-"}</TableCell>
+                    <TableCell>{set.year_released || "-"}</TableCell>
+                    <TableCell>{set.weight_set || "-"}</TableCell>
                     <TableCell>{set.catalogue_visibility ? "Yes" : "No"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

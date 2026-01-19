@@ -212,7 +212,8 @@ export type Database = {
           skill_boost: string[] | null
           theme: string
           updated_at: string
-          year: number | null
+          weight_set: number | null
+          year_released: number | null
         }
         Insert: {
           age_range: string
@@ -227,7 +228,8 @@ export type Database = {
           skill_boost?: string[] | null
           theme: string
           updated_at?: string
-          year?: number | null
+          weight_set?: number | null
+          year_released?: number | null
         }
         Update: {
           age_range?: string
@@ -242,7 +244,8 @@ export type Database = {
           skill_boost?: string[] | null
           theme?: string
           updated_at?: string
-          year?: number | null
+          weight_set?: number | null
+          year_released?: number | null
         }
         Relationships: []
       }

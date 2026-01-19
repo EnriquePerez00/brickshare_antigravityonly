@@ -23,7 +23,7 @@ const sampleSets = [
     skill_boost: ["Motricidad fina", "trabajo en equipo"],
     description: null,
     created_at: "",
-    year: 2023,
+    year_released: 2023,
     catalogue_visibility: true,
   },
   {
@@ -36,7 +36,7 @@ const sampleSets = [
     skill_boost: ["Lógica", "mecánica"],
     description: null,
     created_at: "",
-    year: 2022,
+    year_released: 2022,
     catalogue_visibility: true,
   },
   {
@@ -49,7 +49,7 @@ const sampleSets = [
     skill_boost: ["Creatividad", "visión espacial"],
     description: null,
     created_at: "",
-    year: 2023,
+    year_released: 2023,
     catalogue_visibility: true,
   },
   {
@@ -62,7 +62,7 @@ const sampleSets = [
     skill_boost: ["Imaginación", "juego social"],
     description: null,
     created_at: "",
-    year: 2021,
+    year_released: 2021,
     catalogue_visibility: true,
   },
   {
@@ -75,7 +75,7 @@ const sampleSets = [
     skill_boost: ["Paciencia", "concentración"],
     description: null,
     created_at: "",
-    year: 2023,
+    year_released: 2023,
     catalogue_visibility: true,
   },
   {
@@ -88,7 +88,7 @@ const sampleSets = [
     skill_boost: ["Narrativa", "juego de roles"],
     description: null,
     created_at: "",
-    year: 2022,
+    year_released: 2022,
     catalogue_visibility: true,
   },
 ];
