@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Catalogo from "./pages/Catalogo";
 import ComoFunciona from "./pages/ComoFunciona";
 import SobreNosotros from "./pages/SobreNosotros";
+import Blog from "./pages/Blog";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/catalogo" element={<Catalogo />} />
             <Route path="/como-funciona" element={<ComoFunciona />} />
             <Route path="/sobre-nosotros" element={<SobreNosotros />} />
+            <Route path="/blog" element={<Blog />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
