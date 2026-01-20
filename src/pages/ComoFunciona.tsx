@@ -9,7 +9,12 @@ import {
   Puzzle, 
   AlertCircle,
   Calendar,
-  CheckCircle
+  CheckCircle,
+  Star,
+  Zap,
+  Crown,
+  Clock,
+  ShieldCheck
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -19,6 +24,53 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+const plans = [
+  {
+    name: "Brick Starter",
+    price: "XX",
+    icon: Star,
+    color: "from-emerald-500 to-teal-500",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
+    borderColor: "border-emerald-200 dark:border-emerald-800",
+    ageRange: "5 a 7 años",
+    pieceRange: "100 a 300 piezas",
+    description: "Perfecto para los más pequeños que comienzan su aventura con bloques de construcción."
+  },
+  {
+    name: "Brick Pro",
+    price: "YY",
+    icon: Zap,
+    color: "from-blue-500 to-indigo-500",
+    bgColor: "bg-blue-50 dark:bg-blue-950/30",
+    borderColor: "border-blue-200 dark:border-blue-800",
+    ageRange: "8 a 11 años",
+    pieceRange: "300 a 550 piezas",
+    popular: true,
+    description: "Para constructores con experiencia que buscan retos más complejos."
+  },
+  {
+    name: "Brick Master",
+    price: "ZZ",
+    icon: Crown,
+    color: "from-purple-500 to-pink-500",
+    bgColor: "bg-purple-50 dark:bg-purple-950/30",
+    borderColor: "border-purple-200 dark:border-purple-800",
+    ageRange: "12 a 15 años",
+    pieceRange: "550 a 800 piezas",
+    description: "Diseñado para expertos y niños muy avanzados (10+ años) que dominan construcciones complejas."
+  }
+];
+
+const commonFeatures = [
+  { icon: Package, text: "1 set por mes" },
+  { icon: Clock, text: "Tiempo de uso ilimitado" },
+  { icon: ShieldCheck, text: "Pérdida de 5-6 piezas pequeñas cubierta (95% de casos)" },
+  { icon: Truck, text: "Envío y devolución gratuitos" }
+];
 
 const steps = [
   {
@@ -148,6 +200,105 @@ const ComoFunciona = () => {
                   {index < steps.length - 1 && (
                     <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-border" />
                   )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Subscription Plans Section */}
+        <section className="py-20 bg-gradient-to-br from-secondary/5 via-background to-primary/5">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl font-bold text-foreground mb-4">
+                Nuestros Planes de Suscripción
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Elige el plan perfecto según la edad y experiencia de tu pequeño constructor
+              </p>
+            </motion.div>
+
+            {/* Common Features */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="bg-card border border-border rounded-2xl p-6 mb-12 max-w-4xl mx-auto"
+            >
+              <h3 className="text-xl font-semibold text-center text-foreground mb-6">
+                Incluido en todos los planes
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {commonFeatures.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-primary/5">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <feature.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{feature.text}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Plans Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {plans.map((plan, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="relative"
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                      <Badge className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 px-4 py-1">
+                        Más popular
+                      </Badge>
+                    </div>
+                  )}
+                  <Card className={`h-full ${plan.bgColor} ${plan.borderColor} border-2 hover:shadow-xl transition-all duration-300 ${plan.popular ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-background' : ''}`}>
+                    <CardHeader className="text-center pb-4">
+                      <div className={`w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br ${plan.color} flex items-center justify-center`}>
+                        <plan.icon className="w-8 h-8 text-white" />
+                      </div>
+                      <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                      <div className="mt-2">
+                        <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                        <span className="text-muted-foreground"> €/mes</span>
+                      </div>
+                      <CardDescription className="mt-2">
+                        {plan.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+                          <Puzzle className="w-5 h-5 text-primary flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Rango de piezas</p>
+                            <p className="text-sm text-muted-foreground">{plan.pieceRange}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+                          <Star className="w-5 h-5 text-primary flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Edad sugerida</p>
+                            <p className="text-sm text-muted-foreground">{plan.ageRange}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <Button className={`w-full bg-gradient-to-r ${plan.color} hover:opacity-90 text-white border-0`}>
+                        Elegir plan
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </motion.div>
               ))}
             </div>
