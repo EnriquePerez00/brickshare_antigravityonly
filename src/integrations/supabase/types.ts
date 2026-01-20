@@ -17,28 +17,43 @@ export type Database = {
       inventory: {
         Row: {
           available_stock: number
+          being_completed_count: number
+          being_used_count: number
           created_at: string
           id: string
-          product_id: string
+          product_id: string | null
           rented_count: number
+          returning_count: number
+          set_id: string | null
+          shipping_count: number
           total_stock: number
           updated_at: string
         }
         Insert: {
           available_stock?: number
+          being_completed_count?: number
+          being_used_count?: number
           created_at?: string
           id?: string
-          product_id: string
+          product_id?: string | null
           rented_count?: number
+          returning_count?: number
+          set_id?: string | null
+          shipping_count?: number
           total_stock?: number
           updated_at?: string
         }
         Update: {
           available_stock?: number
+          being_completed_count?: number
+          being_used_count?: number
           created_at?: string
           id?: string
-          product_id?: string
+          product_id?: string | null
           rented_count?: number
+          returning_count?: number
+          set_id?: string | null
+          shipping_count?: number
           total_stock?: number
           updated_at?: string
         }
@@ -48,6 +63,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: true
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "sets"
             referencedColumns: ["id"]
           },
         ]
@@ -124,6 +146,57 @@ export type Database = {
         }
         Relationships: []
       }
+      sets: {
+        Row: {
+          age_range: string
+          catalogue_visibility: boolean
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          lego_ref: string | null
+          name: string
+          piece_count: number
+          skill_boost: string[] | null
+          theme: string
+          updated_at: string
+          weight_set: number | null
+          year_released: number | null
+        }
+        Insert: {
+          age_range: string
+          catalogue_visibility?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          lego_ref?: string | null
+          name: string
+          piece_count: number
+          skill_boost?: string[] | null
+          theme: string
+          updated_at?: string
+          weight_set?: number | null
+          year_released?: number | null
+        }
+        Update: {
+          age_range?: string
+          catalogue_visibility?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          lego_ref?: string | null
+          name?: string
+          piece_count?: number
+          skill_boost?: string[] | null
+          theme?: string
+          updated_at?: string
+          weight_set?: number | null
+          year_released?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -149,19 +222,22 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          product_id: string
+          product_id: string | null
+          set_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          product_id: string
+          product_id?: string | null
+          set_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
-          product_id?: string
+          product_id?: string | null
+          set_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -170,6 +246,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishlist_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "sets"
             referencedColumns: ["id"]
           },
         ]
