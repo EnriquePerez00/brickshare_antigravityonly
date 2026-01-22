@@ -81,6 +81,11 @@ const Footer = () => {
                   Blog
                 </Link>
               </li>
+              <li>
+                <Link to="/donaciones" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
+                  Donaciones
+                </Link>
+              </li>
             </ul>
           </div>
 
