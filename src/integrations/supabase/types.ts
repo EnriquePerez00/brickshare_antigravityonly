@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      donations: {
+        Row: {
+          co2_evitado: number
+          created_at: string
+          direccion: string | null
+          email: string
+          id: string
+          metodo_entrega: string
+          ninos_beneficiados: number
+          nombre: string
+          peso_estimado: number
+          recompensa: string
+          status: string
+          telefono: string | null
+          tracking_code: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          co2_evitado: number
+          created_at?: string
+          direccion?: string | null
+          email: string
+          id?: string
+          metodo_entrega: string
+          ninos_beneficiados: number
+          nombre: string
+          peso_estimado: number
+          recompensa: string
+          status?: string
+          telefono?: string | null
+          tracking_code?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          co2_evitado?: number
+          created_at?: string
+          direccion?: string | null
+          email?: string
+          id?: string
+          metodo_entrega?: string
+          ninos_beneficiados?: number
+          nombre?: string
+          peso_estimado?: number
+          recompensa?: string
+          status?: string
+          telefono?: string | null
+          tracking_code?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           available_stock: number
