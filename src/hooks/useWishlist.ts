@@ -21,9 +21,7 @@ export const useWishlist = () => {
       .select("set_id")
       .eq("user_id", user.id);
 
-    if (error) {
-      console.error("Error fetching wishlist:", error);
-    } else {
+    if (!error && data) {
       setWishlistIds(data.map((item) => item.set_id));
     }
     setIsLoading(false);
