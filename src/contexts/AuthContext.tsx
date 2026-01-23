@@ -154,7 +154,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase.functions.invoke('delete-user');
       
       if (error) {
-        console.error('Error deleting account:', error);
         return { error: new Error(error.message || 'Failed to delete account') };
       }
       
@@ -170,7 +169,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       return { error: null };
     } catch (err) {
-      console.error('Unexpected error deleting account:', err);
       return { error: err as Error };
     }
   };
