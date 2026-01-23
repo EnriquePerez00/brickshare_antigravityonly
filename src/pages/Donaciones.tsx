@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Package, Download, Truck, Heart, Gift, Leaf, Users, ChevronDown, ChevronUp, Upload, MapPin, QrCode } from "lucide-react";
+import { Package, Download, Truck, Heart, Gift, Leaf, Users, Upload, MapPin, QrCode, Loader2, CheckCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useDonation } from "@/hooks/useDonation";
 
 const Donaciones = () => {
   const [kilos, setKilos] = useState([5]);
-  const [selectedReward, setSelectedReward] = useState<string>("");
+  const [selectedReward, setSelectedReward] = useState<"economica" | "social" | "">("");
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     nombre: "",
@@ -26,8 +27,9 @@ const Donaciones = () => {
     telefono: "",
     direccion: "",
     pesoEstimado: "",
-    metodoEntrega: "punto-recogida",
+    metodoEntrega: "punto-recogida" as "punto-recogida" | "recogida-domicilio",
   });
+  const { submitDonation, isLoading, result } = useDonation();
 
   const ninosBeneficiados = kilos[0] * 2;
   const co2Evitado = (kilos[0] * 2.5).toFixed(1);
@@ -69,8 +71,34 @@ const Donaciones = () => {
     },
   ];
 
+  const handleSubmitDonation = async () => {
+    if (!selectedReward) {
+      return;
+    }
+    
+    const peso = parseFloat(formData.pesoEstimado) || kilos[0];
+    
+    const donationResult = await submitDonation({
+      nombre: formData.nombre,
+      email: formData.email,
+      telefono: formData.telefono || undefined,
+      direccion: formData.direccion || undefined,
+      peso_estimado: peso,
+      metodo_entrega: formData.metodoEntrega,
+      recompensa: selectedReward,
+    });
+
+    if (donationResult.success) {
+      setCurrentStep(4);
+    }
+  };
+
   const handleNextStep = () => {
-    if (currentStep < 4) setCurrentStep(currentStep + 1);
+    if (currentStep === 3) {
+      handleSubmitDonation();
+    } else if (currentStep < 4) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const handlePrevStep = () => {
@@ -267,7 +295,7 @@ const Donaciones = () => {
             </motion.div>
 
             <div className="max-w-4xl mx-auto">
-              <RadioGroup value={selectedReward} onValueChange={setSelectedReward} className="grid md:grid-cols-2 gap-6">
+              <RadioGroup value={selectedReward} onValueChange={(value) => setSelectedReward(value as "economica" | "social")} className="grid md:grid-cols-2 gap-6">
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
@@ -469,7 +497,7 @@ const Donaciones = () => {
                       <h3 className="text-xl font-display font-semibold mb-6">Método de entrega</h3>
                       <RadioGroup
                         value={formData.metodoEntrega}
-                        onValueChange={(value) => setFormData({ ...formData, metodoEntrega: value })}
+                        onValueChange={(value) => setFormData({ ...formData, metodoEntrega: value as "punto-recogida" | "recogida-domicilio" })}
                         className="space-y-4"
                       >
                         <Label htmlFor="punto-recogida" className="cursor-pointer">
@@ -484,10 +512,10 @@ const Donaciones = () => {
                             </CardContent>
                           </Card>
                         </Label>
-                        <Label htmlFor="envio-domicilio" className="cursor-pointer">
-                          <Card className={`border-2 transition-all ${formData.metodoEntrega === "envio-domicilio" ? "border-primary" : "border-transparent"}`}>
+                        <Label htmlFor="recogida-domicilio" className="cursor-pointer">
+                          <Card className={`border-2 transition-all ${formData.metodoEntrega === "recogida-domicilio" ? "border-primary" : "border-transparent"}`}>
                             <CardContent className="p-4 flex items-center gap-4">
-                              <RadioGroupItem value="envio-domicilio" id="envio-domicilio" />
+                              <RadioGroupItem value="recogida-domicilio" id="recogida-domicilio" />
                               <Truck className="h-6 w-6 text-primary" />
                               <div>
                                 <p className="font-medium">Recogida a domicilio</p>
@@ -498,7 +526,7 @@ const Donaciones = () => {
                         </Label>
                       </RadioGroup>
 
-                      {formData.metodoEntrega === "envio-domicilio" && (
+                      {formData.metodoEntrega === "recogida-domicilio" && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
@@ -525,12 +553,30 @@ const Donaciones = () => {
                       className="text-center space-y-6"
                     >
                       <div className="w-20 h-20 mx-auto rounded-full gradient-hero flex items-center justify-center">
-                        <QrCode className="h-10 w-10 text-primary-foreground" />
+                        <CheckCircle className="h-10 w-10 text-primary-foreground" />
                       </div>
                       <h3 className="text-xl font-display font-semibold">¡Todo listo!</h3>
                       <p className="text-muted-foreground">
-                        Tu donación ha sido registrada. Descarga tu etiqueta de envío.
+                        Tu donación ha sido registrada. Te hemos enviado un email con los detalles.
                       </p>
+                      
+                      {result?.donation && (
+                        <div className="bg-muted/50 rounded-xl p-6 text-left space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Código de seguimiento:</span>
+                            <span className="font-semibold text-primary">{result.donation.tracking_code}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Niños beneficiados:</span>
+                            <span className="font-medium">{result.donation.ninos_beneficiados} / mes</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">CO₂ evitado:</span>
+                            <span className="font-medium">{result.donation.co2_evitado} kg</span>
+                          </div>
+                        </div>
+                      )}
+                      
                       <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Button className="gradient-hero text-primary-foreground">
                           <Download className="mr-2 h-4 w-4" />
@@ -550,12 +596,25 @@ const Donaciones = () => {
                       <Button
                         variant="outline"
                         onClick={handlePrevStep}
-                        disabled={currentStep === 1}
+                        disabled={currentStep === 1 || isLoading}
                       >
                         Anterior
                       </Button>
-                      <Button onClick={handleNextStep} className="gradient-hero text-primary-foreground">
-                        {currentStep === 3 ? "Confirmar donación" : "Siguiente"}
+                      <Button 
+                        onClick={handleNextStep} 
+                        className="gradient-hero text-primary-foreground"
+                        disabled={isLoading || (currentStep === 3 && !selectedReward)}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Procesando...
+                          </>
+                        ) : currentStep === 3 ? (
+                          "Confirmar donación"
+                        ) : (
+                          "Siguiente"
+                        )}
                       </Button>
                     </div>
                   )}

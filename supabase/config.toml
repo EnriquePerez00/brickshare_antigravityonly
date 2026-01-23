@@ -1,1 +1,7 @@
 project_id = "nqgeayfodndgsqwnlext"
+
+[functions.delete-user]
+verify_jwt = true
+
+[functions.submit-donation]
+verify_jwt = false
