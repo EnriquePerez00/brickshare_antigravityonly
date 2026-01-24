@@ -27,7 +27,6 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
     if (userError || !user) {
-      console.error('Authentication error:', userError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized - User not authenticated' }),
         { 
@@ -38,7 +37,6 @@ Deno.serve(async (req) => {
     }
 
     const userId = user.id;
-    console.log(`Processing account deletion for user: ${userId}`);
 
     // Create admin client to delete the user from auth.users
     const supabaseAdmin = createClient(
@@ -54,50 +52,35 @@ Deno.serve(async (req) => {
 
     // First, delete user data from related tables using admin client
     // Delete wishlist items
-    const { error: wishlistError } = await supabaseAdmin
+    await supabaseAdmin
       .from('wishlist')
       .delete()
       .eq('user_id', userId);
-    
-    if (wishlistError) {
-      console.error('Error deleting wishlist:', wishlistError);
-    }
 
     // Delete user roles
-    const { error: rolesError } = await supabaseAdmin
+    await supabaseAdmin
       .from('user_roles')
       .delete()
       .eq('user_id', userId);
-    
-    if (rolesError) {
-      console.error('Error deleting user roles:', rolesError);
-    }
 
     // Delete profile
-    const { error: profileError } = await supabaseAdmin
+    await supabaseAdmin
       .from('profiles')
       .delete()
       .eq('user_id', userId);
-    
-    if (profileError) {
-      console.error('Error deleting profile:', profileError);
-    }
 
     // Finally, delete the user from auth.users
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
-      console.error('Error deleting auth user:', deleteError);
       return new Response(
-        JSON.stringify({ error: 'Failed to delete user account', details: deleteError.message }),
+        JSON.stringify({ error: 'Failed to delete user account' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
-
-    console.log(`Successfully deleted user account: ${userId}`);
     
     return new Response(
       JSON.stringify({ success: true, message: 'Account deleted successfully' }),
@@ -108,7 +91,6 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Unexpected error in delete-user function:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { 

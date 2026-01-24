@@ -15,6 +15,7 @@ import Admin from "./pages/Admin";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import LegalNotice from "./pages/LegalNotice";
+import Donaciones from "./pages/Donaciones";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
 
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/terminos" element={<Terms />} />
             <Route path="/cookies" element={<PrivacyPolicy />} /> {/* Using Privacy for now as it contains cookie info */}
             <Route path="/aviso-legal" element={<LegalNotice />} />
+            <Route path="/donaciones" element={<Donaciones />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -2,13 +2,18 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Profile {
+export interface Profile {
   id: string;
   user_id: string;
   full_name: string | null;
   avatar_url: string | null;
   sub_status: string | null;
   impact_points: number | null;
+  direccion: string | null;
+  codigo_postal: string | null;
+  ciudad: string | null;
+  telefono: string | null;
+  profile_completed: boolean | null;
 }
 
 interface AuthContextType {
@@ -19,11 +24,13 @@ interface AuthContextType {
   isAdmin: boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updateUserPassword: (password: string) => Promise<{ error: Error | null }>;
   deleteUserAccount: () => Promise<{ error: Error | null }>;
+  updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -126,6 +133,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error as Error | null };
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+    
+    return { error: error as Error | null };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -154,7 +172,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase.functions.invoke('delete-user');
       
       if (error) {
-        console.error('Error deleting account:', error);
         return { error: new Error(error.message || 'Failed to delete account') };
       }
       
@@ -170,7 +187,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       return { error: null };
     } catch (err) {
-      console.error('Unexpected error deleting account:', err);
       return { error: err as Error };
     }
   };
@@ -179,6 +195,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user) {
       await fetchProfile(user.id);
     }
+  };
+
+  const updateProfile = async (data: Partial<Profile>) => {
+    if (!user) return { error: new Error("No user logged in") };
+    
+    const { error } = await supabase
+      .from("profiles")
+      .update(data)
+      .eq("user_id", user.id);
+    
+    if (!error) {
+      await fetchProfile(user.id);
+    }
+    
+    return { error: error as Error | null };
   };
 
   return (
@@ -191,11 +222,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin,
         signUp,
         signIn,
+        signInWithGoogle,
         signOut,
         refreshProfile,
         resetPassword,
         updateUserPassword,
         deleteUserAccount,
+        updateProfile,
       }}
     >
       {children}

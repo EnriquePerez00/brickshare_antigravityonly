@@ -45,7 +45,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/planes" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
+                <Link to="/como-funciona#planes" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
                   Planes y precios
                 </Link>
               </li>
@@ -72,18 +72,13 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/impacto-social" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
-                  Impacto social
-                </Link>
-              </li>
-              <li>
-                <Link to="/sostenibilidad" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
-                  Sostenibilidad
-                </Link>
-              </li>
-              <li>
                 <Link to="/blog" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
                   Blog
+                </Link>
+              </li>
+              <li>
+                <Link to="/donaciones" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
+                  Donaciones
                 </Link>
               </li>
             </ul>
