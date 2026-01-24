@@ -2,13 +2,18 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Profile {
+export interface Profile {
   id: string;
   user_id: string;
   full_name: string | null;
   avatar_url: string | null;
   sub_status: string | null;
   impact_points: number | null;
+  direccion: string | null;
+  codigo_postal: string | null;
+  ciudad: string | null;
+  telefono: string | null;
+  profile_completed: boolean | null;
 }
 
 interface AuthContextType {
@@ -25,6 +30,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updateUserPassword: (password: string) => Promise<{ error: Error | null }>;
   deleteUserAccount: () => Promise<{ error: Error | null }>;
+  updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -191,6 +197,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateProfile = async (data: Partial<Profile>) => {
+    if (!user) return { error: new Error("No user logged in") };
+    
+    const { error } = await supabase
+      .from("profiles")
+      .update(data)
+      .eq("user_id", user.id);
+    
+    if (!error) {
+      await fetchProfile(user.id);
+    }
+    
+    return { error: error as Error | null };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -207,6 +228,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         resetPassword,
         updateUserPassword,
         deleteUserAccount,
+        updateProfile,
       }}
     >
       {children}

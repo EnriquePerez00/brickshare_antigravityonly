@@ -1,19 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle } from "lucide-react";
+import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle, MapPin, Phone, Mail, Pencil } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useSets } from "@/hooks/useProducts";
+import ProfileCompletionModal from "@/components/ProfileCompletionModal";
 
 const Dashboard = () => {
   const { user, profile, isLoading: authLoading, deleteUserAccount } = useAuth();
   const { wishlistIds, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
   const { data: sets = [], isLoading: setsLoading } = useSets(100);
   const navigate = useNavigate();
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  // Show profile completion modal if profile is not complete
+  useEffect(() => {
+    if (profile && !profile.profile_completed && !authLoading) {
+      setShowProfileModal(true);
+    }
+  }, [profile, authLoading]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -206,13 +215,69 @@ const Dashboard = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="mt-16 pt-8 border-t border-border"
           >
-            <div className="flex items-center gap-2 mb-6">
-              <Shield className="h-5 w-5 text-muted-foreground" />
-              <h2 className="text-xl font-display font-bold text-foreground">
-                Seguridad y Datos
-              </h2>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-xl font-display font-bold text-foreground">
+                  Seguridad y Datos
+                </h2>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowProfileModal(true)}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Editar datos
+              </Button>
             </div>
 
+            {/* Contact Data Card */}
+            <div className="bg-card rounded-2xl p-6 shadow-card mb-6">
+              <h3 className="font-semibold text-foreground mb-4">Datos de Contacto</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-start gap-3">
+                  <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nombre</p>
+                    <p className="text-foreground">{profile?.full_name || "No especificado"}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="text-foreground">{user?.email || "No especificado"}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Dirección</p>
+                    <p className="text-foreground">
+                      {profile?.direccion ? (
+                        <>
+                          {profile.direccion}
+                          {profile.codigo_postal && `, ${profile.codigo_postal}`}
+                          {profile.ciudad && ` ${profile.ciudad}`}
+                        </>
+                      ) : (
+                        "No especificada"
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Teléfono</p>
+                    <p className="text-foreground">{profile?.telefono || "No especificado"}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Danger Zone */}
             <div className="bg-destructive/5 rounded-2xl p-6 border border-destructive/20 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex gap-4">
                 <div className="p-3 rounded-xl bg-destructive/10 text-destructive h-fit">
@@ -243,6 +308,11 @@ const Dashboard = () => {
           </motion.div>
         </div>
       </main>
+
+      <ProfileCompletionModal 
+        open={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+      />
 
       <Footer />
     </div>
