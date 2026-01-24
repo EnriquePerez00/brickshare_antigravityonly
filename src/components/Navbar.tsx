@@ -23,7 +23,7 @@ const Navbar = () => {
   };
 
   return (
-    <motion.nav 
+    <motion.nav
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -43,29 +43,35 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Inicio
             </Link>
-            <Link 
-              to="/catalogo" 
+            <Link
+              to="/catalogo"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Catálogo
             </Link>
-            <Link 
-              to="/como-funciona" 
+            <Link
+              to="/como-funciona"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Cómo funciona
             </Link>
-            <Link 
-              to="/sobre-nosotros" 
+            <Link
+              to="/sobre-nosotros"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Sobre nosotros
+            </Link>
+            <Link
+              to="/contacto"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Contacto
             </Link>
           </div>
 
@@ -142,33 +148,40 @@ const Navbar = () => {
             className="md:hidden py-4 border-t border-border"
           >
             <div className="flex flex-col gap-4">
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Inicio
               </Link>
-              <Link 
-                to="/catalogo" 
+              <Link
+                to="/catalogo"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Catálogo
               </Link>
-              <Link 
-                to="/como-funciona" 
+              <Link
+                to="/como-funciona"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Cómo funciona
               </Link>
-              <Link 
-                to="/sobre-nosotros" 
+              <Link
+                to="/sobre-nosotros"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Sobre nosotros
+              </Link>
+              <Link
+                to="/contacto"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Contacto
               </Link>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 {user ? (
@@ -186,9 +199,9 @@ const Navbar = () => {
                         </Link>
                       </Button>
                     )}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => {
                         handleSignOut();
                         setMobileMenuOpen(false);

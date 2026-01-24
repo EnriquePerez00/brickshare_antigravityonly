@@ -3,7 +3,7 @@ name: Deploy Staging
 on:
   push:
     branches:
-      - main  # O la rama que quieras usar para staging
+      - staging
 
 permissions:
   contents: write

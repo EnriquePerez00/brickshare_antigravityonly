@@ -18,6 +18,8 @@ import LegalNotice from "./pages/LegalNotice";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
 
+import Contacto from "./pages/Contacto";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -34,6 +36,7 @@ const App = () => (
             <Route path="/sobre-nosotros" element={<SobreNosotros />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/contacto" element={<Contacto />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/privacidad" element={<PrivacyPolicy />} />
