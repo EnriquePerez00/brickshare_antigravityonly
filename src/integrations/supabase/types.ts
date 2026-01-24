@@ -170,31 +170,46 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          ciudad: string | null
+          codigo_postal: string | null
           created_at: string
+          direccion: string | null
           full_name: string | null
           id: string
           impact_points: number | null
+          profile_completed: boolean | null
           sub_status: string | null
+          telefono: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
+          ciudad?: string | null
+          codigo_postal?: string | null
           created_at?: string
+          direccion?: string | null
           full_name?: string | null
           id?: string
           impact_points?: number | null
+          profile_completed?: boolean | null
           sub_status?: string | null
+          telefono?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
+          ciudad?: string | null
+          codigo_postal?: string | null
           created_at?: string
+          direccion?: string | null
           full_name?: string | null
           id?: string
           impact_points?: number | null
+          profile_completed?: boolean | null
           sub_status?: string | null
+          telefono?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -300,13 +315,6 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "wishlist_set_id_fkey"
-            columns: ["set_id"]
-            isOneToOne: false
-            referencedRelation: "sets"
             referencedColumns: ["id"]
           },
         ]
