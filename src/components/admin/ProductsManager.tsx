@@ -38,7 +38,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, Wand2, Loader2, FileText, Boxes } from "lucide-react";
+import { Plus, Pencil, Trash2, Wand2, Loader2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useLegoEnrichment } from "@/hooks/useLegoEnrichment";
 import Papa from "papaparse";
@@ -55,7 +55,9 @@ const setSchema = z.object({
   image_url: z.string().url().optional().or(z.literal("")),
   skill_boost: z.string().optional(),
   year_released: z.coerce.number().min(1900, "Valid year required").optional(),
-  weight_set: z.coerce.number().optional().or(z.literal(0)),
+  set_weight: z.coerce.number().optional().or(z.literal(0)),
+  set_minifigs: z.coerce.number().optional().or(z.literal(0)),
+  set_dim: z.string().optional(),
   catalogue_visibility: z.string().default("yes"),
 });
 
@@ -79,7 +81,9 @@ const ProductsManager = () => {
       image_url: "",
       skill_boost: "",
       year_released: new Date().getFullYear(),
-      weight_set: 0,
+      set_weight: 0,
+      set_minifigs: 0,
+      set_dim: "",
       catalogue_visibility: "yes",
     },
   });
@@ -92,7 +96,7 @@ const ProductsManager = () => {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as any;
     },
   });
 
@@ -112,7 +116,9 @@ const ProductsManager = () => {
         image_url: data.image_url || null,
         skill_boost: skillBoostArray,
         year_released: data.year_released,
-        weight_set: data.weight_set || null,
+        set_weight: data.set_weight || null,
+        set_minifigs: data.set_minifigs || null,
+        set_dim: data.set_dim || null,
         catalogue_visibility: data.catalogue_visibility === "yes",
       });
       if (error) throw error;
@@ -146,7 +152,9 @@ const ProductsManager = () => {
           image_url: data.image_url || null,
           skill_boost: skillBoostArray,
           year_released: data.year_released,
-          weight_set: data.weight_set || null,
+          set_weight: data.set_weight || null,
+          set_minifigs: data.set_minifigs || null,
+          set_dim: data.set_dim || null,
           catalogue_visibility: data.catalogue_visibility === "yes",
         })
         .eq("id", id);
@@ -190,7 +198,9 @@ const ProductsManager = () => {
       image_url: set.image_url || "",
       skill_boost: set.skill_boost?.join(", ") || "",
       year_released: set.year_released,
-      weight_set: set.weight_set || 0,
+      set_weight: set.set_weight || 0,
+      set_minifigs: set.set_minifigs || 0,
+      set_dim: set.set_dim || "",
       catalogue_visibility: set.catalogue_visibility ? "yes" : "no",
     });
     setIsDialogOpen(true);
@@ -229,18 +239,39 @@ const ProductsManager = () => {
           return;
         }
 
-        const setsToInsert = data.map((row) => ({
-          name: row.name,
-          lego_ref: row.lego_ref || null,
-          description: row.description || null,
-          theme: row.theme,
-          age_range: row.age_range,
-          piece_count: parseInt(row.piece_count) || 0,
-          image_url: row.image_url || null,
-          weight_set: parseFloat(row.weight_set) || 0,
-          year_released: parseInt(row.year_released) || null,
-          skill_boost: row.skill_boost ? row.skill_boost.split(",").map((s: string) => s.trim()) : null,
-          catalogue_visibility: row.catalogue_visibility === "no" ? false : true,
+        const refs = data.map((row: any) => row.REF).filter(Boolean);
+        if (refs.length > 0) {
+          const { data: existingSets, error: checkError } = await supabase
+            .from("sets")
+            .select("lego_ref")
+            .in("lego_ref", refs);
+
+          if (checkError) {
+            toast.error("Error verificando duplicados: " + checkError.message);
+            return;
+          }
+
+          if (existingSets && existingSets.length > 0) {
+            const existingRefs = existingSets.map((s) => s.lego_ref).join(", ");
+            toast.error(`Set(s) ya en la bb.dd: ${existingRefs}`);
+            return;
+          }
+        }
+
+        const setsToInsert = data.map((row: any) => ({
+          name: row.Rebrickable_name || "Unknown Set",
+          lego_ref: row.REF || null,
+          description: row.Brickset_description || null,
+          theme: row.Rebrickable_Theme || "Unknown",
+          age_range: row.Brickset_age_range || "N/A",
+          piece_count: parseInt(row.bircklink_parts || row.Bricklink_parts) || 0,
+          image_url: row.Rebrickable_Image_URL || null,
+          set_weight: parseFloat(row["Bricklink_weight(gr)"]) || 0,
+          set_minifigs: parseInt(row.Bricklink_minifigs) || 0,
+          set_dim: row.Bricklink_dim || null,
+          year_released: parseInt(row.Rebrickable_Released) || null,
+          skill_boost: null,
+          catalogue_visibility: true,
         }));
 
         try {
@@ -280,8 +311,7 @@ const ProductsManager = () => {
     <Card>
       <CardHeader className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <CardTitle>Gestión de Sets LEGO</CardTitle>
-        <div className="flex gap-4 items-center"> {/* Simplified layout */}
-          {/* Grupo Ficha Producto */}
+        <div className="flex gap-4 items-center">
           <div className="flex gap-2">
             <input
               type="file"
@@ -290,32 +320,16 @@ const ProductsManager = () => {
               ref={fileInputRef}
               onChange={handleCSVUpload}
             />
-            <div className="flex flex-col items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2"
-              >
-                <FileText className="h-4 w-4" />
-                Subir CSV
-              </Button>
-              <span className="text-[10px] text-muted-foreground">sube template ficha producto</span>
-            </div>
+
+            <Button
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Set
+            </Button>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setEditingSet(null);
-                    form.reset();
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Set
-                </Button>
-              </DialogTrigger>
               <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
@@ -441,19 +455,47 @@ const ProductsManager = () => {
                         )}
                       />
                     </div>
-                    <FormField
-                      control={form.control}
-                      name="weight_set"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Weight (grams)</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="1000" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="set_weight"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Weight (g)</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="1000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="set_minifigs"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Minifigs</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="0" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="set_dim"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Dimensions</FormLabel>
+                            <FormControl>
+                              <Input placeholder="20x10x5" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <FormField
                       control={form.control}
                       name="catalogue_visibility"
@@ -554,6 +596,8 @@ const ProductsManager = () => {
                   <TableHead>Theme</TableHead>
                   <TableHead>Year</TableHead>
                   <TableHead>Weight (g)</TableHead>
+                  <TableHead>Minifigs</TableHead>
+                  <TableHead>Dims</TableHead>
                   <TableHead>Visible</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -565,7 +609,9 @@ const ProductsManager = () => {
                     <TableCell>{set.name}</TableCell>
                     <TableCell>{set.theme}</TableCell>
                     <TableCell>{set.year_released || "-"}</TableCell>
-                    <TableCell>{set.weight_set || "-"}</TableCell>
+                    <TableCell>{set.set_weight || "-"}</TableCell>
+                    <TableCell>{set.set_minifigs || "-"}</TableCell>
+                    <TableCell>{set.set_dim || "-"}</TableCell>
                     <TableCell>{set.catalogue_visibility ? "Yes" : "No"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
@@ -598,3 +644,4 @@ const ProductsManager = () => {
 };
 
 export default ProductsManager;
+
