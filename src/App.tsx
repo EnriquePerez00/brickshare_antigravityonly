@@ -12,6 +12,7 @@ import Blog from "./pages/Blog";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
+import Operations from "./pages/Operations";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import LegalNotice from "./pages/LegalNotice";
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/contacto" element={<Contacto />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/operaciones" element={<Operations />} />
             <Route path="/privacidad" element={<PrivacyPolicy />} />
             <Route path="/terminos" element={<Terms />} />
             <Route path="/cookies" element={<PrivacyPolicy />} /> {/* Using Privacy for now as it contains cookie info */}

@@ -22,6 +22,7 @@ interface AuthContextType {
   profile: Profile | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isOperador: boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
@@ -41,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isOperador, setIsOperador] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -48,24 +50,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
-    
+
     if (!error && data) {
       setProfile(data);
     }
   };
 
-  const checkAdminRole = async (userId: string) => {
+  const checkUserRoles = async (userId: string) => {
     const { data, error } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    
+      .eq("user_id", userId);
+
     if (!error && data) {
-      setIsAdmin(true);
+      const roles = data.map(r => r.role);
+      setIsAdmin(roles.includes("admin"));
+      setIsOperador(roles.includes("operador"));
     } else {
       setIsAdmin(false);
+      setIsOperador(false);
     }
   };
 
@@ -75,18 +78,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         // Defer Supabase calls with setTimeout
         if (session?.user) {
           setTimeout(() => {
             fetchProfile(session.user.id);
-            checkAdminRole(session.user.id);
+            checkUserRoles(session.user.id);
           }, 0);
         } else {
           setProfile(null);
           setIsAdmin(false);
+          setIsOperador(false);
         }
-        
+
         setIsLoading(false);
       }
     );
@@ -95,12 +99,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         fetchProfile(session.user.id);
-        checkAdminRole(session.user.id);
+        checkUserRoles(session.user.id);
       }
-      
+
       setIsLoading(false);
     });
 
@@ -109,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -120,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       },
     });
-    
+
     return { error: error as Error | null };
   };
 
@@ -129,7 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
     });
-    
+
     return { error: error as Error | null };
   };
 
@@ -140,7 +144,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         redirectTo: `${window.location.origin}/`,
       },
     });
-    
+
     return { error: error as Error | null };
   };
 
@@ -150,6 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setProfile(null);
     setIsAdmin(false);
+    setIsOperador(false);
   };
 
   const resetPassword = async (email: string) => {
@@ -166,25 +171,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteUserAccount = async () => {
     if (!user) return { error: new Error("No user logged in") };
-    
+
     try {
       // Call the edge function that properly deletes all user data and auth record
       const { data, error } = await supabase.functions.invoke('delete-user');
-      
+
       if (error) {
         return { error: new Error(error.message || 'Failed to delete account') };
       }
-      
+
       if (data?.error) {
         return { error: new Error(data.error) };
       }
-      
+
       // Clear local state after successful deletion
       setUser(null);
       setSession(null);
       setProfile(null);
       setIsAdmin(false);
-      
+      setIsOperador(false);
+
       return { error: null };
     } catch (err) {
       return { error: err as Error };
@@ -199,16 +205,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateProfile = async (data: Partial<Profile>) => {
     if (!user) return { error: new Error("No user logged in") };
-    
+
     const { error } = await supabase
       .from("profiles")
       .update(data)
       .eq("user_id", user.id);
-    
+
     if (!error) {
       await fetchProfile(user.id);
     }
-    
+
     return { error: error as Error | null };
   };
 
@@ -220,6 +226,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         profile,
         isLoading,
         isAdmin,
+        isOperador,
         signUp,
         signIn,
         signInWithGoogle,

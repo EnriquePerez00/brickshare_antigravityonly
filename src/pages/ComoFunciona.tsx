@@ -1,12 +1,13 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Heart, 
-  Truck, 
-  RotateCcw, 
-  Sparkles, 
-  Package, 
-  CreditCard, 
-  Puzzle, 
+import {
+  Heart,
+  Truck,
+  RotateCcw,
+  Sparkles,
+  Package,
+  CreditCard,
+  Puzzle,
   AlertCircle,
   Calendar,
   CheckCircle,
@@ -27,11 +28,14 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useSubscription } from "@/hooks/useSubscription";
+import { Loader2 } from "lucide-react";
 
 const plans = [
   {
     name: "Brick Starter",
-    price: "XX",
+    price: "19,90",
+    priceId: "price_1StarterID", // Reemplazar con ID real de Stripe
     icon: Star,
     color: "from-emerald-500 to-teal-500",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
@@ -42,7 +46,8 @@ const plans = [
   },
   {
     name: "Brick Pro",
-    price: "YY",
+    price: "29,90",
+    priceId: "price_1ProID", // Reemplazar con ID real de Stripe
     icon: Zap,
     color: "from-blue-500 to-indigo-500",
     bgColor: "bg-blue-50 dark:bg-blue-950/30",
@@ -54,7 +59,8 @@ const plans = [
   },
   {
     name: "Brick Master",
-    price: "ZZ",
+    price: "39,90",
+    priceId: "price_1MasterID", // Reemplazar con ID real de Stripe
     icon: Crown,
     color: "from-purple-500 to-pink-500",
     bgColor: "bg-purple-50 dark:bg-purple-950/30",
@@ -129,6 +135,14 @@ const faqs = [
 ];
 
 const ComoFunciona = () => {
+  const { startSubscription, isLoading } = useSubscription();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const handleSubscribe = async (plan: any) => {
+    setLoadingPlan(plan.name);
+    await startSubscription(plan.name, plan.priceId);
+    setLoadingPlan(null);
+  };
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -139,7 +153,7 @@ const ComoFunciona = () => {
             <div className="absolute top-10 left-10 w-32 h-32 bg-primary rounded-full blur-3xl" />
             <div className="absolute bottom-10 right-10 w-40 h-40 bg-secondary rounded-full blur-3xl" />
           </div>
-          
+
           <div className="container mx-auto px-4 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -147,13 +161,13 @@ const ComoFunciona = () => {
               transition={{ duration: 0.6 }}
               className="text-center max-w-3xl mx-auto"
             >
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-              ¿Cómo Funciona?
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Alquilar sets de construcción nunca fue tan fácil. Descubre cómo funciona 
-              nuestro servicio de suscripción y empieza a construir sin límites.
-            </p>
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+                ¿Cómo Funciona?
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Alquilar sets de construcción nunca fue tan fácil. Descubre cómo funciona
+                nuestro servicio de suscripción y empieza a construir sin límites.
+              </p>
             </motion.div>
           </div>
         </section>
@@ -196,7 +210,7 @@ const ComoFunciona = () => {
                       {step.description}
                     </p>
                   </div>
-                  
+
                   {index < steps.length - 1 && (
                     <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-border" />
                   )}
@@ -294,7 +308,14 @@ const ComoFunciona = () => {
                           </div>
                         </div>
                       </div>
-                      <Button className={`w-full bg-gradient-to-r ${plan.color} hover:opacity-90 text-white border-0`}>
+                      <Button
+                        className={`w-full bg-gradient-to-r ${plan.color} hover:opacity-90 text-white border-0`}
+                        onClick={() => handleSubscribe(plan)}
+                        disabled={isLoading}
+                      >
+                        {loadingPlan === plan.name ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : null}
                         Elegir plan
                       </Button>
                     </CardContent>

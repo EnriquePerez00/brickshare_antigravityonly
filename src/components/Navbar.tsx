@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Blocks, Menu, X, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Blocks, Menu, X, User, LogOut, LayoutDashboard, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,7 +14,7 @@ import {
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, profile, signOut, isAdmin } = useAuth();
+  const { user, profile, signOut, isAdmin, isOperador } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -101,6 +101,14 @@ const Navbar = () => {
                       <Link to="/admin" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         Administración
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {(isOperador || isAdmin) && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/operaciones" className="flex items-center gap-2">
+                        <Truck className="h-4 w-4" />
+                        Operaciones
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -195,7 +203,16 @@ const Navbar = () => {
                     {isAdmin && (
                       <Button variant="outline" size="sm" asChild>
                         <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                          <User className="h-4 w-4 mr-2" />
                           Administración
+                        </Link>
+                      </Button>
+                    )}
+                    {(isOperador || isAdmin) && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to="/operaciones" onClick={() => setMobileMenuOpen(false)}>
+                          <Truck className="h-4 w-4 mr-2" />
+                          Operaciones
                         </Link>
                       </Button>
                     )}

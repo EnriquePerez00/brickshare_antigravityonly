@@ -32,17 +32,27 @@ const Auth = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; policy?: string }>({});
 
-  const { signIn, signUp, signInWithGoogle, resetPassword, updateUserPassword, user } = useAuth();
+  const { signIn, signUp, signInWithGoogle, resetPassword, updateUserPassword, user, isAdmin, isOperador, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
+  const redirectBasedOnRole = () => {
+    if (isAdmin) {
+      navigate("/admin");
+    } else if (isOperador) {
+      navigate("/operaciones");
+    } else {
       navigate("/");
     }
-  }, [user, navigate]);
+  };
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      redirectBasedOnRole();
+    }
+  }, [user, isAdmin, isOperador, authLoading, navigate]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string; policy?: string } = {};
@@ -91,7 +101,7 @@ const Auth = () => {
           title: "¡Bienvenido!",
           description: "Has iniciado sesión correctamente",
         });
-        navigate("/");
+        // Note: redirection will be handled by the useEffect once roles are loaded
       }
     } else if (mode === "signup") {
       const { error } = await signUp(email, password, fullName);
@@ -140,7 +150,7 @@ const Auth = () => {
           title: "Contraseña actualizada",
           description: "Tu contraseña ha sido cambiada correctamente",
         });
-        navigate("/");
+        redirectBasedOnRole();
       }
     }
 

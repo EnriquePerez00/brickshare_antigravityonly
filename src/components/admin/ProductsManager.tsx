@@ -38,8 +38,9 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Wand2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLegoEnrichment } from "@/hooks/useLegoEnrichment";
 
 const setSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -61,6 +62,7 @@ const ProductsManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSet, setEditingSet] = useState<any>(null);
   const queryClient = useQueryClient();
+  const { fetchLegoData, isLoading: isEnriching } = useLegoEnrichment();
 
   const form = useForm<SetFormData>({
     resolver: zodResolver(setSchema),
@@ -191,6 +193,23 @@ const ProductsManager = () => {
     setIsDialogOpen(true);
   };
 
+  const handleEnrich = async () => {
+    const legoRef = form.getValues("lego_ref");
+    if (!legoRef) {
+      toast.error("Por favor, introduce una referencia de LEGO");
+      return;
+    }
+
+    const data = await fetchLegoData(legoRef);
+    if (data) {
+      form.setValue("name", data.name || form.getValues("name"));
+      form.setValue("piece_count", data.piece_count || form.getValues("piece_count"));
+      form.setValue("year_released", data.year_released || form.getValues("year_released"));
+      form.setValue("image_url", data.image_url || form.getValues("image_url"));
+      toast.success("Datos autocompletados desde Rebrickable");
+    }
+  };
+
   const handleSubmit = (data: SetFormData) => {
     if (editingSet) {
       updateMutation.mutate({ id: editingSet.id, data });
@@ -250,10 +269,26 @@ const ProductsManager = () => {
                   name="lego_ref"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Lego Reference</FormLabel>
-                      <FormControl>
-                        <Input placeholder="75192" {...field} />
-                      </FormControl>
+                      <FormLabel>Referencia LEGO</FormLabel>
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Input placeholder="75192" {...field} />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          onClick={handleEnrich}
+                          disabled={isEnriching}
+                          title="Autocompletar con Rebrickable"
+                        >
+                          {isEnriching ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            < Wand2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
