@@ -38,9 +38,12 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, Wand2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Wand2, Loader2, FileText, Boxes } from "lucide-react";
 import { toast } from "sonner";
 import { useLegoEnrichment } from "@/hooks/useLegoEnrichment";
+import Papa from "papaparse";
+import { useRef } from "react";
+
 
 const setSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -210,6 +213,55 @@ const ProductsManager = () => {
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const data = results.data as any[];
+        if (data.length === 0) {
+          toast.error("El archivo CSV está vacío");
+          return;
+        }
+
+        const setsToInsert = data.map((row) => ({
+          name: row.name,
+          lego_ref: row.lego_ref || null,
+          description: row.description || null,
+          theme: row.theme,
+          age_range: row.age_range,
+          piece_count: parseInt(row.piece_count) || 0,
+          image_url: row.image_url || null,
+          weight_set: parseFloat(row.weight_set) || 0,
+          year_released: parseInt(row.year_released) || null,
+          skill_boost: row.skill_boost ? row.skill_boost.split(",").map((s: string) => s.trim()) : null,
+          catalogue_visibility: row.catalogue_visibility === "no" ? false : true,
+        }));
+
+        try {
+          const { error } = await supabase.from("sets").insert(setsToInsert);
+          if (error) throw error;
+          toast.success(`${setsToInsert.length} sets importados correctamente`);
+          queryClient.invalidateQueries({ queryKey: ["admin-sets"] });
+        } catch (error: any) {
+          toast.error("Error al importar sets: " + error.message);
+        }
+      },
+      error: (error) => {
+        toast.error("Error al leer el archivo CSV: " + error.message);
+      },
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = (data: SetFormData) => {
     if (editingSet) {
       updateMutation.mutate({ id: editingSet.id, data });
@@ -226,236 +278,262 @@ const ProductsManager = () => {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Sets Management</CardTitle>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => {
-                setEditingSet(null);
-                form.reset();
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Set
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingSet ? "Edit Set" : "Add New Set"}
-              </DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(handleSubmit)}
-                className="space-y-4"
+      <CardHeader className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <CardTitle>Gestión de Sets LEGO</CardTitle>
+        <div className="flex gap-4 items-center"> {/* Simplified layout */}
+          {/* Grupo Ficha Producto */}
+          <div className="flex gap-2">
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleCSVUpload}
+            />
+            <div className="flex flex-col items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2"
               >
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="LEGO City Police" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lego_ref"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Referencia LEGO</FormLabel>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input placeholder="75192" {...field} />
-                        </FormControl>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="icon"
-                          onClick={handleEnrich}
-                          disabled={isEnriching}
-                          title="Autocompletar con Rebrickable"
-                        >
-                          {isEnriching ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            < Wand2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="A fun police station set..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="theme"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Theme</FormLabel>
-                        <FormControl>
-                          <Input placeholder="City" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="age_range"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Age Range</FormLabel>
-                        <FormControl>
-                          <Input placeholder="6-12" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="piece_count"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Piece Count</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="500" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="year_released"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Year Released</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="2023" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="weight_set"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Weight (grams)</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="1000" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="catalogue_visibility"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Catalogue Visibility</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        value={field.value}
+                <FileText className="h-4 w-4" />
+                Subir CSV
+              </Button>
+              <span className="text-[10px] text-muted-foreground">sube template ficha producto</span>
+            </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setEditingSet(null);
+                    form.reset();
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Set
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingSet ? "Edit Set" : "Add New Set"}
+                  </DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(handleSubmit)}
+                    className="space-y-4"
+                  >
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="LEGO City Police" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lego_ref"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Referencia LEGO</FormLabel>
+                          <div className="flex gap-2">
+                            <FormControl>
+                              <Input placeholder="75192" {...field} />
+                            </FormControl>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="icon"
+                              onClick={handleEnrich}
+                              disabled={isEnriching}
+                              title="Autocompletar con Rebrickable"
+                            >
+                              {isEnriching ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                < Wand2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="A fun police station set..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="theme"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Theme</FormLabel>
+                            <FormControl>
+                              <Input placeholder="City" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="age_range"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Age Range</FormLabel>
+                            <FormControl>
+                              <Input placeholder="6-12" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="piece_count"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Piece Count</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="500" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="year_released"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Year Released</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="2023" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="weight_set"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Weight (grams)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="1000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="catalogue_visibility"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Catalogue Visibility</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Show in catalogue?" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="yes">Yes</SelectItem>
+                              <SelectItem value="no">No</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="image_url"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Image URL</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://example.com/image.jpg"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="skill_boost"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Skills (comma separated)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Creativity, Problem Solving"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleDialogClose}
                       >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Show in catalogue?" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="yes">Yes</SelectItem>
-                          <SelectItem value="no">No</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="image_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Image URL</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="https://example.com/image.jpg"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="skill_boost"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Skills (comma separated)</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Creativity, Problem Solving"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleDialogClose}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={
-                      createMutation.isPending || updateMutation.isPending
-                    }
-                  >
-                    {editingSet ? "Update" : "Create"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={
+                          createMutation.isPending || updateMutation.isPending
+                        }
+                      >
+                        {editingSet ? "Update" : "Create"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -515,7 +593,7 @@ const ProductsManager = () => {
           </div>
         )}
       </CardContent>
-    </Card>
+    </Card >
   );
 };
 

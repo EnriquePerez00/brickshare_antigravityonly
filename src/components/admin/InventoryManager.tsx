@@ -39,6 +39,9 @@ import { z } from "zod";
 import { Plus, Pencil, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import Papa from "papaparse";
+import { useRef } from "react";
+import { FileText } from "lucide-react";
 
 const inventorySchema = z.object({
   set_id: z.string().min(1, "Set is required"),
@@ -185,6 +188,75 @@ const InventoryManager = () => {
     form.reset();
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Fetch all sets to map lego_ref to set_id
+    const { data: allSets, error: setsError } = await supabase
+      .from("sets")
+      .select("id, lego_ref");
+
+    if (setsError) {
+      toast.error("Error al obtener referencias de LEGO: " + setsError.message);
+      return;
+    }
+
+    const refToIdMap = new Map(allSets.map(s => [s.lego_ref, s.id]));
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const data = results.data as any[];
+        if (data.length === 0) {
+          toast.error("El archivo CSV está vacío");
+          return;
+        }
+
+        const inventoryToInsert = data.map((row) => {
+          const setId = refToIdMap.get(row.lego_ref);
+          if (!setId) {
+            console.warn(`Referencia LEGO no encontrada: ${row.lego_ref}`);
+            return null;
+          }
+          return {
+            set_id: setId,
+            total_stock: parseInt(row.total_stock) || 0,
+            available_stock: parseInt(row.available_stock) || 0,
+            shipping_count: parseInt(row.shipping_count) || 0,
+            being_used_count: parseInt(row.being_used_count) || 0,
+            returning_count: parseInt(row.returning_count) || 0,
+            being_completed_count: parseInt(row.being_completed_count) || 0,
+          };
+        }).filter(Boolean);
+
+        if (inventoryToInsert.length === 0) {
+          toast.error("No se encontraron referencias válidas en el CSV");
+          return;
+        }
+
+        try {
+          const { error } = await supabase.from("inventory").insert(inventoryToInsert);
+          if (error) throw error;
+          toast.success(`${inventoryToInsert.length} registros de inventario importados correctamente`);
+          queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
+        } catch (error: any) {
+          toast.error("Error al importar inventario: " + error.message);
+        }
+      },
+      error: (error) => {
+        toast.error("Error al leer el archivo CSV: " + error.message);
+      },
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const getStockStatus = (available: number, total: number) => {
     const ratio = total > 0 ? available / total : 0;
     if (ratio === 0) return { label: "Out of Stock", variant: "destructive" as const };
@@ -196,17 +268,37 @@ const InventoryManager = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Inventory Management</CardTitle>
-        <Button
-          onClick={() => {
-            setEditingInventory(null);
-            form.reset();
-            setIsDialogOpen(true);
-          }}
-          disabled={!availableSets?.length && !editingInventory}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Inventory
-        </Button>
+        <div className="flex gap-2">
+          <input
+            type="file"
+            accept=".csv"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleCSVUpload}
+          />
+          <div className="flex flex-col items-end gap-1">
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Subir CSV
+            </Button>
+            <span className="text-[10px] text-muted-foreground">sube template inventario piezas set</span>
+          </div>
+          <Button
+            onClick={() => {
+              setEditingInventory(null);
+              form.reset();
+              setIsDialogOpen(true);
+            }}
+            disabled={!availableSets?.length && !editingInventory}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Inventory
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
