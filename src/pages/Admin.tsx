@@ -6,6 +6,8 @@ import { Package, Users, Boxes } from "lucide-react";
 import SetsManager from "@/components/admin/ProductsManager";
 import WishlistsViewer from "@/components/admin/WishlistsViewer";
 import InventoryManager from "@/components/admin/InventoryManager";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const Admin = () => {
   const { user, isAdmin, isLoading } = useAuth();
@@ -30,8 +32,9 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Navbar />
+      <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Panel de Administración</h1>
           <p className="text-muted-foreground mt-2">
@@ -68,6 +71,7 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <Footer />
     </div>
   );
 };

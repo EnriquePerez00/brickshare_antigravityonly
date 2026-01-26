@@ -12,11 +12,11 @@ const Footer = () => {
               <div className="p-2 rounded-xl gradient-hero">
                 <Blocks className="h-6 w-6 text-primary-foreground" />
               </div>
-            <span className="text-xl font-display font-bold">Brickshare</span>
-          </div>
-          <p className="text-sm text-primary-foreground/70 leading-relaxed">
-            Suscripción circular de sets de construcción que impulsa el desarrollo infantil y genera empleo inclusivo.
-          </p>
+              <span className="text-xl font-display font-bold">Brickshare</span>
+            </div>
+            <p className="text-sm text-primary-foreground/70 leading-relaxed">
+              Suscripción circular de sets de construcción que impulsa el desarrollo infantil y genera empleo inclusivo.
+            </p>
             <div className="flex gap-4">
               <a href="#" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors">
                 <Facebook className="h-4 w-4" />
@@ -54,6 +54,11 @@ const Footer = () => {
                   Preguntas frecuentes
                 </Link>
               </li>
+              <li>
+                <Link to="/contacto" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
+                  Contacto
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -85,7 +90,9 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-sm text-primary-foreground/70">
                 <Mail className="h-4 w-4" />
-                hola@brickshare.es
+                <Link to="/contacto" className="hover:text-primary-foreground transition-colors">
+                  hola@brickshare.es
+                </Link>
               </li>
               <li className="flex items-center gap-3 text-sm text-primary-foreground/70">
                 <Phone className="h-4 w-4" />
@@ -117,7 +124,7 @@ const Footer = () => {
             </div>
           </div>
           <p className="text-xs text-primary-foreground/40 mt-4 text-center">
-            LEGO® es una marca registrada de The LEGO Group. Brickshare no está patrocinado, autorizado ni respaldado por The LEGO Group. 
+            LEGO® es una marca registrada de The LEGO Group. Brickshare no está patrocinado, autorizado ni respaldado por The LEGO Group.
             Este servicio utiliza exclusivamente productos LEGO® originales adquiridos legalmente.
           </p>
         </div>

@@ -1,9 +1,9 @@
-name: Deploy Staging
+name: Deploy Antigravity Staging
 
 on:
   push:
     branches:
-      - staging
+      - antigravity-staging
 
 permissions:
   contents: write
@@ -31,8 +31,8 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      - name: Deploy to Staging (GitHub Pages) 🚀
+      - name: Deploy to Antigravity Staging (GitHub Pages) 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
-          branch: brickshare_staging # Despliega a la rama brickshare_staging
+          branch: brickshare_antigravity_staging # New staging branch

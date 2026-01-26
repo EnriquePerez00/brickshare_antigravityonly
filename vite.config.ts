@@ -7,7 +7,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   // GitHub Pages uses a subpath, Vercel typically uses root.
   // We detect GITHUB_ACTIONS env to set the base path for Pages.
-  base: process.env.GITHUB_ACTIONS && !process.env.VERCEL ? '/bricksahre/' : '/',
+  base: process.env.GITHUB_ACTIONS && !process.env.VERCEL ? '/brickshare_antigravityonly/' : '/',
   server: {
     host: "::",
     port: 8080,
