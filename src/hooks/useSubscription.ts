@@ -20,7 +20,7 @@ export const useSubscription = () => {
 
         setIsLoading(true);
         try {
-            const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+            const { data, error } = await supabase.functions.invoke("create-stripe-checkout-session", {
                 body: { plan, userId: user.id, priceId },
             });
 

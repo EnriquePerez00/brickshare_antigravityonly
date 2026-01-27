@@ -67,9 +67,9 @@ const sampleSets = [
   },
   {
     id: "sample-5",
-    name: "Space Adventures - Nave Estelar",
+    name: "Star Wars - Nave Estelar",
     image_url: "https://images.unsplash.com/photo-1518946222227-364f22132616?w=400&h=400&fit=crop",
-    theme: "Space",
+    theme: "Star Wars",
     age_range: "10-16 años",
     piece_count: 1353,
     skill_boost: ["Paciencia", "concentración"],
@@ -93,7 +93,7 @@ const sampleSets = [
   },
 ];
 
-const themes = ["City", "Technic", "Creator", "Friends", "Space", "Architecture"];
+const themes = ["City", "Technic", "Creator", "Friends", "Star Wars", "Architecture"];
 const ageRanges = ["5-7 años", "6-12 años", "7-12 años", "8-12 años", "8-14 años", "9-16 años", "10-16 años"];
 const pieceRanges = [
   { label: "Menos de 300", min: 0, max: 299 },

@@ -6,12 +6,14 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
     httpClient: Stripe.createFetchHttpClient(),
 });
 
-const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 serve(async (req) => {
+    const origin = req.headers.get("origin") || "";
+    const corsHeaders = {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+        "Access-Control-Allow-Credentials": "true",
+    };
+
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
@@ -35,8 +37,8 @@ serve(async (req) => {
                 },
             ],
             mode: "subscription",
-            success_url: `${req.headers.get("origin")}/dashboard?subscription=success`,
-            cancel_url: `${req.headers.get("origin")}/como-funciona?subscription=cancelled`,
+            success_url: `${origin}/dashboard?subscription=success`,
+            cancel_url: `${origin}/como-funciona?subscription=cancelled`,
             metadata: {
                 user_id: userId,
                 plan: plan,

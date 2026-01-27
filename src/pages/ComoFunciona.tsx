@@ -35,7 +35,7 @@ const plans = [
   {
     name: "Brick Starter",
     price: "19,90",
-    priceId: "price_1StarterID", // Reemplazar con ID real de Stripe
+    priceId: "price_1StxtY7Pc5FKirdFJ7ypGgR3",
     icon: Star,
     color: "from-emerald-500 to-teal-500",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
@@ -47,7 +47,7 @@ const plans = [
   {
     name: "Brick Pro",
     price: "29,90",
-    priceId: "price_1ProID", // Reemplazar con ID real de Stripe
+    priceId: "price_1Stxtv7Pc5FKirdFdsMnrRa7",
     icon: Zap,
     color: "from-blue-500 to-indigo-500",
     bgColor: "bg-blue-50 dark:bg-blue-950/30",
@@ -60,7 +60,7 @@ const plans = [
   {
     name: "Brick Master",
     price: "39,90",
-    priceId: "price_1MasterID", // Reemplazar con ID real de Stripe
+    priceId: "price_1StxuC7Pc5FKirdFHE7OoIas",
     icon: Crown,
     color: "from-purple-500 to-pink-500",
     bgColor: "bg-purple-50 dark:bg-purple-950/30",

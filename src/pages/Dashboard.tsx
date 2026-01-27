@@ -1,19 +1,22 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle, MapPin, Phone, Mail, Pencil } from "lucide-react";
+import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle, MapPin, Phone, Mail, Pencil, Package } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useSets } from "@/hooks/useProducts";
+import { useOrders } from "@/hooks/useOrders";
 import ProfileCompletionModal from "@/components/ProfileCompletionModal";
 
 const Dashboard = () => {
   const { user, profile, isLoading: authLoading, deleteUserAccount } = useAuth();
   const { wishlistIds, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
   const { data: sets = [], isLoading: setsLoading } = useSets(100);
+  const { data: orders = [], isLoading: ordersLoading } = useOrders();
   const navigate = useNavigate();
   const [showProfileModal, setShowProfileModal] = useState(false);
 
@@ -208,6 +211,119 @@ const Dashboard = () => {
             )}
           </motion.div>
 
+          {/* Order History Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-16"
+          >
+            <h2 className="text-2xl font-display font-bold text-foreground mb-6">
+              Mi Histórico
+            </h2>
+
+            {ordersLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : orders.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {orders.map((order) => {
+                  const getStatusBadge = (status: string) => {
+                    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+                      pending: { label: "Pendiente", variant: "outline" },
+                      shipped: { label: "Enviado", variant: "default" },
+                      delivered: { label: "Entregado", variant: "default" },
+                      in_use: { label: "En uso", variant: "default" },
+                      returned: { label: "Devuelto", variant: "secondary" },
+                      cancelled: { label: "Cancelado", variant: "destructive" },
+                    };
+                    const config = statusConfig[status] || { label: status, variant: "outline" };
+                    return <Badge variant={config.variant}>{config.label}</Badge>;
+                  };
+
+                  const formatDate = (dateString: string | null) => {
+                    if (!dateString) return null;
+                    return new Date(dateString).toLocaleDateString("es-ES", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    });
+                  };
+
+                  return (
+                    <div
+                      key={order.id}
+                      className="bg-card rounded-2xl overflow-hidden shadow-card"
+                    >
+                      {order.sets ? (
+                        <div className="aspect-video bg-secondary/50 overflow-hidden">
+                          <img
+                            src={order.sets.image_url || "/placeholder.svg"}
+                            alt={order.sets.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-video bg-secondary/50 flex items-center justify-center">
+                          <Package className="h-12 w-12 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="p-5">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-display font-semibold text-foreground">
+                            {order.sets?.name || "Set no disponible"}
+                          </h3>
+                          {getStatusBadge(order.status)}
+                        </div>
+                        {order.sets && (
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
+                              {order.sets.theme}
+                            </span>
+                            <span className="px-2 py-1 rounded-md text-xs font-medium bg-accent/10 text-accent">
+                              {order.sets.piece_count} piezas
+                            </span>
+                          </div>
+                        )}
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <p>
+                            <span className="font-medium">Pedido:</span> {formatDate(order.order_date)}
+                          </p>
+                          {order.shipped_date && (
+                            <p>
+                              <span className="font-medium">Enviado:</span> {formatDate(order.shipped_date)}
+                            </p>
+                          )}
+                          {order.delivered_date && (
+                            <p>
+                              <span className="font-medium">Entregado:</span> {formatDate(order.delivered_date)}
+                            </p>
+                          )}
+                          {order.returned_date && (
+                            <p>
+                              <span className="font-medium">Devuelto:</span> {formatDate(order.returned_date)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-card rounded-2xl">
+                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-lg text-muted-foreground mb-4">
+                  No tienes pedidos todavía
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Cuando realices tu primer pedido, aparecerá aquí
+                </p>
+              </div>
+            )}
+          </motion.div>
+
           {/* Security & Data Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -309,9 +425,9 @@ const Dashboard = () => {
         </div>
       </main>
 
-      <ProfileCompletionModal 
-        open={showProfileModal} 
-        onClose={() => setShowProfileModal(false)} 
+      <ProfileCompletionModal
+        open={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
       />
 
       <Footer />
