@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Truck, ClipboardList, Boxes, Settings } from "lucide-react";
 import InventoryManager from "@/components/admin/InventoryManager";
+import ShipmentsList from "@/components/admin/ShipmentsList";
+import ReturnsList from "@/components/admin/ReturnsList";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -65,19 +67,11 @@ const Operations = () => {
                     </TabsContent>
 
                     <TabsContent value="shipments">
-                        <div className="bg-card p-8 rounded-xl border border-border text-center">
-                            <Truck className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                            <h3 className="text-lg font-semibold">Gestión de Envíos</h3>
-                            <p className="text-muted-foreground">Próximamente: Listado de pedidos listos para enviar.</p>
-                        </div>
+                        <ShipmentsList />
                     </TabsContent>
 
                     <TabsContent value="returns">
-                        <div className="bg-card p-8 rounded-xl border border-border text-center">
-                            <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                            <h3 className="text-lg font-semibold">Gestión de Devoluciones</h3>
-                            <p className="text-muted-foreground">Próximamente: Procesamiento de sets recibidos.</p>
-                        </div>
+                        <ReturnsList />
                     </TabsContent>
 
                     <TabsContent value="maintenance">

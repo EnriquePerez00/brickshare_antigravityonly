@@ -38,31 +38,19 @@ CREATE POLICY "Users can view own orders"
 -- Admins can manage all orders
 CREATE POLICY "Admins can manage all orders"
     ON public.orders FOR ALL
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.profiles
-            WHERE profiles.user_id = auth.uid()
-            AND profiles.role = 'admin'
-        )
-    );
+    USING (public.has_role(auth.uid(), 'admin'::public.app_role));
 
 -- Operadores can insert and update orders
 CREATE POLICY "Operadores can manage orders"
     ON public.orders FOR INSERT
     WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.profiles
-            WHERE profiles.user_id = auth.uid()
-            AND profiles.role IN ('admin', 'operador')
-        )
+        public.has_role(auth.uid(), 'admin'::public.app_role) OR 
+        public.has_role(auth.uid(), 'operador'::public.app_role)
     );
 
 CREATE POLICY "Operadores can update orders"
     ON public.orders FOR UPDATE
     USING (
-        EXISTS (
-            SELECT 1 FROM public.profiles
-            WHERE profiles.user_id = auth.uid()
-            AND profiles.role IN ('admin', 'operador')
-        )
+        public.has_role(auth.uid(), 'admin'::public.app_role) OR 
+        public.has_role(auth.uid(), 'operador'::public.app_role)
     );

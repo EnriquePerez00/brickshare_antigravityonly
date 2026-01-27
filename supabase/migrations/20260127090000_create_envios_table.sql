@@ -60,33 +60,21 @@ CREATE POLICY "Users can view own shipments"
 -- Admins can manage all shipments
 CREATE POLICY "Admins can manage all shipments"
     ON public.envios FOR ALL
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.profiles
-            WHERE profiles.user_id = auth.uid()
-            AND profiles.role = 'admin'
-        )
-    );
+    USING (public.has_role(auth.uid(), 'admin'::public.app_role));
 
 -- Operadores can insert and update shipments
 CREATE POLICY "Operadores can create shipments"
     ON public.envios FOR INSERT
     WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.profiles
-            WHERE profiles.user_id = auth.uid()
-            AND profiles.role IN ('admin', 'operador')
-        )
+        public.has_role(auth.uid(), 'admin'::public.app_role) OR 
+        public.has_role(auth.uid(), 'operador'::public.app_role)
     );
 
 CREATE POLICY "Operadores can update shipments"
     ON public.envios FOR UPDATE
     USING (
-        EXISTS (
-            SELECT 1 FROM public.profiles
-            WHERE profiles.user_id = auth.uid()
-            AND profiles.role IN ('admin', 'operador')
-        )
+        public.has_role(auth.uid(), 'admin'::public.app_role) OR 
+        public.has_role(auth.uid(), 'operador'::public.app_role)
     );
 
 -- Add trigger for updated_at

@@ -14,59 +14,162 @@ export type Database = {
   }
   public: {
     Tables: {
-      donations: {
+      backoffice_operations: {
         Row: {
-          co2_evitado: number
-          created_at: string
-          direccion: string | null
-          email: string
-          id: string
-          metodo_entrega: string
-          ninos_beneficiados: number
-          nombre: string
-          peso_estimado: number
-          recompensa: string
-          status: string
-          telefono: string | null
-          tracking_code: string | null
-          updated_at: string
+          event_id: string
+          metadata: Json | null
+          operation_time: string
+          operation_type: Database["public"]["Enums"]["operation_type"]
           user_id: string | null
         }
         Insert: {
-          co2_evitado: number
-          created_at?: string
-          direccion?: string | null
-          email: string
-          id?: string
-          metodo_entrega: string
-          ninos_beneficiados: number
-          nombre: string
-          peso_estimado: number
-          recompensa: string
-          status?: string
-          telefono?: string | null
-          tracking_code?: string | null
-          updated_at?: string
+          event_id?: string
+          metadata?: Json | null
+          operation_time?: string
+          operation_type: Database["public"]["Enums"]["operation_type"]
           user_id?: string | null
         }
         Update: {
-          co2_evitado?: number
-          created_at?: string
-          direccion?: string | null
-          email?: string
-          id?: string
-          metodo_entrega?: string
-          ninos_beneficiados?: number
-          nombre?: string
-          peso_estimado?: number
-          recompensa?: string
-          status?: string
-          telefono?: string | null
-          tracking_code?: string | null
-          updated_at?: string
+          event_id?: string
+          metadata?: Json | null
+          operation_time?: string
+          operation_type?: Database["public"]["Enums"]["operation_type"]
           user_id?: string | null
         }
         Relationships: []
+      }
+      envios: {
+        Row: {
+          ciudad_envio: string
+          codigo_postal_envio: string
+          costo_envio: number | null
+          created_at: string
+          direccion_envio: string
+          direccion_proveedor_recogida: string | null
+          estado_envio: string
+          fecha_asignada: string | null
+          fecha_entrega_usuario: string | null
+          fecha_lista_almacen: string | null
+          fecha_recepcion_almacen: string | null
+          fecha_recogida_almacen: string | null
+          fecha_solicitud_devolucion: string | null
+          id: string
+          notas_adicionales: string | null
+          numero_seguimiento: string | null
+          order_id: string
+          pais_envio: string
+          proveedor_envio: string | null
+          proveedor_recogida: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ciudad_envio: string
+          codigo_postal_envio: string
+          costo_envio?: number | null
+          created_at?: string
+          direccion_envio: string
+          direccion_proveedor_recogida?: string | null
+          estado_envio?: string
+          fecha_asignada?: string | null
+          fecha_entrega_usuario?: string | null
+          fecha_lista_almacen?: string | null
+          fecha_recepcion_almacen?: string | null
+          fecha_recogida_almacen?: string | null
+          fecha_solicitud_devolucion?: string | null
+          id?: string
+          notas_adicionales?: string | null
+          numero_seguimiento?: string | null
+          order_id: string
+          pais_envio?: string
+          proveedor_envio?: string | null
+          proveedor_recogida?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ciudad_envio?: string
+          codigo_postal_envio?: string
+          costo_envio?: number | null
+          created_at?: string
+          direccion_envio?: string
+          direccion_proveedor_recogida?: string | null
+          estado_envio?: string
+          fecha_asignada?: string | null
+          fecha_entrega_usuario?: string | null
+          fecha_lista_almacen?: string | null
+          fecha_recepcion_almacen?: string | null
+          fecha_recogida_almacen?: string | null
+          fecha_solicitud_devolucion?: string | null
+          id?: string
+          notas_adicionales?: string | null
+          numero_seguimiento?: string | null
+          order_id?: string
+          pais_envio?: string
+          proveedor_envio?: string | null
+          proveedor_recogida?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "envios_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventario_sets: {
+        Row: {
+          cantidad_total: number
+          created_at: string
+          en_devolucion: number
+          en_envio: number
+          en_reparacion: number
+          en_uso: number
+          id: string
+          set_id: string
+          set_ref: string | null
+          stock_central: number
+          updated_at: string
+        }
+        Insert: {
+          cantidad_total?: number
+          created_at?: string
+          en_devolucion?: number
+          en_envio?: number
+          en_reparacion?: number
+          en_uso?: number
+          id?: string
+          set_id: string
+          set_ref?: string | null
+          stock_central?: number
+          updated_at?: string
+        }
+        Update: {
+          cantidad_total?: number
+          created_at?: string
+          en_devolucion?: number
+          en_envio?: number
+          en_reparacion?: number
+          en_uso?: number
+          id?: string
+          set_id?: string
+          set_ref?: string | null
+          stock_central?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventario_sets_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: true
+            referencedRelation: "sets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory: {
         Row: {
@@ -75,10 +178,8 @@ export type Database = {
           being_used_count: number
           created_at: string
           id: string
-          product_id: string | null
-          rented_count: number
           returning_count: number
-          set_id: string | null
+          set_id: string
           shipping_count: number
           total_stock: number
           updated_at: string
@@ -89,10 +190,8 @@ export type Database = {
           being_used_count?: number
           created_at?: string
           id?: string
-          product_id?: string | null
-          rented_count?: number
           returning_count?: number
-          set_id?: string | null
+          set_id: string
           shipping_count?: number
           total_stock?: number
           updated_at?: string
@@ -103,24 +202,56 @@ export type Database = {
           being_used_count?: number
           created_at?: string
           id?: string
-          product_id?: string | null
-          rented_count?: number
           returning_count?: number
-          set_id?: string | null
+          set_id?: string
           shipping_count?: number
           total_stock?: number
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "inventory_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "inventory_set_id_fkey"
+            columns: ["set_id"]
             isOneToOne: true
-            referencedRelation: "products"
+            referencedRelation: "sets"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      operaciones_recepcion: {
+        Row: {
+          created_at: string
+          id: string
+          missing_parts: string | null
+          peso_obtenido: number | null
+          set_id: string
+          status_recepcion: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          missing_parts?: string | null
+          peso_obtenido?: number | null
+          set_id: string
+          status_recepcion?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          missing_parts?: string | null
+          peso_obtenido?: number | null
+          set_id?: string
+          status_recepcion?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "inventory_set_id_fkey"
+            foreignKeyName: "operaciones_recepcion_set_id_fkey"
             columns: ["set_id"]
             isOneToOne: false
             referencedRelation: "sets"
@@ -128,92 +259,180 @@ export type Database = {
           },
         ]
       }
-      products: {
+      orders: {
         Row: {
-          age_range: string
           created_at: string
-          description: string | null
+          delivered_date: string | null
           id: string
-          image_url: string | null
-          name: string
-          piece_count: number
-          skill_boost: string[] | null
-          theme: string
-          updated_at: string
-        }
-        Insert: {
-          age_range: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          name: string
-          piece_count: number
-          skill_boost?: string[] | null
-          theme: string
-          updated_at?: string
-        }
-        Update: {
-          age_range?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          name?: string
-          piece_count?: number
-          skill_boost?: string[] | null
-          theme?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          ciudad: string | null
-          codigo_postal: string | null
-          created_at: string
-          direccion: string | null
-          full_name: string | null
-          id: string
-          impact_points: number | null
-          profile_completed: boolean | null
-          sub_status: string | null
-          telefono: string | null
+          notes: string | null
+          order_date: string
+          returned_date: string | null
+          set_id: string | null
+          shipped_date: string | null
+          status: string
+          tracking_number: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          avatar_url?: string | null
-          ciudad?: string | null
-          codigo_postal?: string | null
           created_at?: string
-          direccion?: string | null
-          full_name?: string | null
+          delivered_date?: string | null
           id?: string
-          impact_points?: number | null
-          profile_completed?: boolean | null
-          sub_status?: string | null
-          telefono?: string | null
+          notes?: string | null
+          order_date?: string
+          returned_date?: string | null
+          set_id?: string | null
+          shipped_date?: string | null
+          status?: string
+          tracking_number?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
-          avatar_url?: string | null
-          ciudad?: string | null
-          codigo_postal?: string | null
           created_at?: string
-          direccion?: string | null
-          full_name?: string | null
+          delivered_date?: string | null
           id?: string
-          impact_points?: number | null
-          profile_completed?: boolean | null
-          sub_status?: string | null
-          telefono?: string | null
+          notes?: string | null
+          order_date?: string
+          returned_date?: string | null
+          set_id?: string | null
+          shipped_date?: string | null
+          status?: string
+          tracking_number?: string | null
           updated_at?: string
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "orders_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          address_extra: string | null
+          avatar_url: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          impact_points: number | null
+          phone: string | null
+          province: string | null
+          sub_status: string | null
+          subscription_id: string | null
+          subscription_status: string | null
+          subscription_type: string | null
+          updated_at: string
+          user_id: string
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          address_extra?: string | null
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          impact_points?: number | null
+          phone?: string | null
+          province?: string | null
+          sub_status?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
+          subscription_type?: string | null
+          updated_at?: string
+          user_id: string
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          address_extra?: string | null
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          impact_points?: number | null
+          phone?: string | null
+          province?: string | null
+          sub_status?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
+          subscription_type?: string | null
+          updated_at?: string
+          user_id?: string
+          zip_code?: string | null
+        }
         Relationships: []
+      }
+      set_piece_list: {
+        Row: {
+          bricklink_color_id: string | null
+          color_ref: string | null
+          created_at: string
+          id: string
+          lego_element_id: string | null
+          lego_ref: string
+          piece_description: string | null
+          piece_qty: number
+          piece_ref: string
+          piece_studdim: string | null
+          piece_url: string | null
+          piece_weight: number | null
+          set_id: string
+          updated_at: string
+        }
+        Insert: {
+          bricklink_color_id?: string | null
+          color_ref?: string | null
+          created_at?: string
+          id?: string
+          lego_element_id?: string | null
+          lego_ref: string
+          piece_description?: string | null
+          piece_qty?: number
+          piece_ref: string
+          piece_studdim?: string | null
+          piece_url?: string | null
+          piece_weight?: number | null
+          set_id: string
+          updated_at?: string
+        }
+        Update: {
+          bricklink_color_id?: string | null
+          color_ref?: string | null
+          created_at?: string
+          id?: string
+          lego_element_id?: string | null
+          lego_ref?: string
+          piece_description?: string | null
+          piece_qty?: number
+          piece_ref?: string
+          piece_studdim?: string | null
+          piece_url?: string | null
+          piece_weight?: number | null
+          set_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "set_piece_list_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "sets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sets: {
         Row: {
@@ -226,10 +445,12 @@ export type Database = {
           lego_ref: string | null
           name: string
           piece_count: number
+          set_dim: string | null
+          set_minifigs: number | null
+          set_weight: number | null
           skill_boost: string[] | null
           theme: string
           updated_at: string
-          weight_set: number | null
           year_released: number | null
         }
         Insert: {
@@ -242,10 +463,12 @@ export type Database = {
           lego_ref?: string | null
           name: string
           piece_count: number
+          set_dim?: string | null
+          set_minifigs?: number | null
+          set_weight?: number | null
           skill_boost?: string[] | null
           theme: string
           updated_at?: string
-          weight_set?: number | null
           year_released?: number | null
         }
         Update: {
@@ -258,10 +481,12 @@ export type Database = {
           lego_ref?: string | null
           name?: string
           piece_count?: number
+          set_dim?: string | null
+          set_minifigs?: number | null
+          set_weight?: number | null
           skill_boost?: string[] | null
           theme?: string
           updated_at?: string
-          weight_set?: number | null
           year_released?: number | null
         }
         Relationships: []
@@ -291,30 +516,27 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          product_id: string | null
-          set_id: string | null
+          set_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          product_id?: string | null
-          set_id?: string | null
+          set_id: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
-          product_id?: string | null
-          set_id?: string | null
+          set_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "wishlist_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "wishlist_set_id_fkey"
+            columns: ["set_id"]
             isOneToOne: false
-            referencedRelation: "products"
+            referencedRelation: "sets"
             referencedColumns: ["id"]
           },
         ]
@@ -334,6 +556,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "operador"
+      operation_type:
+        | "recepcion paquete"
+        | "analisis_peso"
+        | "deposito_fulfillment"
+        | "higienizado"
+        | "retorno_stock"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -347,121 +575,128 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-  : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-  ? R
-  : never
+    ? R
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-  ? R
-  : never
-  : never
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
+      Insert: infer I
+    }
+    ? I
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Update: infer U
-  }
-  ? U
-  : never
+      Update: infer U
+    }
+    ? U
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Update: infer U
-  }
-  ? U
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-  | keyof DefaultSchema["Enums"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-  | keyof DefaultSchema["CompositeTypes"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "operador"],
+      operation_type: [
+        "recepcion paquete",
+        "analisis_peso",
+        "deposito_fulfillment",
+        "higienizado",
+        "retorno_stock",
+      ],
     },
   },
 } as const

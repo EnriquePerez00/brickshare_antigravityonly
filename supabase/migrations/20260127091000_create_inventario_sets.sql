@@ -40,11 +40,8 @@ CREATE POLICY "Admins and Operadores can manage inventario"
     ON public.inventario_sets FOR ALL
     TO authenticated
     USING (
-        EXISTS (
-            SELECT 1 FROM public.profiles
-            WHERE profiles.user_id = auth.uid()
-            AND profiles.role IN ('admin', 'operador')
-        )
+        public.has_role(auth.uid(), 'admin'::public.app_role) OR 
+        public.has_role(auth.uid(), 'operador'::public.app_role)
     );
 
 -- Add trigger for updated_at
