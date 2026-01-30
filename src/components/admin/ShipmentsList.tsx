@@ -52,38 +52,40 @@ const ShipmentsList = () => {
 
     return (
         <div className="bg-card rounded-xl border border-border overflow-hidden">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Set Ref</TableHead>
-                        <TableHead>Estado Envío</TableHead>
-                        <TableHead>Dirección Envío</TableHead>
-                        <TableHead>Última Actualización</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {activeShipments.map((shipment) => (
-                        <TableRow key={shipment.id}>
-                            <TableCell className="font-medium">
-                                {shipment.users?.email || "-"}
-                            </TableCell>
-                            <TableCell>
-                                {shipment.set_ref || "-"}
-                            </TableCell>
-                            <TableCell>
-                                {getStatusBadge(shipment.estado_envio)}
-                            </TableCell>
-                            <TableCell>
-                                {shipment.direccion_envio || "-"}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                                {new Date(shipment.updated_at).toLocaleDateString()}
-                            </TableCell>
+            <div className="max-h-[600px] overflow-y-auto">
+                <Table>
+                    <TableHeader className="sticky top-0 bg-card z-10">
+                        <TableRow>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Set Ref</TableHead>
+                            <TableHead>Estado Envío</TableHead>
+                            <TableHead>Dirección Envío</TableHead>
+                            <TableHead>Última Actualización</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {activeShipments.map((shipment) => (
+                            <TableRow key={shipment.id}>
+                                <TableCell className="font-medium">
+                                    {shipment.users?.email || "-"}
+                                </TableCell>
+                                <TableCell>
+                                    {shipment.set_ref || "-"}
+                                </TableCell>
+                                <TableCell>
+                                    {getStatusBadge(shipment.estado_envio)}
+                                </TableCell>
+                                <TableCell>
+                                    {shipment.direccion_envio || "-"}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                    {new Date(shipment.updated_at).toLocaleDateString()}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     );
 };

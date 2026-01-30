@@ -592,9 +592,9 @@ const ProductsManager = () => {
             No sets yet. Add your first LEGO set!
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="max-h-[600px] overflow-y-auto overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 bg-card z-10">
                 <TableRow>
                   <TableHead>Ref</TableHead>
                   <TableHead>Name</TableHead>

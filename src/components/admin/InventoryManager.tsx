@@ -247,9 +247,9 @@ const InventoryManager = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="max-h-[600px] overflow-y-auto overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 bg-card z-10">
                 <TableRow>
                   <TableHead>Set (Ref)</TableHead>
                   <TableHead className="text-center">Total</TableHead>
