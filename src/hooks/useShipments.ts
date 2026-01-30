@@ -4,8 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export interface ShipmentData {
     id: string;
-    order_id: string;
     user_id: string;
+    set_id: string | null;
     set_ref: string | null;
     fecha_asignada: string | null;
     fecha_entrega: string | null;
@@ -28,14 +28,6 @@ export interface ShipmentData {
     notas_adicionales: string | null;
     created_at: string;
     updated_at: string;
-    orders?: {
-        id: string;
-        sets?: {
-            id: string;
-            set_name: string;
-            set_ref: string;
-        } | null;
-    } | null;
     users?: {
         full_name: string | null;
         email: string | null;
@@ -57,14 +49,6 @@ export const useShipments = () => {
                 .from("envios" as any)
                 .select(`
                     *,
-                    orders:order_id (
-                        id,
-                        sets:set_id (
-                            id,
-                            set_name,
-                            set_ref
-                        )
-                    ),
                     users:user_id (
                         full_name,
                         email,

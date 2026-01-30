@@ -38,7 +38,6 @@ interface ConfirmedEnvio {
     envio_id: string;
     user_id: string;
     set_id: string;
-    order_id: string;
     user_name: string;
     set_name: string;
     set_ref: string;
@@ -273,7 +272,6 @@ const SetAssignment = () => {
                                             <TableRow>
                                                 <TableHead>Usuario</TableHead>
                                                 <TableHead>Set (Ref)</TableHead>
-                                                <TableHead>ID Pedido</TableHead>
                                                 <TableHead>Fecha</TableHead>
                                                 <TableHead className="text-center">Acciones</TableHead>
                                             </TableRow>
@@ -286,9 +284,6 @@ const SetAssignment = () => {
                                                     </TableCell>
                                                     <TableCell>
                                                         {envio.set_name} ({envio.set_ref})
-                                                    </TableCell>
-                                                    <TableCell className="font-mono text-xs">
-                                                        {envio.order_id.slice(0, 8)}...
                                                     </TableCell>
                                                     <TableCell>
                                                         {new Date(envio.created_at).toLocaleDateString()}
