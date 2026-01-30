@@ -21,10 +21,20 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { UserPlus, RefreshCw, Trash2, Package2 } from "lucide-react";
+import { Eye, CheckCircle, XCircle, Trash2, Package2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
-interface AssignedEnvio {
+interface PreviewAssignment {
+    user_id: string;
+    user_name: string;
+    set_id: string;
+    set_name: string;
+    set_ref: string;
+    current_stock: number;
+}
+
+interface ConfirmedEnvio {
     envio_id: string;
     user_id: string;
     set_id: string;
@@ -35,34 +45,60 @@ interface AssignedEnvio {
     created_at: string;
 }
 
+type ViewMode = "initial" | "preview" | "confirmed";
+
 const SetAssignment = () => {
     const queryClient = useQueryClient();
-    const [assignedEnvios, setAssignedEnvios] = useState<AssignedEnvio[]>([]);
+    const [viewMode, setViewMode] = useState<ViewMode>("initial");
+    const [previewAssignments, setPreviewAssignments] = useState<PreviewAssignment[]>([]);
+    const [confirmedEnvios, setConfirmedEnvios] = useState<ConfirmedEnvio[]>([]);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [envioToDelete, setEnvioToDelete] = useState<string | null>(null);
 
-    const assignMutation = useMutation({
+    // Preview mutation - shows proposal without making changes
+    const previewMutation = useMutation({
         mutationFn: async () => {
-            const { data, error } = await supabase.rpc("assign_sets_to_users");
+            const { data, error } = await supabase.rpc("preview_assign_sets_to_users");
             if (error) throw error;
-            return data as AssignedEnvio[];
+            return data as PreviewAssignment[];
         },
-        onSuccess: (data: AssignedEnvio[]) => {
-            const assignedCount = data?.length || 0;
-            if (assignedCount > 0) {
-                setAssignedEnvios(data);
-                toast.success(`¡Éxito! Se han asignado ${assignedCount} sets a usuarios.`);
+        onSuccess: (data: PreviewAssignment[]) => {
+            if (data.length > 0) {
+                setPreviewAssignments(data);
+                setViewMode("preview");
+                toast.success(`Se encontraron ${data.length} asignaciones posibles`);
             } else {
-                toast.info("No se encontraron asignaciones pendientes posibles (sin stock o sin wishlists).");
+                toast.info("No se encontraron asignaciones posibles (sin usuarios elegibles o sin stock)");
             }
+        },
+        onError: (error: Error) => {
+            toast.error("Error al generar propuesta: " + error.message);
+        },
+    });
+
+    // Confirm mutation - executes the assignments
+    const confirmMutation = useMutation({
+        mutationFn: async (userIds: string[]) => {
+            const { data, error } = await supabase.rpc("confirm_assign_sets_to_users", {
+                p_user_ids: userIds,
+            });
+            if (error) throw error;
+            return data as ConfirmedEnvio[];
+        },
+        onSuccess: (data: ConfirmedEnvio[]) => {
+            setConfirmedEnvios(data);
+            setViewMode("confirmed");
+            setPreviewAssignments([]);
+            toast.success(`¡Éxito! Se han confirmado ${data.length} asignaciones`);
             queryClient.invalidateQueries({ queryKey: ["admin-set-assignment-inventory"] });
             queryClient.invalidateQueries({ queryKey: ["admin-shipments"] });
         },
         onError: (error: Error) => {
-            toast.error("Error al asignar sets: " + error.message);
+            toast.error("Error al confirmar asignaciones: " + error.message);
         },
     });
 
+    // Delete mutation - removes confirmed assignment with rollback
     const deleteMutation = useMutation({
         mutationFn: async (envioId: string) => {
             const { error } = await supabase.rpc("delete_assignment_and_rollback", {
@@ -73,7 +109,7 @@ const SetAssignment = () => {
         onSuccess: () => {
             toast.success("Asignación eliminada correctamente");
             if (envioToDelete) {
-                setAssignedEnvios((prev) => prev.filter((e) => e.envio_id !== envioToDelete));
+                setConfirmedEnvios((prev) => prev.filter((e) => e.envio_id !== envioToDelete));
             }
             queryClient.invalidateQueries({ queryKey: ["admin-set-assignment-inventory"] });
             queryClient.invalidateQueries({ queryKey: ["admin-shipments"] });
@@ -82,6 +118,22 @@ const SetAssignment = () => {
             toast.error("Error al eliminar asignación: " + error.message);
         },
     });
+
+    const handleGenerateProposal = () => {
+        setConfirmedEnvios([]);
+        previewMutation.mutate();
+    };
+
+    const handleConfirmAssignments = () => {
+        const userIds = previewAssignments.map((a) => a.user_id);
+        confirmMutation.mutate(userIds);
+    };
+
+    const handleCancelPreview = () => {
+        setPreviewAssignments([]);
+        setViewMode("initial");
+        toast.info("Propuesta cancelada");
+    };
 
     const handleDeleteClick = (envioId: string) => {
         setEnvioToDelete(envioId);
@@ -103,72 +155,161 @@ const SetAssignment = () => {
                     <div>
                         <CardTitle>Asignación Automática de Sets</CardTitle>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Asigna sets aleatoriamente basándose en las wishlists de los usuarios y el stock disponible.
+                            {viewMode === "initial" && "Genera una propuesta de asignaciones basada en wishlists y stock disponible"}
+                            {viewMode === "preview" && "Revisa la propuesta y confírmala o cancélala"}
+                            {viewMode === "confirmed" && "Asignaciones confirmadas - puedes eliminar aquí si es necesario"}
                         </p>
                     </div>
-                    <Button
-                        onClick={() => assignMutation.mutate()}
-                        disabled={assignMutation.isPending}
-                        className="bg-primary hover:bg-primary/90"
-                    >
-                        {assignMutation.isPending ? (
-                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                            <UserPlus className="h-4 w-4 mr-2" />
+                    <div className="flex gap-2">
+                        {viewMode === "initial" && (
+                            <Button
+                                onClick={handleGenerateProposal}
+                                disabled={previewMutation.isPending}
+                                className="bg-primary hover:bg-primary/90"
+                            >
+                                {previewMutation.isPending ? (
+                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Eye className="h-4 w-4 mr-2" />
+                                )}
+                                Genera propuesta de asignación
+                            </Button>
                         )}
-                        Asigna sets a usuarios
-                    </Button>
+                        {viewMode === "preview" && (
+                            <>
+                                <Button
+                                    onClick={handleCancelPreview}
+                                    variant="outline"
+                                    disabled={confirmMutation.isPending}
+                                >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    onClick={handleConfirmAssignments}
+                                    disabled={confirmMutation.isPending}
+                                    className="bg-green-600 hover:bg-green-700"
+                                >
+                                    {confirmMutation.isPending ? (
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <CheckCircle className="h-4 w-4 mr-2" />
+                                    )}
+                                    Confirmar asignaciones
+                                </Button>
+                            </>
+                        )}
+                        {viewMode === "confirmed" && (
+                            <Button
+                                onClick={() => setViewMode("initial")}
+                                variant="outline"
+                            >
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Nueva propuesta
+                            </Button>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    {assignedEnvios.length === 0 ? (
+                    {viewMode === "initial" && (
                         <div className="text-center py-12">
                             <Package2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                             <p className="text-muted-foreground">
-                                No hay asignaciones mostradas. Haz clic en "Asigna sets a usuarios" para ver los resultados.
+                                Haz clic en "Genera propuesta de asignación" para ver qué sets se asignarían.
                             </p>
                         </div>
-                    ) : (
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Usuario</TableHead>
-                                        <TableHead>Set (Ref)</TableHead>
-                                        <TableHead>ID Pedido</TableHead>
-                                        <TableHead>Fecha</TableHead>
-                                        <TableHead className="text-center">Acciones</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {assignedEnvios.map((envio) => (
-                                        <TableRow key={envio.envio_id}>
-                                            <TableCell className="font-medium">
-                                                {envio.user_name}
-                                            </TableCell>
-                                            <TableCell>
-                                                {envio.set_name} ({envio.set_ref})
-                                            </TableCell>
-                                            <TableCell className="font-mono text-xs">
-                                                {envio.order_id.slice(0, 8)}...
-                                            </TableCell>
-                                            <TableCell>
-                                                {new Date(envio.created_at).toLocaleDateString()}
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleDeleteClick(envio.envio_id)}
-                                                    disabled={deleteMutation.isPending}
-                                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </TableCell>
+                    )}
+
+                    {viewMode === "preview" && (
+                        <div>
+                            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <p className="text-sm text-blue-900 dark:text-blue-100">
+                                    <strong>Vista previa:</strong> Esta es una propuesta. No se han realizado cambios en la base de datos.
+                                    Revisa las asignaciones y confirma o cancela.
+                                </p>
+                            </div>
+                            <div className="rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Usuario</TableHead>
+                                            <TableHead>Set Propuesto (Ref)</TableHead>
+                                            <TableHead className="text-center">Stock Actual</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {previewAssignments.map((assignment) => (
+                                            <TableRow key={assignment.user_id}>
+                                                <TableCell className="font-medium">
+                                                    {assignment.user_name}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {assignment.set_name} ({assignment.set_ref})
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <Badge variant="outline">{assignment.current_stock} disponible</Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
+                    )}
+
+                    {viewMode === "confirmed" && (
+                        <div>
+                            {confirmedEnvios.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <Package2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                                    <p className="text-muted-foreground">
+                                        No hay asignaciones confirmadas.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="rounded-md border">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Usuario</TableHead>
+                                                <TableHead>Set (Ref)</TableHead>
+                                                <TableHead>ID Pedido</TableHead>
+                                                <TableHead>Fecha</TableHead>
+                                                <TableHead className="text-center">Acciones</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {confirmedEnvios.map((envio) => (
+                                                <TableRow key={envio.envio_id}>
+                                                    <TableCell className="font-medium">
+                                                        {envio.user_name}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {envio.set_name} ({envio.set_ref})
+                                                    </TableCell>
+                                                    <TableCell className="font-mono text-xs">
+                                                        {envio.order_id.slice(0, 8)}...
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {new Date(envio.created_at).toLocaleDateString()}
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleDeleteClick(envio.envio_id)}
+                                                            disabled={deleteMutation.isPending}
+                                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
                         </div>
                     )}
                 </CardContent>
