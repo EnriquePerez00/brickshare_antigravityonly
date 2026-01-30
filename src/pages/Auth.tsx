@@ -235,6 +235,7 @@ const Auth = () => {
                     type="email"
                     placeholder="tu@email.com"
                     value={email}
+                    data-testid="email-input"
                     onChange={(e) => {
                       setEmail(e.target.value);
                       setErrors((prev) => ({ ...prev, email: undefined }));
@@ -272,6 +273,7 @@ const Auth = () => {
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
+                    data-testid="password-input"
                     onChange={(e) => {
                       setPassword(e.target.value);
                       setErrors((prev) => ({ ...prev, password: undefined }));
@@ -329,6 +331,7 @@ const Auth = () => {
               type="submit"
               disabled={isSubmitting}
               className="w-full gradient-hero"
+              data-testid="auth-submit-button"
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {mode === "login" && "Iniciar sesión"}

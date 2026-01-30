@@ -42,38 +42,40 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link
-              to="/"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Inicio
-            </Link>
-            <Link
-              to="/catalogo"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Catálogo
-            </Link>
-            <Link
-              to="/como-funciona"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Cómo funciona
-            </Link>
-            <Link
-              to="/sobre-nosotros"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Sobre nosotros
-            </Link>
-            <Link
-              to="/contacto"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Contacto
-            </Link>
-          </div>
+          {(!isAdmin && !isOperador) && (
+            <div className="hidden md:flex items-center gap-8">
+              <Link
+                to="/"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Inicio
+              </Link>
+              <Link
+                to="/catalogo"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Catálogo
+              </Link>
+              <Link
+                to="/como-funciona"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cómo funciona
+              </Link>
+              <Link
+                to="/sobre-nosotros"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sobre nosotros
+              </Link>
+              <Link
+                to="/contacto"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Contacto
+              </Link>
+            </div>
+          )}
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
@@ -122,10 +124,10 @@ const Navbar = () => {
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/auth">Iniciar sesión</Link>
+                  <Link to="/auth" data-testid="login-link">Iniciar sesión</Link>
                 </Button>
                 <Button size="sm" className="gradient-hero" asChild>
-                  <Link to="/auth">
+                  <Link to="/auth" data-testid="register-link" aria-label="Registrarse">
                     <User className="h-4 w-4 mr-2" />
                     Suscribirse
                   </Link>
@@ -155,96 +157,98 @@ const Navbar = () => {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden py-4 border-t border-border"
           >
-            <div className="flex flex-col gap-4">
-              <Link
-                to="/"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Inicio
-              </Link>
-              <Link
-                to="/catalogo"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Catálogo
-              </Link>
-              <Link
-                to="/como-funciona"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Cómo funciona
-              </Link>
-              <Link
-                to="/sobre-nosotros"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Sobre nosotros
-              </Link>
-              <Link
-                to="/contacto"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Contacto
-              </Link>
-              <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                {user ? (
-                  <>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                        <LayoutDashboard className="h-4 w-4 mr-2" />
-                        Mi Panel
-                      </Link>
-                    </Button>
-                    {isAdmin && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
-                          <User className="h-4 w-4 mr-2" />
-                          Administración
-                        </Link>
-                      </Button>
-                    )}
-                    {(isOperador || isAdmin) && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to="/operaciones" onClick={() => setMobileMenuOpen(false)}>
-                          <Truck className="h-4 w-4 mr-2" />
-                          Operaciones
-                        </Link>
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        handleSignOut();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="text-destructive"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Cerrar sesión
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                        Iniciar sesión
-                      </Link>
-                    </Button>
-                    <Button size="sm" className="gradient-hero" asChild>
-                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                        <User className="h-4 w-4 mr-2" />
-                        Suscribirse
-                      </Link>
-                    </Button>
-                  </>
-                )}
+            {(!isAdmin && !isOperador) && (
+              <div className="flex flex-col gap-4">
+                <Link
+                  to="/"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Inicio
+                </Link>
+                <Link
+                  to="/catalogo"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Catálogo
+                </Link>
+                <Link
+                  to="/como-funciona"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Cómo funciona
+                </Link>
+                <Link
+                  to="/sobre-nosotros"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sobre nosotros
+                </Link>
+                <Link
+                  to="/contacto"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Contacto
+                </Link>
               </div>
+            )}
+            <div className="flex flex-col gap-2 pt-4 border-t border-border">
+              {user ? (
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Mi Panel
+                    </Link>
+                  </Button>
+                  {isAdmin && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                        <User className="h-4 w-4 mr-2" />
+                        Administración
+                      </Link>
+                    </Button>
+                  )}
+                  {(isOperador || isAdmin) && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/operaciones" onClick={() => setMobileMenuOpen(false)}>
+                        <Truck className="h-4 w-4 mr-2" />
+                        Operaciones
+                      </Link>
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      handleSignOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-destructive"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Cerrar sesión
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/auth" data-testid="login-link-mobile" onClick={() => setMobileMenuOpen(false)}>
+                      Iniciar sesión
+                    </Link>
+                  </Button>
+                  <Button size="sm" className="gradient-hero" asChild>
+                    <Link to="/auth" data-testid="register-link-mobile" onClick={() => setMobileMenuOpen(false)} aria-label="Registrarse">
+                      <User className="h-4 w-4 mr-2" />
+                      Suscribirse
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </motion.div>
         )}

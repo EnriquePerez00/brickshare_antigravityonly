@@ -6,6 +6,7 @@ export interface ShipmentData {
     id: string;
     order_id: string;
     user_id: string;
+    set_ref: string | null;
     fecha_asignada: string | null;
     fecha_entrega: string | null;
     fecha_entrega_real: string | null;
@@ -25,16 +26,19 @@ export interface ShipmentData {
     costo_envio: number | null;
     transportista: string | null;
     notas_adicionales: string | null;
+    created_at: string;
+    updated_at: string;
     orders?: {
         id: string;
         sets?: {
             id: string;
-            name: string;
-            lego_ref: string;
+            set_name: string;
+            set_ref: string;
         } | null;
     } | null;
-    profiles?: {
+    users?: {
         full_name: string | null;
+        email: string | null;
         user_id: string;
     } | null;
 }
@@ -57,12 +61,13 @@ export const useShipments = () => {
                         id,
                         sets:set_id (
                             id,
-                            name,
-                            lego_ref
+                            set_name,
+                            set_ref
                         )
                     ),
-                    profiles:user_id (
+                    users:user_id (
                         full_name,
+                        email,
                         user_id
                     )
                 `)

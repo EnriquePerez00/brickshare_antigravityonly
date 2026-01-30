@@ -1,5 +1,8 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { Heart, Recycle, Users, Lightbulb, Shield, Sparkles } from "lucide-react";
+import { Heart, Recycle, Users, Lightbulb, Shield, Sparkles, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import familyImage from "@/assets/family-playing-lego.jpg";
@@ -30,6 +33,26 @@ const values = [
 ];
 
 const SobreNosotros = () => {
+  const { isAdmin, isOperador, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (isAdmin) {
+        navigate("/admin");
+      } else if (isOperador) {
+        navigate("/operaciones");
+      }
+    }
+  }, [isAdmin, isOperador, isLoading, navigate]);
+
+  if (isLoading || isAdmin || isOperador) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -71,23 +94,23 @@ const SobreNosotros = () => {
                 </h2>
                 <div className="space-y-4 text-muted-foreground">
                   <p>
-                    <span className="text-foreground font-medium">¿Cuántas veces montan realmente mis hijos un set de construcción?</span> Esta 
-                    pregunta fue el punto de partida de todo. Como padre, observé cómo los juguetes de construcción 
+                    <span className="text-foreground font-medium">¿Cuántas veces montan realmente mis hijos un set de construcción?</span> Esta
+                    pregunta fue el punto de partida de todo. Como padre, observé cómo los juguetes de construcción
                     se montaban con ilusión... y luego quedaban guardados en una estantería, acumulando polvo.
                   </p>
                   <p>
-                    Busqué una solución que permitiera a mis hijos disfrutar de la experiencia de construir 
-                    sin tener que comprar cada set, sin ocupar espacio infinito en casa, y sin generar un 
+                    Busqué una solución que permitiera a mis hijos disfrutar de la experiencia de construir
+                    sin tener que comprar cada set, sin ocupar espacio infinito en casa, y sin generar un
                     gasto desproporcionado. <span className="text-foreground font-medium">No la encontré. Así que decidí crearla.</span>
                   </p>
                   <p>
-                    Así nació Brickshare: un servicio de alquiler de sets de construcción que permite a las 
-                    familias acceder a una variedad infinita de sets, rotando constantemente, sin los 
+                    Así nació Brickshare: un servicio de alquiler de sets de construcción que permite a las
+                    familias acceder a una variedad infinita de sets, rotando constantemente, sin los
                     inconvenientes de la compra tradicional.
                   </p>
                 </div>
               </motion.div>
-              
+
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -96,8 +119,8 @@ const SobreNosotros = () => {
                 className="relative"
               >
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <img 
-                    src={familyImage} 
+                  <img
+                    src={familyImage}
                     alt="Familia jugando con bloques de construcción"
                     className="w-full h-auto"
                   />
@@ -123,14 +146,14 @@ const SobreNosotros = () => {
                 className="order-2 lg:order-1"
               >
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <img 
-                    src={circularImage} 
-                    alt="Economía circular" 
+                  <img
+                    src={circularImage}
+                    alt="Economía circular"
                     className="w-full h-auto"
                   />
                 </div>
               </motion.div>
-              
+
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -149,17 +172,17 @@ const SobreNosotros = () => {
                 </h2>
                 <div className="space-y-4 text-muted-foreground">
                   <p>
-                    Nuestro modelo se basa en los principios de la <span className="text-foreground font-medium">economía circular</span>: 
-                    cada set que entra en nuestro sistema se utiliza muchas más veces de lo que lo haría 
+                    Nuestro modelo se basa en los principios de la <span className="text-foreground font-medium">economía circular</span>:
+                    cada set que entra en nuestro sistema se utiliza muchas más veces de lo que lo haría
                     en un hogar individual.
                   </p>
                   <p>
-                    Esto significa menos producción innecesaria, menos residuos, y un uso más 
-                    inteligente de los recursos. Todo ello manteniendo unas condiciones de uso 
+                    Esto significa menos producción innecesaria, menos residuos, y un uso más
+                    inteligente de los recursos. Todo ello manteniendo unas condiciones de uso
                     <span className="text-foreground font-medium"> óptimas y completamente seguras</span> para los niños.
                   </p>
                   <p>
-                    Cada set pasa por un riguroso proceso de higienización, revisión y reposición 
+                    Cada set pasa por un riguroso proceso de higienización, revisión y reposición
                     de piezas antes de llegar a la siguiente familia.
                   </p>
                 </div>
@@ -189,22 +212,22 @@ const SobreNosotros = () => {
                 </h2>
                 <div className="space-y-4 text-muted-foreground">
                   <p>
-                    Brickshare no es solo un negocio: es una <span className="text-foreground font-medium">iniciativa de impacto social</span>. 
-                    Colaboramos activamente con entidades del tercer sector, generando oportunidades 
+                    Brickshare no es solo un negocio: es una <span className="text-foreground font-medium">iniciativa de impacto social</span>.
+                    Colaboramos activamente con entidades del tercer sector, generando oportunidades
                     de empleo para personas con diversidad funcional.
                   </p>
                   <p>
-                    Nuestro equipo de higienización y preparación de sets está formado por personas 
-                    que, gracias a este proyecto, encuentran un trabajo digno y una vía de 
+                    Nuestro equipo de higienización y preparación de sets está formado por personas
+                    que, gracias a este proyecto, encuentran un trabajo digno y una vía de
                     integración laboral.
                   </p>
                   <p>
-                    Cuando eliges Brickshare, no solo estás ahorrando dinero y espacio: estás 
+                    Cuando eliges Brickshare, no solo estás ahorrando dinero y espacio: estás
                     contribuyendo a un mundo más justo e inclusivo.
                   </p>
                 </div>
               </motion.div>
-              
+
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -213,9 +236,9 @@ const SobreNosotros = () => {
                 className="relative"
               >
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <img 
-                    src={childrenImage} 
-                    alt="Niños aprendiendo con bloques de construcción" 
+                  <img
+                    src={childrenImage}
+                    alt="Niños aprendiendo con bloques de construcción"
                     className="w-full h-auto"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
@@ -315,7 +338,7 @@ const SobreNosotros = () => {
                 Únete a la revolución del juego consciente
               </h2>
               <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-                Descubre cómo puedes disfrutar de infinitas posibilidades de construcción 
+                Descubre cómo puedes disfrutar de infinitas posibilidades de construcción
                 mientras contribuyes a un mundo mejor.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

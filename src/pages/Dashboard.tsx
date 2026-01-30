@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle, MapPin, Phone, Mail, Pencil, Package } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,11 +21,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // Show profile completion modal if profile is not complete
   useEffect(() => {
-    if (profile && !profile.profile_completed && !authLoading) {
-      setShowProfileModal(true);
-    }
+    // Profile completion check removed as field doesn't exist in new schema
   }, [profile, authLoading]);
 
   useEffect(() => {
@@ -162,40 +160,20 @@ const Dashboard = () => {
             ) : wishlistSets.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {wishlistSets.map((set) => (
-                  <div
+                  <ProductCard
                     key={set.id}
-                    className="bg-card rounded-2xl overflow-hidden shadow-card"
-                  >
-                    <div className="aspect-video bg-secondary/50 overflow-hidden">
-                      <img
-                        src={set.image_url || "/placeholder.svg"}
-                        alt={set.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-5">
-                      <h3 className="font-display font-semibold text-foreground mb-2">
-                        {set.name}
-                      </h3>
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
-                          {set.theme}
-                        </span>
-                        <span className="px-2 py-1 rounded-md text-xs font-medium bg-accent/10 text-accent">
-                          {set.piece_count} piezas
-                        </span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleWishlist(set.id)}
-                        className="w-full text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Eliminar de Wishlist
-                      </Button>
-                    </div>
-                  </div>
+                    id={set.id}
+                    name={set.set_name}
+                    imageUrl={set.set_image_url || "/placeholder.svg"}
+                    theme={set.set_theme}
+                    ageRange={set.set_age_range}
+                    pieceCount={set.set_piece_count}
+                    skillBoost={Array.isArray(set.skill_boost) ? (set.skill_boost as string[]).join(", ") : ""}
+                    legoRef={set.set_ref || undefined}
+                    description={set.set_description}
+                    isWishlisted={true}
+                    onWishlistToggle={toggleWishlist}
+                  />
                 ))}
               </div>
             ) : (
@@ -259,8 +237,8 @@ const Dashboard = () => {
                       {order.sets ? (
                         <div className="aspect-video bg-secondary/50 overflow-hidden">
                           <img
-                            src={order.sets.image_url || "/placeholder.svg"}
-                            alt={order.sets.name}
+                            src={order.sets.set_image_url || "/placeholder.svg"}
+                            alt={order.sets.set_name}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -272,17 +250,17 @@ const Dashboard = () => {
                       <div className="p-5">
                         <div className="flex items-start justify-between mb-2">
                           <h3 className="font-display font-semibold text-foreground">
-                            {order.sets?.name || "Set no disponible"}
+                            {order.sets?.set_name || "Set no disponible"}
                           </h3>
                           {getStatusBadge(order.status)}
                         </div>
                         {order.sets && (
                           <div className="flex flex-wrap gap-2 mb-3">
                             <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
-                              {order.sets.theme}
+                              {order.sets.set_theme}
                             </span>
                             <span className="px-2 py-1 rounded-md text-xs font-medium bg-accent/10 text-accent">
-                              {order.sets.piece_count} piezas
+                              {order.sets.set_piece_count} piezas
                             </span>
                           </div>
                         )}
@@ -371,11 +349,11 @@ const Dashboard = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Dirección</p>
                     <p className="text-foreground">
-                      {profile?.direccion ? (
+                      {profile?.address ? (
                         <>
-                          {profile.direccion}
-                          {profile.codigo_postal && `, ${profile.codigo_postal}`}
-                          {profile.ciudad && ` ${profile.ciudad}`}
+                          {profile.address}
+                          {profile.zip_code && `, ${profile.zip_code}`}
+                          {profile.city && ` ${profile.city}`}
                         </>
                       ) : (
                         "No especificada"
@@ -387,7 +365,7 @@ const Dashboard = () => {
                   <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm text-muted-foreground">Teléfono</p>
-                    <p className="text-foreground">{profile?.telefono || "No especificado"}</p>
+                    <p className="text-foreground">{profile?.phone || "No especificado"}</p>
                   </div>
                 </div>
               </div>

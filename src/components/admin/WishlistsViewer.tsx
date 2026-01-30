@@ -25,9 +25,9 @@ const WishlistsViewer = () => {
           created_at,
           sets (
             id,
-            name,
-            theme,
-            age_range
+            set_name,
+            set_theme,
+            set_age_range
           )
         `)
         .order("created_at", { ascending: false });
@@ -35,15 +35,15 @@ const WishlistsViewer = () => {
       if (wishlistError) throw wishlistError;
 
       // Fetch profiles separately
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
+      const { data: users, error: profilesError } = await supabase
+        .from("users")
         .select("user_id, full_name");
 
       if (profilesError) throw profilesError;
 
       // Create a map of user_id to full_name
       const profileMap = new Map(
-        profiles?.map((p) => [p.user_id, p.full_name]) || []
+        users?.map((p) => [p.user_id, p.full_name]) || []
       );
 
       // Combine the data
@@ -113,10 +113,10 @@ const WishlistsViewer = () => {
                       return (
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">
-                            {setData?.name || "Unknown Set"}
+                            {setData?.set_name || "Unknown Set"}
                           </TableCell>
-                          <TableCell>{setData?.theme}</TableCell>
-                          <TableCell>{setData?.age_range}</TableCell>
+                          <TableCell>{setData?.set_theme}</TableCell>
+                          <TableCell>{setData?.set_age_range}</TableCell>
                           <TableCell>
                             {format(new Date(item.created_at), "MMM d, yyyy")}
                           </TableCell>

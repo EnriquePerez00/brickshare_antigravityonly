@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Search, Filter, X, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -15,78 +17,84 @@ import { useWishlist } from "@/hooks/useWishlist";
 const sampleSets = [
   {
     id: "sample-1",
-    name: "City - Estación de Bomberos",
-    image_url: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
-    theme: "City",
-    age_range: "6-12 años",
-    piece_count: 509,
+    set_name: "Estación de Bomberos",
+    set_ref: "60320",
+    set_image_url: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
+    set_theme: "City",
+    set_age_range: "6+ años",
+    set_piece_count: 509,
     skill_boost: ["Motricidad fina", "trabajo en equipo"],
-    description: null,
+    set_description: "Una moderna estación de bomberos con camión, helicóptero y personajes icónicos para misiones de rescate.",
     created_at: "",
     year_released: 2023,
     catalogue_visibility: true,
   },
   {
     id: "sample-2",
-    name: "Technic - Excavadora Pesada",
-    image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
-    theme: "Technic",
-    age_range: "9-16 años",
-    piece_count: 834,
+    set_name: "Excavadora Pesada",
+    set_ref: "42121",
+    set_image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+    set_theme: "Technic",
+    set_age_range: "9+ años",
+    set_piece_count: 834,
     skill_boost: ["Lógica", "mecánica"],
-    description: null,
+    set_description: "2 modelos en 1: construye una excavadora o una retroexcavadora para aprender sobre ingeniería real.",
     created_at: "",
     year_released: 2022,
     catalogue_visibility: true,
   },
   {
     id: "sample-3",
-    name: "Creator - Casa Familiar Moderna",
-    image_url: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&h=400&fit=crop",
-    theme: "Creator",
-    age_range: "8-12 años",
-    piece_count: 728,
+    set_name: "Casa Familiar Moderna",
+    set_ref: "31139",
+    set_image_url: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&h=400&fit=crop",
+    set_theme: "Creator",
+    set_age_range: "8+ años",
+    set_piece_count: 728,
     skill_boost: ["Creatividad", "visión espacial"],
-    description: null,
+    set_description: "Reconstruye esta acogedora casa en una vivienda junto al canal o una pintoresca casa de playa.",
     created_at: "",
     year_released: 2023,
     catalogue_visibility: true,
   },
   {
     id: "sample-4",
-    name: "Friends - Centro Comercial",
-    image_url: "https://images.unsplash.com/photo-1599623560574-39d485900c95?w=400&h=400&fit=crop",
-    theme: "Friends",
-    age_range: "7-12 años",
-    piece_count: 446,
+    set_name: "Centro Comercial",
+    set_ref: "41450",
+    set_image_url: "https://images.unsplash.com/photo-1599623560574-39d485900c95?w=400&h=400&fit=crop",
+    set_theme: "Friends",
+    set_age_range: "8+ años",
+    set_piece_count: 446,
     skill_boost: ["Imaginación", "juego social"],
-    description: null,
+    set_description: "Descubre el mundo de Friends con este centro comercial lleno de tiendas y accesorios divertidos.",
     created_at: "",
     year_released: 2021,
     catalogue_visibility: true,
   },
   {
     id: "sample-5",
-    name: "Star Wars - Nave Estelar",
-    image_url: "https://images.unsplash.com/photo-1518946222227-364f22132616?w=400&h=400&fit=crop",
-    theme: "Star Wars",
-    age_range: "10-16 años",
-    piece_count: 1353,
+    set_name: "Nave Estelar",
+    set_ref: "75301",
+    set_image_url: "https://images.unsplash.com/photo-1518946222227-364f22132616?w=400&h=400&fit=crop",
+    set_theme: "Star Wars",
+    set_age_range: "9+ años",
+    set_piece_count: 1353,
     skill_boost: ["Paciencia", "concentración"],
-    description: null,
+    set_description: "Únete a la Rebelión con esta mítica nave. Incluye mini figuras de Luke Skywalker y R2-D2.",
     created_at: "",
     year_released: 2023,
     catalogue_visibility: true,
   },
   {
     id: "sample-6",
-    name: "City - Comisaría de Policía",
-    image_url: "https://images.unsplash.com/photo-1560961911-ba7ef651a56c?w=400&h=400&fit=crop",
-    theme: "City",
-    age_range: "6-12 años",
-    piece_count: 668,
+    set_name: "Comisaría de Policía",
+    set_ref: "60316",
+    set_image_url: "https://images.unsplash.com/photo-1560961911-ba7ef651a56c?w=400&h=400&fit=crop",
+    set_theme: "City",
+    set_age_range: "6+ años",
+    set_piece_count: 668,
     skill_boost: ["Narrativa", "juego de roles"],
-    description: null,
+    set_description: "Protege la ciudad con esta completa comisaría. Incluye calabozo, patrulla y dron de vigilancia.",
     created_at: "",
     year_released: 2022,
     catalogue_visibility: true,
@@ -103,8 +111,28 @@ const pieceRanges = [
 ];
 
 const Catalogo = () => {
+  const { isAdmin, isOperador, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const { data: dbSets = [], isLoading: setsLoading } = useSets(100);
   const { isWishlisted, toggleWishlist } = useWishlist();
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (isAdmin) {
+        navigate("/admin");
+      } else if (isOperador) {
+        navigate("/operaciones");
+      }
+    }
+  }, [isAdmin, isOperador, authLoading, navigate]);
+
+  if (authLoading || isAdmin || isOperador) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
@@ -142,11 +170,11 @@ const Catalogo = () => {
   };
 
   const filteredSets = allSets.filter(set => {
-    const matchesSearch = set.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTheme = selectedThemes.length === 0 || selectedThemes.includes(set.theme);
-    const matchesAge = selectedAges.length === 0 || selectedAges.includes(set.age_range);
+    const matchesSearch = (set.set_name || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTheme = selectedThemes.length === 0 || selectedThemes.includes(set.set_theme);
+    const matchesAge = selectedAges.length === 0 || selectedAges.includes(set.set_age_range);
     const matchesPieces = selectedPieces.length === 0 || selectedPieces.some(
-      range => set.piece_count >= range.min && set.piece_count <= range.max
+      range => (set.set_piece_count || 0) >= range.min && (set.set_piece_count || 0) <= range.max
     );
     return matchesSearch && matchesTheme && matchesAge && matchesPieces;
   });
@@ -306,17 +334,19 @@ const Catalogo = () => {
                   <p className="text-sm text-muted-foreground mb-6">
                     {filteredSets.length} {filteredSets.length === 1 ? 'set encontrado' : 'sets encontrados'}
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredSets.map((setData) => (
                       <ProductCard
                         key={setData.id}
                         id={setData.id}
-                        name={setData.name}
-                        imageUrl={setData.image_url || "/placeholder.svg"}
-                        theme={setData.theme}
-                        ageRange={setData.age_range}
-                        pieceCount={setData.piece_count}
-                        skillBoost={Array.isArray(setData.skill_boost) ? setData.skill_boost.join(", ") : ""}
+                        name={setData.set_name}
+                        imageUrl={setData.set_image_url || "/placeholder.svg"}
+                        theme={setData.set_theme}
+                        ageRange={setData.set_age_range}
+                        pieceCount={setData.set_piece_count}
+                        skillBoost={Array.isArray(setData.skill_boost) ? (setData.skill_boost as string[]).join(", ") : ""}
+                        legoRef={setData.set_ref}
+                        description={setData.set_description}
                         isWishlisted={isWishlisted(setData.id)}
                         onWishlistToggle={toggleWishlist}
                       />

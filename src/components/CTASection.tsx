@@ -25,7 +25,7 @@ const CTASection = () => {
             {/* Background decoration */}
             <div className="absolute top-0 right-0 w-64 h-64 gradient-hero opacity-10 rounded-full blur-3xl" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent opacity-10 rounded-full blur-3xl" />
-            
+
             <div className="relative z-10 text-center">
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
@@ -36,7 +36,7 @@ const CTASection = () => {
               >
                 ¿Listo para jugar con propósito?
               </motion.h2>
-              
+
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -44,7 +44,7 @@ const CTASection = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto"
               >
-                Únete a miles de familias que ya disfrutan de sets de construcción sin acumular, 
+                Únete a miles de familias que ya disfrutan de sets de construcción sin acumular,
                 mientras generan impacto social positivo.
               </motion.p>
 
@@ -73,7 +73,7 @@ const CTASection = () => {
                 className="flex flex-col sm:flex-row gap-4 justify-center"
               >
                 <Button size="lg" className="gradient-hero text-lg px-8" asChild>
-                  <Link to="/auth">
+                  <Link to="/auth" data-testid="cta-register-link">
                     Comenzar ahora
                     <ArrowRight className="h-5 w-5 ml-2" />
                   </Link>

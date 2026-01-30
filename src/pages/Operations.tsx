@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, ClipboardList, Boxes, Settings } from "lucide-react";
-import InventoryManager from "@/components/admin/InventoryManager";
+import { Truck, ClipboardList, Boxes, Settings, UserPlus } from "lucide-react";
+import SetAssignment from "@/components/admin/SetAssignment";
 import ShipmentsList from "@/components/admin/ShipmentsList";
 import ReturnsList from "@/components/admin/ReturnsList";
 import Navbar from "@/components/Navbar";
@@ -42,11 +42,11 @@ const Operations = () => {
                     </p>
                 </div>
 
-                <Tabs defaultValue="inventory" className="space-y-6">
+                <Tabs defaultValue="assignment" className="space-y-6">
                     <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
-                        <TabsTrigger value="inventory" className="flex items-center gap-2">
-                            <Boxes className="h-4 w-4" />
-                            Inventario
+                        <TabsTrigger value="assignment" className="flex items-center gap-2">
+                            <UserPlus className="h-4 w-4" />
+                            Asignación sets
                         </TabsTrigger>
                         <TabsTrigger value="shipments" className="flex items-center gap-2">
                             <Truck className="h-4 w-4" />
@@ -62,8 +62,8 @@ const Operations = () => {
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="inventory" className="space-y-4">
-                        <InventoryManager />
+                    <TabsContent value="assignment" className="space-y-4">
+                        <SetAssignment />
                     </TabsContent>
 
                     <TabsContent value="shipments">
@@ -84,7 +84,7 @@ const Operations = () => {
                 </Tabs>
             </div>
             <Footer />
-        </div>
+        </div >
     );
 };
 

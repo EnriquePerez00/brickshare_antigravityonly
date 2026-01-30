@@ -3,18 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface SetData {
   id: string;
-  name: string;
-  description: string | null;
-  image_url: string | null;
-  theme: string;
-  age_range: string;
-  piece_count: number;
+  set_name: string;
+  set_description: string | null;
+  set_image_url: string | null;
+  set_theme: string;
+  set_age_range: string;
+  set_piece_count: number;
   skill_boost: string[] | null;
   created_at: string;
   year_released: number | null;
   set_weight: number | null;
   catalogue_visibility: boolean;
-  lego_ref: string | null;
+  set_ref: string | null;
 }
 
 export const useSets = (limit = 20, offset = 0) => {
@@ -23,7 +23,7 @@ export const useSets = (limit = 20, offset = 0) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sets")
-        .select("id, name, description, image_url, theme, age_range, piece_count, skill_boost, created_at, year_released, set_weight, catalogue_visibility, lego_ref")
+        .select("id, set_name, set_description, set_image_url, set_theme, set_age_range, set_piece_count, skill_boost, created_at, year_released, set_weight, catalogue_visibility, set_ref")
         .eq("catalogue_visibility", true)
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);

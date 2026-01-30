@@ -46,13 +46,13 @@ import { useRef } from "react";
 
 
 const setSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  lego_ref: z.string().optional(),
-  description: z.string().optional(),
-  theme: z.string().min(1, "Theme is required"),
-  age_range: z.string().min(1, "Age range is required"),
-  piece_count: z.coerce.number().min(1, "Piece count must be at least 1"),
-  image_url: z.string().url().optional().or(z.literal("")),
+  set_name: z.string().min(1, "Name is required"),
+  set_ref: z.string().optional(),
+  set_description: z.string().optional(),
+  set_theme: z.string().min(1, "Theme is required"),
+  set_age_range: z.string().min(1, "Age range is required"),
+  set_piece_count: z.coerce.number().min(1, "Piece count must be at least 1"),
+  set_image_url: z.string().url().optional().or(z.literal("")),
   skill_boost: z.string().optional(),
   year_released: z.coerce.number().min(1900, "Valid year required").optional(),
   set_weight: z.coerce.number().optional().or(z.literal(0)),
@@ -72,13 +72,13 @@ const ProductsManager = () => {
   const form = useForm<SetFormData>({
     resolver: zodResolver(setSchema),
     defaultValues: {
-      name: "",
-      lego_ref: "",
-      description: "",
-      theme: "",
-      age_range: "",
-      piece_count: 0,
-      image_url: "",
+      set_name: "",
+      set_ref: "",
+      set_description: "",
+      set_theme: "",
+      set_age_range: "",
+      set_piece_count: 0,
+      set_image_url: "",
       skill_boost: "",
       year_released: new Date().getFullYear(),
       set_weight: 0,
@@ -93,7 +93,12 @@ const ProductsManager = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sets")
-        .select("*")
+        .select(`
+          *,
+          inventory_sets (
+            inventory_set_total_qty
+          )
+        `)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as any;
@@ -107,13 +112,13 @@ const ProductsManager = () => {
         : null;
 
       const { error } = await supabase.from("sets").insert({
-        name: data.name,
-        lego_ref: data.lego_ref || null,
-        description: data.description || null,
-        theme: data.theme,
-        age_range: data.age_range,
-        piece_count: data.piece_count,
-        image_url: data.image_url || null,
+        set_name: data.set_name,
+        set_ref: data.set_ref || null,
+        set_description: data.set_description || null,
+        set_theme: data.set_theme,
+        set_age_range: data.set_age_range,
+        set_piece_count: data.set_piece_count,
+        set_image_url: data.set_image_url || null,
         skill_boost: skillBoostArray,
         year_released: data.year_released,
         set_weight: data.set_weight || null,
@@ -143,13 +148,13 @@ const ProductsManager = () => {
       const { error } = await supabase
         .from("sets")
         .update({
-          name: data.name,
-          lego_ref: data.lego_ref || null,
-          description: data.description || null,
-          theme: data.theme,
-          age_range: data.age_range,
-          piece_count: data.piece_count,
-          image_url: data.image_url || null,
+          set_name: data.set_name,
+          set_ref: data.set_ref || null,
+          set_description: data.set_description || null,
+          set_theme: data.set_theme,
+          set_age_range: data.set_age_range,
+          set_piece_count: data.set_piece_count,
+          set_image_url: data.set_image_url || null,
           skill_boost: skillBoostArray,
           year_released: data.year_released,
           set_weight: data.set_weight || null,
@@ -189,13 +194,13 @@ const ProductsManager = () => {
   const handleEdit = (set: any) => {
     setEditingSet(set);
     form.reset({
-      name: set.name,
-      lego_ref: set.lego_ref || "",
-      description: set.description || "",
-      theme: set.theme,
-      age_range: set.age_range,
-      piece_count: set.piece_count,
-      image_url: set.image_url || "",
+      set_name: set.set_name,
+      set_ref: set.set_ref || "",
+      set_description: set.set_description || "",
+      set_theme: set.set_theme,
+      set_age_range: set.set_age_range,
+      set_piece_count: set.set_piece_count,
+      set_image_url: set.set_image_url || "",
       skill_boost: set.skill_boost?.join(", ") || "",
       year_released: set.year_released,
       set_weight: set.set_weight || 0,
@@ -207,7 +212,7 @@ const ProductsManager = () => {
   };
 
   const handleEnrich = async () => {
-    const legoRef = form.getValues("lego_ref");
+    const legoRef = form.getValues("set_ref");
     if (!legoRef) {
       toast.error("Por favor, introduce una referencia de LEGO");
       return;
@@ -215,10 +220,10 @@ const ProductsManager = () => {
 
     const data = await fetchLegoData(legoRef);
     if (data) {
-      form.setValue("name", data.name || form.getValues("name"));
-      form.setValue("piece_count", data.piece_count || form.getValues("piece_count"));
+      form.setValue("set_name", data.name || form.getValues("set_name"));
+      form.setValue("set_piece_count", data.piece_count || form.getValues("set_piece_count"));
       form.setValue("year_released", data.year_released || form.getValues("year_released"));
-      form.setValue("image_url", data.image_url || form.getValues("image_url"));
+      form.setValue("set_image_url", data.image_url || form.getValues("set_image_url"));
       toast.success("Datos autocompletados desde Rebrickable");
     }
   };
@@ -243,8 +248,8 @@ const ProductsManager = () => {
         if (refs.length > 0) {
           const { data: existingSets, error: checkError } = await supabase
             .from("sets")
-            .select("lego_ref")
-            .in("lego_ref", refs);
+            .select("set_ref")
+            .in("set_ref", refs);
 
           if (checkError) {
             toast.error("Error verificando duplicados: " + checkError.message);
@@ -252,20 +257,20 @@ const ProductsManager = () => {
           }
 
           if (existingSets && existingSets.length > 0) {
-            const existingRefs = existingSets.map((s) => s.lego_ref).join(", ");
+            const existingRefs = existingSets.map((s) => s.set_ref).join(", ");
             toast.error(`Set(s) ya en la bb.dd: ${existingRefs}`);
             return;
           }
         }
 
         const setsToInsert = data.map((row: any) => ({
-          name: row.Rebrickable_name || "Unknown Set",
-          lego_ref: row.REF || null,
-          description: row.Brickset_description || null,
-          theme: row.Rebrickable_Theme || "Unknown",
-          age_range: row.Brickset_age_range || "N/A",
-          piece_count: parseInt(row.bircklink_parts || row.Bricklink_parts) || 0,
-          image_url: row.Rebrickable_Image_URL || null,
+          set_name: row.Rebrickable_name || "Unknown Set",
+          set_ref: row.REF || null,
+          set_description: row.Brickset_description || null,
+          set_theme: row.Rebrickable_Theme || "Unknown",
+          set_age_range: row.Brickset_age_range || "N/A",
+          set_piece_count: parseInt(row.bircklink_parts || row.Bricklink_parts) || 0,
+          set_image_url: row.Rebrickable_Image_URL || null,
           set_weight: parseFloat(row["Bricklink_weight(gr)"]) || 0,
           set_minifigs: parseInt(row.Bricklink_minifigs) || 0,
           set_dim: row.Bricklink_dim || null,
@@ -343,7 +348,7 @@ const ProductsManager = () => {
                   >
                     <FormField
                       control={form.control}
-                      name="name"
+                      name="set_name"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Name</FormLabel>
@@ -356,7 +361,7 @@ const ProductsManager = () => {
                     />
                     <FormField
                       control={form.control}
-                      name="lego_ref"
+                      name="set_ref"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Referencia LEGO</FormLabel>
@@ -385,7 +390,7 @@ const ProductsManager = () => {
                     />
                     <FormField
                       control={form.control}
-                      name="description"
+                      name="set_description"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Description</FormLabel>
@@ -402,7 +407,7 @@ const ProductsManager = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="theme"
+                        name="set_theme"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Theme</FormLabel>
@@ -415,7 +420,7 @@ const ProductsManager = () => {
                       />
                       <FormField
                         control={form.control}
-                        name="age_range"
+                        name="set_age_range"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Age Range</FormLabel>
@@ -430,7 +435,7 @@ const ProductsManager = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="piece_count"
+                        name="set_piece_count"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Piece Count</FormLabel>
@@ -523,7 +528,7 @@ const ProductsManager = () => {
                     />
                     <FormField
                       control={form.control}
-                      name="image_url"
+                      name="set_image_url"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Image URL</FormLabel>
@@ -594,10 +599,7 @@ const ProductsManager = () => {
                   <TableHead>Ref</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Theme</TableHead>
-                  <TableHead>Year</TableHead>
-                  <TableHead>Weight (g)</TableHead>
-                  <TableHead>Minifigs</TableHead>
-                  <TableHead>Dims</TableHead>
+                  <TableHead>Stock Total</TableHead>
                   <TableHead>Visible</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -605,13 +607,10 @@ const ProductsManager = () => {
               <TableBody>
                 {sets?.map((set) => (
                   <TableRow key={set.id}>
-                    <TableCell className="font-medium">{set.lego_ref || "-"}</TableCell>
-                    <TableCell>{set.name}</TableCell>
-                    <TableCell>{set.theme}</TableCell>
-                    <TableCell>{set.year_released || "-"}</TableCell>
-                    <TableCell>{set.set_weight || "-"}</TableCell>
-                    <TableCell>{set.set_minifigs || "-"}</TableCell>
-                    <TableCell>{set.set_dim || "-"}</TableCell>
+                    <TableCell className="font-medium">{set.set_ref || "-"}</TableCell>
+                    <TableCell>{set.set_name}</TableCell>
+                    <TableCell>{set.set_theme}</TableCell>
+                    <TableCell>{set.inventory_sets?.inventory_set_total_qty || 0}</TableCell>
                     <TableCell>{set.catalogue_visibility ? "Yes" : "No"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

@@ -6,14 +6,20 @@ export interface Profile {
   id: string;
   user_id: string;
   full_name: string | null;
+  email: string | null;
   avatar_url: string | null;
   sub_status: string | null;
+  user_status: string | null;
   impact_points: number | null;
-  direccion: string | null;
-  codigo_postal: string | null;
-  ciudad: string | null;
-  telefono: string | null;
-  profile_completed: boolean | null;
+  address: string | null;
+  address_extra: string | null;
+  zip_code: string | null;
+  city: string | null;
+  province: string | null;
+  phone: string | null;
+  subscription_id: string | null;
+  subscription_status: string | null;
+  subscription_type: string | null;
 }
 
 interface AuthContextType {
@@ -46,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
-      .from("profiles")
+      .from("users")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
@@ -207,7 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return { error: new Error("No user logged in") };
 
     const { error } = await supabase
-      .from("profiles")
+      .from("users")
       .update(data)
       .eq("user_id", user.id);
 

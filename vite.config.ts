@@ -9,8 +9,9 @@ export default defineConfig(({ mode }) => ({
   // We detect GITHUB_ACTIONS env to set the base path for Pages.
   base: process.env.GITHUB_ACTIONS && !process.env.VERCEL ? '/brickshare_antigravityonly/' : '/',
   server: {
-    host: "::",
+    host: true,
     port: 8080,
+    cors: true,
     hmr: {
       overlay: false,
     },

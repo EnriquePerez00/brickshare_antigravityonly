@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import {
   Heart,
@@ -135,14 +137,34 @@ const faqs = [
 ];
 
 const ComoFunciona = () => {
-  const { startSubscription, isLoading } = useSubscription();
+  const { startSubscription, isLoading: subscriptionLoading } = useSubscription();
+  const { isAdmin, isOperador, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (isAdmin) {
+        navigate("/admin");
+      } else if (isOperador) {
+        navigate("/operaciones");
+      }
+    }
+  }, [isAdmin, isOperador, authLoading, navigate]);
 
   const handleSubscribe = async (plan: any) => {
     setLoadingPlan(plan.name);
     await startSubscription(plan.name, plan.priceId);
     setLoadingPlan(null);
   };
+
+  if (authLoading || isAdmin || isOperador) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -311,7 +333,7 @@ const ComoFunciona = () => {
                       <Button
                         className={`w-full bg-gradient-to-r ${plan.color} hover:opacity-90 text-white border-0`}
                         onClick={() => handleSubscribe(plan)}
-                        disabled={isLoading}
+                        disabled={subscriptionLoading}
                       >
                         {loadingPlan === plan.name ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />

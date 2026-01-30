@@ -64,11 +64,11 @@ const ReturnsList = () => {
                 <TableBody>
                     {returns.map((shipment) => (
                         <TableRow key={shipment.id}>
-                            <TableCell className="font-medium text-xs truncate max-w-[100px]" title={shipment.profiles?.full_name || shipment.user_id}>
-                                {shipment.profiles?.full_name || shipment.user_id.substring(0, 8)}
+                            <TableCell className="font-medium text-xs truncate max-w-[100px]" title={shipment.users?.full_name || shipment.user_id}>
+                                {shipment.users?.full_name || shipment.user_id.substring(0, 8)}
                             </TableCell>
                             <TableCell>
-                                {shipment.orders?.sets?.lego_ref || "-"}
+                                {shipment.orders?.sets?.set_ref || "-"}
                             </TableCell>
                             <TableCell>
                                 {formatDate(shipment.fecha_asignada)}

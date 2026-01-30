@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Users, Boxes } from "lucide-react";
 import SetsManager from "@/components/admin/ProductsManager";
-import WishlistsViewer from "@/components/admin/WishlistsViewer";
+import PiecePurchaseManager from "@/components/admin/PiecePurchaseManager";
 import InventoryManager from "@/components/admin/InventoryManager";
+import { ShoppingCart, Package, Boxes } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -38,7 +38,7 @@ const Admin = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Panel de Administración</h1>
           <p className="text-muted-foreground mt-2">
-            Gestiona los sets de LEGO, el inventario y consulta las wishlists de los usuarios
+            Gestiona los sets de LEGO, el inventario y las piezas pendientes de compra.
           </p>
         </div>
 
@@ -48,9 +48,9 @@ const Admin = () => {
               <Package className="h-4 w-4" />
               Sets
             </TabsTrigger>
-            <TabsTrigger value="wishlists" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Wishlists
+            <TabsTrigger value="purchase" className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              Compra piezas
             </TabsTrigger>
             <TabsTrigger value="inventory" className="flex items-center gap-2">
               <Boxes className="h-4 w-4" />
@@ -62,8 +62,8 @@ const Admin = () => {
             <SetsManager />
           </TabsContent>
 
-          <TabsContent value="wishlists">
-            <WishlistsViewer />
+          <TabsContent value="purchase">
+            <PiecePurchaseManager />
           </TabsContent>
 
           <TabsContent value="inventory">

@@ -17,10 +17,10 @@ export interface OrderData {
     updated_at: string;
     sets?: {
         id: string;
-        name: string;
-        image_url: string | null;
-        theme: string;
-        piece_count: number;
+        set_name: string;
+        set_image_url: string | null;
+        set_theme: string;
+        set_piece_count: number;
     } | null;
 }
 
@@ -38,10 +38,10 @@ export const useOrders = () => {
           *,
           sets:set_id (
             id,
-            name,
-            image_url,
-            theme,
-            piece_count
+            set_name,
+            set_image_url,
+            set_theme,
+            set_piece_count
           )
         `)
                 .eq("user_id", user.id)

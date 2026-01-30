@@ -15,6 +15,14 @@ import {
 import { Plus, Pencil, Package, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import Papa from "papaparse";
 
 const InventoryManager = () => {
@@ -29,16 +37,17 @@ const InventoryManager = () => {
   // The user asked for "edit and delete icons", so I should re-enable editing logic if it was lost or add it if missing.
 
   const { data: inventory, isLoading } = useQuery({
-    queryKey: ["admin-inventory"],
+    queryKey: ["admin-inventory-sets"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("inventory")
+        .from("inventory_sets")
         .select(`
           *,
           sets (
             id,
-            name,
-            theme
+            set_name,
+            set_theme,
+            set_ref
           )
         `)
         .order("created_at", { ascending: false });
@@ -49,35 +58,56 @@ const InventoryManager = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("inventory").delete().eq("id", id);
+      const { error } = await supabase.from("inventory_sets").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
-      toast.success("Inventory deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-inventory-sets"] });
+      toast.success("Inventario eliminado correctamente");
     },
     onError: (error) => {
-      toast.error("Failed to delete inventory: " + error.message);
+      toast.error("Error al eliminar inventario: " + error.message);
     },
   });
 
-  // Placeholder handleEdit if full edit dialog logic isn't restored yet, 
-  // but to satisfy the linter and user request for ICON, I should implement what it does.
-  // Since I removed the dialog logic in favor of CSV upload, maybe "Edit" means nothing now?
-  // But products manager EDIT opens a dialog.
-  // The user said "Elimina el icono de subir CSV... en el icono Add inventory solicita subir un fichero".
-  // So "Add Inventory" became "Upload CSV".
-  // Now "Edit" icon? Maybe to edit stock numbers manually?
-  // I will re-add the state for editing, but for now I'll just make it log or show a "Not implemented" toast if the dialog form is gone.
-  // Wait, I see I removed the dialog form in step 132.
-  // I should probably bring back the manual edit form if the user wants "Edit" icon functionality.
-  // For now I will define it to avoid crashes.
+  const updateMutation = useMutation({
+    mutationFn: async (values: any) => {
+      const { id, ...updateData } = values;
+      const { error } = await supabase
+        .from("inventory_sets")
+        .update(updateData)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-inventory-sets"] });
+      toast.success("Inventario actualizado correctamente");
+      setIsDialogOpen(false);
+      setEditingInventory(null);
+    },
+    onError: (error) => {
+      toast.error("Error al actualizar inventario: " + error.message);
+    },
+  });
 
   const handleEdit = (item: any) => {
-    toast.info("Manual editing is temporarily disabled in favor of CSV updates. Feature coming back soon.");
-    // In a real scenario I'd re-implement the form dialog here. 
-    // But user only asked for the icons to be added. 
-    // I'll make delete work fully.
+    setEditingInventory({ ...item });
+    setIsDialogOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!editingInventory) return;
+
+    const { id, inventory_set_total_qty, en_envio, en_uso, en_devolucion, en_reparacion } = editingInventory;
+
+    updateMutation.mutate({
+      id,
+      inventory_set_total_qty: parseInt(inventory_set_total_qty),
+      en_envio: parseInt(en_envio),
+      en_uso: parseInt(en_uso),
+      en_devolucion: parseInt(en_devolucion),
+      en_reparacion: parseInt(en_reparacion),
+    });
   };
 
   // Re-adding handleEdit properly requires state.
@@ -90,14 +120,14 @@ const InventoryManager = () => {
     // Fetch all sets to map lego_ref to set_id
     const { data: allSets, error: setsError } = await supabase
       .from("sets")
-      .select("id, lego_ref");
+      .select("id, set_ref");
 
     if (setsError) {
       toast.error("Error al obtener referencias de LEGO: " + setsError.message);
       return;
     }
 
-    const refToIdMap = new Map(allSets.map(s => [s.lego_ref, s.id]));
+    const refToIdMap = new Map(allSets.map(s => [s.set_ref, s.id]));
 
     Papa.parse(file, {
       header: true,
@@ -113,8 +143,8 @@ const InventoryManager = () => {
         if (refs.length > 0) {
           const { data: existingPieces, error: checkError } = await supabase
             .from("set_piece_list" as any)
-            .select("lego_ref")
-            .in("lego_ref", refs);
+            .select("set_ref")
+            .in("set_ref", refs);
 
           if (checkError) {
             toast.error("Error verificando duplicados: " + checkError.message);
@@ -122,8 +152,8 @@ const InventoryManager = () => {
           }
 
           if (existingPieces && existingPieces.length > 0) {
-            // Correctly cast existingPieces to extract lego_ref if types are missing
-            const existingRefs = [...new Set(existingPieces.map((p: any) => p.lego_ref))].join(", ");
+            // Correctly cast existingPieces to extract set_ref if types are missing
+            const existingRefs = [...new Set(existingPieces.map((p: any) => p.set_ref))].join(", ");
             toast.error(`Inventario ya en la bb.dd para: ${existingRefs}`);
             return;
           }
@@ -137,15 +167,15 @@ const InventoryManager = () => {
           }
           return {
             set_id: setId,
-            lego_ref: row.REF,
+            set_ref: row.REF,
             piece_ref: row.piece_ref,
             color_ref: row.bricklink_color,
             piece_description: row.piece_description,
             piece_qty: parseInt(row.rebrickable_qty) || 0,
-            piece_url: row.bricklink_image_piece_url,
+            piece_image_url: row.bricklink_image_piece_url,
             piece_weight: parseFloat(row["bricklink_piece_weight(gr)"]?.replace(",", ".")) || 0,
             piece_studdim: row.bricklink_piece_studdim,
-            lego_element_id: row.element_id,
+            piece_lego_elementid: row.element_id,
             bricklink_color_id: row.bricklink_color_id,
           };
         }).filter(Boolean);
@@ -178,11 +208,10 @@ const InventoryManager = () => {
     }
   };
 
-  const getStockStatus = (available: number, total: number) => {
-    const ratio = total > 0 ? available / total : 0;
-    if (ratio === 0) return { label: "Out of Stock", variant: "destructive" as const };
-    if (ratio < 0.3) return { label: "Low Stock", variant: "secondary" as const };
-    return { label: "In Stock", variant: "default" as const };
+  const getStockStatus = (total: number) => {
+    if (total === 0) return { label: "Sin Stock", variant: "destructive" as const };
+    if (total < 5) return { label: "Stock bajo", variant: "secondary" as const };
+    return { label: "Con Stock", variant: "default" as const };
   };
 
   return (
@@ -222,44 +251,40 @@ const InventoryManager = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Set</TableHead>
+                  <TableHead>Set (Ref)</TableHead>
                   <TableHead className="text-center">Total</TableHead>
-                  <TableHead className="text-center">Available</TableHead>
-                  <TableHead className="text-center">Shipping</TableHead>
-                  <TableHead className="text-center">In Use</TableHead>
-                  <TableHead className="text-center">Returning</TableHead>
-                  <TableHead className="text-center">Completing</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-center">Envío</TableHead>
+                  <TableHead className="text-center">En uso</TableHead>
+                  <TableHead className="text-center">Devolución</TableHead>
+                  <TableHead className="text-center">Reparación</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {inventory?.map((item) => {
                   const status = getStockStatus(
-                    item.available_stock,
-                    item.total_stock
+                    item.inventory_set_total_qty
                   );
                   return (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
-                        {item.sets?.name || "Unknown"}
+                        {item.sets?.set_name} ({item.sets?.set_ref})
                       </TableCell>
                       <TableCell className="text-center">
-                        {item.total_stock}
+                        {item.inventory_set_total_qty}
                       </TableCell>
                       <TableCell className="text-center">
-                        {item.available_stock}
+                        {item.en_envio}
                       </TableCell>
                       <TableCell className="text-center">
-                        {item.shipping_count}
+                        {item.en_uso}
                       </TableCell>
                       <TableCell className="text-center">
-                        {item.being_used_count}
+                        {item.en_devolucion}
                       </TableCell>
                       <TableCell className="text-center">
-                        {item.returning_count}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {item.being_completed_count}
+                        {item.en_reparacion}
                       </TableCell>
                       <TableCell>
                         <Badge variant={status.variant}>{status.label}</Badge>
@@ -291,6 +316,70 @@ const InventoryManager = () => {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Inventario</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="total" className="text-right">Total</Label>
+              <Input
+                id="total"
+                type="number"
+                className="col-span-3"
+                value={editingInventory?.inventory_set_total_qty || 0}
+                onChange={(e) => setEditingInventory({ ...editingInventory, inventory_set_total_qty: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="envio" className="text-right">Envío</Label>
+              <Input
+                id="envio"
+                type="number"
+                className="col-span-3"
+                value={editingInventory?.en_envio || 0}
+                onChange={(e) => setEditingInventory({ ...editingInventory, en_envio: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="uso" className="text-right">En uso</Label>
+              <Input
+                id="uso"
+                type="number"
+                className="col-span-3"
+                value={editingInventory?.en_uso || 0}
+                onChange={(e) => setEditingInventory({ ...editingInventory, en_uso: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="devolucion" className="text-right">Devolución</Label>
+              <Input
+                id="devolucion"
+                type="number"
+                className="col-span-3"
+                value={editingInventory?.en_devolucion || 0}
+                onChange={(e) => setEditingInventory({ ...editingInventory, en_devolucion: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="reparacion" className="text-right">Reparación</Label>
+              <Input
+                id="reparacion"
+                type="number"
+                className="col-span-3"
+                value={editingInventory?.en_reparacion || 0}
+                onChange={(e) => setEditingInventory({ ...editingInventory, en_reparacion: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={updateMutation.isPending}>Guardar cambios</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

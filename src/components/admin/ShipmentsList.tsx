@@ -7,27 +7,17 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { Package } from "lucide-react";
 
 const ShipmentsList = () => {
     const { data: shipments, isLoading } = useShipments();
 
-    // Filter only shipments that are NOT returns (or just show all with status filtering if preferred)
-    // For now, let's show all shipments in this section but maybe filtered by relevant statuses
-    const activeShipments = shipments?.filter(s =>
-        ['pendiente', 'asignado', 'en_transito', 'entregado'].includes(s.estado_envio)
-    );
-
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return "-";
-        try {
-            return format(new Date(dateString), "dd/MM/yyyy", { locale: es });
-        } catch (e) {
-            return "-";
-        }
-    };
+    // Filter shipments by allowed estados and sort by updated_at DESC (most recent first)
+    const activeShipments = shipments
+        ?.filter(s =>
+            ['preparado_envio', 'enviado', 'preparado_devolucion', 'devuelto'].includes(s.estado_envio)
+        )
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
     if (isLoading) {
         return <div className="animate-pulse space-y-4">
@@ -49,30 +39,37 @@ const ShipmentsList = () => {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>set_num</TableHead>
-                        <TableHead>fecha_asignacion</TableHead>
-                        <TableHead>fecha_recogida_al</TableHead>
-                        <TableHead>proveedor_envio</TableHead>
-                        <TableHead>fecha_entrega_us</TableHead>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Estado Envío</TableHead>
+                        <TableHead>Dirección Envío</TableHead>
+                        <TableHead>Set Ref</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {activeShipments.map((shipment) => (
                         <TableRow key={shipment.id}>
                             <TableCell className="font-medium">
-                                {shipment.orders?.sets?.lego_ref || "-"}
+                                {shipment.order_id?.substring(0, 8) || "-"}
                             </TableCell>
                             <TableCell>
-                                {formatDate(shipment.fecha_asignada)}
+                                {shipment.users?.email || "-"}
                             </TableCell>
                             <TableCell>
-                                {formatDate(shipment.fecha_recogida_almacen)}
+                                <span className={`px-2 py-1 rounded-md text-xs font-medium ${shipment.estado_envio === 'enviado' ? 'bg-blue-100 text-blue-800' :
+                                    shipment.estado_envio === 'preparado_envio' ? 'bg-yellow-100 text-yellow-800' :
+                                        shipment.estado_envio === 'devuelto' ? 'bg-green-100 text-green-800' :
+                                            shipment.estado_envio === 'preparado_devolucion' ? 'bg-orange-100 text-orange-800' :
+                                                'bg-gray-100 text-gray-800'
+                                    }`}>
+                                    {shipment.estado_envio || "-"}
+                                </span>
                             </TableCell>
                             <TableCell>
-                                {shipment.proveedor_envio || "-"}
+                                {shipment.direccion_envio || "-"}
                             </TableCell>
                             <TableCell>
-                                {formatDate(shipment.fecha_entrega_usuario)}
+                                {shipment.set_ref || shipment.orders?.sets?.set_ref || "-"}
                             </TableCell>
                         </TableRow>
                     ))}
