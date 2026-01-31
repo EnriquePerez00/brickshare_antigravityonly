@@ -15,27 +15,29 @@ export const useSubscription = () => {
                 description: "Debes iniciar sesión para suscribirte",
                 variant: "destructive",
             });
-            return;
+            return null;
         }
 
         setIsLoading(true);
         try {
-            const { data, error } = await supabase.functions.invoke("create-stripe-checkout-session", {
+            const { data, error } = await supabase.functions.invoke("create-subscription-intent", {
                 body: { plan, userId: user.id, priceId },
             });
 
             if (error) throw error;
 
-            if (data?.url) {
-                window.location.href = data.url;
-            }
+            return {
+                clientSecret: data.clientSecret,
+                subscriptionId: data.subscriptionId
+            };
         } catch (error) {
-            console.error("Error creating checkout session:", error);
+            console.error("Error creating subscription intent:", error);
             toast({
                 title: "Error",
                 description: "No se pudo iniciar el proceso de pago",
                 variant: "destructive",
             });
+            return null;
         } finally {
             setIsLoading(false);
         }

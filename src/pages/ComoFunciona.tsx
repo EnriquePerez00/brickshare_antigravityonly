@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Loader2 } from "lucide-react";
+import StripePaymentModal from "@/components/StripePaymentModal";
 
 const plans = [
   {
@@ -141,6 +142,9 @@ const ComoFunciona = () => {
   const { isAdmin, isOperador, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
   useEffect(() => {
     if (!authLoading) {
@@ -154,7 +158,14 @@ const ComoFunciona = () => {
 
   const handleSubscribe = async (plan: any) => {
     setLoadingPlan(plan.name);
-    await startSubscription(plan.name, plan.priceId);
+    const result = await startSubscription(plan.name, plan.priceId);
+
+    if (result && result.clientSecret) {
+      setClientSecret(result.clientSecret);
+      setSelectedPlan(plan);
+      setIsStripeModalOpen(true);
+    }
+
     setLoadingPlan(null);
   };
 
@@ -424,6 +435,12 @@ const ComoFunciona = () => {
         </section>
       </main>
       <Footer />
+      <StripePaymentModal
+        isOpen={isStripeModalOpen}
+        onClose={() => setIsStripeModalOpen(false)}
+        clientSecret={clientSecret}
+        planName={selectedPlan?.name || ""}
+      />
     </div>
   );
 };

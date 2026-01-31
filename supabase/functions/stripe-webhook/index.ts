@@ -38,19 +38,71 @@ serve(async (req) => {
             Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
         );
 
-        if (event.type === "checkout.session.completed") {
-            const session = event.data.object;
-            const userId = session.metadata.user_id;
-            const plan = session.metadata.plan;
+        console.log(`Handling Stripe event: ${event.type}`);
 
-            if (userId) {
-                const { error } = await supabase
-                    .from("profiles")
-                    .update({ sub_status: plan })
-                    .eq("user_id", userId);
+        switch (event.type) {
+            case "invoice.paid": {
+                const invoice = event.data.object;
+                const subscriptionId = invoice.subscription;
+                const customerId = invoice.customer;
 
-                if (error) throw error;
+                // Try to get plan from subscription metadata or items
+                const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+                const plan = subscription.metadata.plan || "Brick Starter"; // Default or fallback
+                const userId = subscription.metadata.user_id;
+
+                console.log(`Invoice paid for user ${userId}, plan ${plan}`);
+
+                if (customerId) {
+                    const { error } = await supabase
+                        .from("users")
+                        .update({
+                            subscription_status: "OK",
+                            subscription_type: plan,
+                            subscription_id: subscriptionId
+                        })
+                        .eq("stripe_customer_id", customerId);
+
+                    if (error) throw error;
+                }
+                break;
             }
+
+            case "payment_intent.succeeded": {
+                const paymentIntent = event.data.object;
+                const userId = paymentIntent.metadata.user_id;
+                const orderType = paymentIntent.metadata.order_type;
+
+                console.log(`Payment successful for user ${userId}, type ${orderType}`);
+
+                if (orderType === "shipment") {
+                    // Logic for extra shipping payments
+                    // e.g., update the shipment status or create a record
+                    console.log("Processing shipment payment logic...");
+                    // Placeholder for future logic
+                }
+                break;
+            }
+
+            case "customer.subscription.deleted": {
+                const subscription = event.data.object;
+                const customerId = subscription.customer;
+
+                console.log(`Subscription deleted for customer ${customerId}`);
+
+                if (customerId) {
+                    const { error } = await supabase
+                        .from("users")
+                        .update({ subscription_status: "canceled" })
+                        .eq("stripe_customer_id", customerId);
+
+                    if (error) throw error;
+                }
+                break;
+            }
+
+            default:
+                console.log(`Unhandled event type ${event.type}`);
         }
 
         return new Response(JSON.stringify({ received: true }), {
