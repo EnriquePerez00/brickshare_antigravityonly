@@ -83,7 +83,7 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Suscripción</p>
                   <p className="text-lg font-semibold text-foreground capitalize">
-                    {profile?.sub_status || "Free"}
+                    {profile?.subscription_type || "Free"}
                   </p>
                 </div>
               </div>

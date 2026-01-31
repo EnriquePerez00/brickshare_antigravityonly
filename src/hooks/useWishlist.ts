@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 export const useWishlist = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,6 +41,19 @@ export const useWishlist = () => {
         variant: "destructive",
       });
       return false;
+    }
+
+    // Check subscription status if trying to ADD to wishlist
+    if (!wishlistIds.includes(setId)) {
+      if (!profile?.subscription_status || profile.subscription_status !== 'active') {
+        toast({
+          title: "Suscripción Inactiva",
+          description: "Necesitas una suscripción activa para añadir sets a tu wishlist.",
+          variant: "destructive",
+        });
+        navigate("/como-funciona");
+        return false;
+      }
     }
 
     const isCurrentlyWishlisted = wishlistIds.includes(setId);

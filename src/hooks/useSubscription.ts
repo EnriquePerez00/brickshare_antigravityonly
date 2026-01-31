@@ -24,17 +24,46 @@ export const useSubscription = () => {
                 body: { plan, userId: user.id, priceId },
             });
 
-            if (error) throw error;
+            if (error) {
+                // Parse the error body if available, or use the general error message
+                let errorMessage = "No se pudo iniciar el proceso de pago";
+                try {
+                    // supabase.functions.invoke returns error as an object that might contain the response body
+                    if (error instanceof Error) {
+                        errorMessage = error.message;
+                    }
+                    // If the function returned a 500/400 with a JSON body, Supabase client might wrap it.
+                    // However, usually `data` is null and `error` is present.
+                    // The edge function returns: { error: error.message }
+                    // If the invocation fails, `error` is a Supabase FunctionsHttpError or similar.
+
+                    // Let's try to extract a more specific message if possible.
+                    // If the Edge Function returns a JSON error, it might be in `context` or we just rely on the logging.
+                    // Actually, Supabase invoke returns `data` as null and `error` as the error object if the status is not 2xx.
+                    // If we returned a JSON { error: "..." }, it is often harder to get from the `error` object directly in the JS client without reading the body stream manually if it wasn't parsed.
+                    // But let's assume `error.message` gives us something, or we log it.
+                    console.error("Supabase Function Error:", error);
+                    errorMessage = error.message || errorMessage;
+                } catch (e) {
+                    console.error("Error parsing error:", e);
+                }
+                throw new Error(errorMessage);
+            }
+
+            // Check if data has an error property even if status was 200 (though we return 500 on error)
+            if (data?.error) {
+                throw new Error(data.error);
+            }
 
             return {
                 clientSecret: data.clientSecret,
                 subscriptionId: data.subscriptionId
             };
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error creating subscription intent:", error);
             toast({
-                title: "Error",
-                description: "No se pudo iniciar el proceso de pago",
+                title: "Error de configuración",
+                description: error.message || "No se pudo iniciar el proceso de pago. Inténtalo de nuevo.",
                 variant: "destructive",
             });
             return null;
