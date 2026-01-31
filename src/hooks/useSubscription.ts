@@ -60,10 +60,18 @@ export const useSubscription = () => {
                 subscriptionId: data.subscriptionId
             };
         } catch (error: any) {
-            console.error("Error creating subscription intent:", error);
+            console.error("FULL ERROR OBJECT:", error);
+            // Attempt to read body if it's a fetch response-like object
+            if (error && typeof error.json === 'function') {
+                try {
+                    const body = await error.json();
+                    console.error("Error Body:", body);
+                } catch (e) { console.log("Could not parse error body JSON"); }
+            }
+
             toast({
                 title: "Error de configuración",
-                description: error.message || "No se pudo iniciar el proceso de pago. Inténtalo de nuevo.",
+                description: (error.message || "Error desconocido") + ". Revisa la consola (F12) para más detalles.",
                 variant: "destructive",
             });
             return null;

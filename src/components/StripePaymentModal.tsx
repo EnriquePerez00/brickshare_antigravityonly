@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     PaymentElement,
     useStripe,
@@ -74,7 +75,7 @@ const CheckoutForm = ({ onSuccess, onError, onCancel }: CheckoutFormProps) => {
                             Procesando...
                         </>
                     ) : (
-                        "Suscribirse"
+                        "Pasarela Pago"
                     )}
                 </Button>
             </div>
@@ -97,6 +98,7 @@ const StripePaymentModal = ({
 }: StripePaymentModalProps) => {
     const [isSuccess, setIsSuccess] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (!isOpen) {
@@ -121,7 +123,10 @@ const StripePaymentModal = ({
                         </DialogDescription>
                     </DialogHeader>
                     <div className="mt-6">
-                        <Button onClick={() => window.location.href = "/catalogo"} className="w-full">
+                        <Button onClick={() => {
+                            onClose();
+                            navigate("/catalogo");
+                        }} className="w-full">
                             Ir al Catálogo
                         </Button>
                     </div>

@@ -29,10 +29,24 @@ serve(async (req) => {
             });
         }
 
-        const supabase = createClient(
-            Deno.env.get("SUPABASE_URL") ?? "",
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-        );
+        const sbUrl = Deno.env.get("SUPABASE_URL");
+        const sbKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+
+        console.log("Debug: Checking Env Vars");
+        console.log("SUPABASE_URL exists:", !!sbUrl);
+        console.log("SUPABASE_SERVICE_ROLE_KEY exists:", !!sbKey);
+        console.log("STRIPE_SECRET_KEY exists:", !!stripeKey);
+
+        if (!sbUrl || !sbKey || !stripeKey) {
+            throw new Error("Missing required environment variables: " +
+                (!sbUrl ? "SUPABASE_URL " : "") +
+                (!sbKey ? "SUPABASE_SERVICE_ROLE_KEY " : "") +
+                (!stripeKey ? "STRIPE_SECRET_KEY" : "")
+            );
+        }
+
+        const supabase = createClient(sbUrl, sbKey);
 
         // 1. Get user profile to check for stripe_customer_id
         const { data: userProfile, error: profileError } = await supabase

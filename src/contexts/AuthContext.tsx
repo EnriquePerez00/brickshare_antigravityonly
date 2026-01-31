@@ -8,7 +8,6 @@ export interface Profile {
   full_name: string | null;
   email: string | null;
   avatar_url: string | null;
-  sub_status: string | null;
   user_status: string | null;
   impact_points: number | null;
   address: string | null;

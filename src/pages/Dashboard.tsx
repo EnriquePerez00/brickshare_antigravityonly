@@ -1,16 +1,26 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle, MapPin, Phone, Mail, Pencil, Package } from "lucide-react";
+import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle, MapPin, Phone, Mail, Pencil, Package, ArrowLeftRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useSets } from "@/hooks/useProducts";
-import { useOrders } from "@/hooks/useOrders";
+import { useOrders, useReturnSet } from "@/hooks/useOrders";
 import ProfileCompletionModal from "@/components/ProfileCompletionModal";
 
 const Dashboard = () => {
@@ -18,8 +28,25 @@ const Dashboard = () => {
   const { wishlistIds, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
   const { data: sets = [], isLoading: setsLoading } = useSets(100);
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
+  const returnMutation = useReturnSet();
   const navigate = useNavigate();
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [selectedEnvioId, setSelectedEnvioId] = useState<string | null>(null);
+
+  const handleReturnClick = (envioId: string) => {
+    setSelectedEnvioId(envioId);
+    setReturnDialogOpen(true);
+  };
+
+  const handleConfirmReturn = () => {
+    if (selectedEnvioId) {
+      returnMutation.mutate(selectedEnvioId);
+      setReturnDialogOpen(false);
+      setSelectedEnvioId(null);
+    }
+  };
 
   useEffect(() => {
     // Profile completion check removed as field doesn't exist in new schema
@@ -83,7 +110,9 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Suscripción</p>
                   <p className="text-lg font-semibold text-foreground capitalize">
-                    {profile?.subscription_type || "Free"}
+                    {(!profile?.subscription_type || profile.subscription_type === 'none')
+                      ? "Sin Suscripción Activa"
+                      : profile.subscription_type}
                   </p>
                 </div>
               </div>
@@ -205,98 +234,90 @@ const Dashboard = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : orders.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {orders.map((order) => {
-                  const getStatusBadge = (status: string) => {
-                    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-                      pending: { label: "Pendiente", variant: "outline" },
-                      shipped: { label: "Enviado", variant: "default" },
-                      delivered: { label: "Entregado", variant: "default" },
-                      in_use: { label: "En uso", variant: "default" },
-                      returned: { label: "Devuelto", variant: "secondary" },
-                      cancelled: { label: "Cancelado", variant: "destructive" },
-                    };
-                    const config = statusConfig[status] || { label: status, variant: "outline" };
-                    return <Badge variant={config.variant}>{config.label}</Badge>;
-                  };
+              <div className="overflow-hidden bg-card rounded-2xl shadow-card">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/50">
+                        <th className="p-4 font-medium text-muted-foreground">Ref</th>
+                        <th className="p-4 font-medium text-muted-foreground">Set</th>
+                        <th className="p-4 font-medium text-muted-foreground">Estado</th>
+                        <th className="p-4 font-medium text-muted-foreground">Fecha Actualización</th>
+                        <th className="p-4 font-medium text-muted-foreground text-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {orders.map((order) => {
+                        const getStatusBadge = (status: string) => {
+                          const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+                            preparacion: { label: "En Preparación", variant: "outline" },
+                            ruta_envio: { label: "En Ruta (Envío)", variant: "default" },
+                            entregado: { label: "Entregado", variant: "default" },
+                            devuelto: { label: "Devuelto", variant: "secondary" },
+                            ruta_devolucion: { label: "En Ruta (Devolución)", variant: "secondary" },
+                          };
+                          const config = statusConfig[status] || { label: status, variant: "outline" };
+                          return <Badge variant={config.variant}>{config.label}</Badge>;
+                        };
 
-                  const formatDate = (dateString: string | null) => {
-                    if (!dateString) return null;
-                    return new Date(dateString).toLocaleDateString("es-ES", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    });
-                  };
+                        const formatDate = (dateString: string) => {
+                          return new Date(dateString).toLocaleDateString("es-ES", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          });
+                        };
 
-                  return (
-                    <div
-                      key={order.id}
-                      className="bg-card rounded-2xl overflow-hidden shadow-card"
-                    >
-                      {order.sets ? (
-                        <div className="aspect-video bg-secondary/50 overflow-hidden">
-                          <img
-                            src={order.sets.set_image_url || "/placeholder.svg"}
-                            alt={order.sets.set_name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="aspect-video bg-secondary/50 flex items-center justify-center">
-                          <Package className="h-12 w-12 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div className="p-5">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-display font-semibold text-foreground">
-                            {order.sets?.set_name || "Set no disponible"}
-                          </h3>
-                          {getStatusBadge(order.status)}
-                        </div>
-                        {order.sets && (
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
-                              {order.sets.set_theme}
-                            </span>
-                            <span className="px-2 py-1 rounded-md text-xs font-medium bg-accent/10 text-accent">
-                              {order.sets.set_piece_count} piezas
-                            </span>
-                          </div>
-                        )}
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          <p>
-                            <span className="font-medium">Pedido:</span> {formatDate(order.order_date)}
-                          </p>
-                          {order.shipped_date && (
-                            <p>
-                              <span className="font-medium">Enviado:</span> {formatDate(order.shipped_date)}
-                            </p>
-                          )}
-                          {order.delivered_date && (
-                            <p>
-                              <span className="font-medium">Entregado:</span> {formatDate(order.delivered_date)}
-                            </p>
-                          )}
-                          {order.returned_date && (
-                            <p>
-                              <span className="font-medium">Devuelto:</span> {formatDate(order.returned_date)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                        const canReturn = order.estado_envio === 'entregado' || order.estado_envio === 'active';
+
+                        return (
+                          <tr key={order.id} className="hover:bg-muted/50 transition-colors">
+                            <td className="p-4 font-mono text-xs">{order.set_ref || "-"}</td>
+                            <td className="p-4 font-medium">
+                              <div className="flex items-center gap-3">
+                                {order.sets?.set_image_url && (
+                                  <img
+                                    src={order.sets.set_image_url}
+                                    alt={order.sets.set_name}
+                                    className="w-10 h-10 rounded object-cover bg-secondary"
+                                  />
+                                )}
+                                <span>{order.sets?.set_name || "Set Desconocido"}</span>
+                              </div>
+                            </td>
+                            <td className="p-4">{getStatusBadge(order.estado_envio)}</td>
+                            <td className="p-4 text-muted-foreground">{formatDate(order.updated_at)}</td>
+                            <td className="p-4 text-right">
+                              {canReturn && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 gap-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200"
+                                  onClick={() => handleReturnClick(order.id)}
+                                  disabled={returnMutation.isPending}
+                                >
+                                  <ArrowLeftRight className="h-3.5 w-3.5" />
+                                  Devolver
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : (
               <div className="text-center py-12 bg-card rounded-2xl">
                 <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-lg text-muted-foreground mb-4">
-                  No tienes pedidos todavía
+                  No tienes envíos registrados
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Cuando realices tu primer pedido, aparecerá aquí
+                  Tus asignaciones de sets aparecerán aquí
                 </p>
               </div>
             )}
@@ -407,6 +428,23 @@ const Dashboard = () => {
         open={showProfileModal}
         onClose={() => setShowProfileModal(false)}
       />
+
+      <AlertDialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Confirmar devolución?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se cambiará el estado del envío a "En Ruta (Devolución)". Asegúrate de preparar el paquete para su recogida.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmReturn} className="bg-orange-600 hover:bg-orange-700">
+              Confirmar Devolución
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>

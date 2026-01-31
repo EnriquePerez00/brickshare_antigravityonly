@@ -57,7 +57,7 @@ serve(async (req) => {
                     const { error } = await supabase
                         .from("users")
                         .update({
-                            subscription_status: "OK",
+                            subscription_status: "active",
                             subscription_type: plan,
                             subscription_id: subscriptionId
                         })
