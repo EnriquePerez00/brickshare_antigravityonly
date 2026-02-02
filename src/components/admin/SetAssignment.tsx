@@ -31,6 +31,7 @@ interface PreviewAssignment {
     set_id: string;
     set_name: string;
     set_ref: string;
+    set_price: number;
     current_stock: number;
 }
 
@@ -41,7 +42,16 @@ interface ConfirmedEnvio {
     user_name: string;
     set_name: string;
     set_ref: string;
+    set_price: number;
     created_at: string;
+}
+
+interface PaymentErrorInfo {
+    open: boolean;
+    userName: string;
+    userEmail: string;
+    errorMessage: string;
+    errorCode: string;
 }
 
 type ViewMode = "initial" | "preview" | "confirmed";
@@ -53,6 +63,13 @@ const SetAssignment = () => {
     const [confirmedEnvios, setConfirmedEnvios] = useState<ConfirmedEnvio[]>([]);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [envioToDelete, setEnvioToDelete] = useState<string | null>(null);
+    const [paymentErrorDialog, setPaymentErrorDialog] = useState<PaymentErrorInfo>({
+        open: false,
+        userName: "",
+        userEmail: "",
+        errorMessage: "",
+        errorCode: ""
+    });
 
     // Preview mutation - shows proposal without making changes
     const previewMutation = useMutation({
@@ -75,25 +92,94 @@ const SetAssignment = () => {
         },
     });
 
-    // Confirm mutation - executes the assignments
+    // Confirm mutation - executes payments FIRST, then assignments
     const confirmMutation = useMutation({
-        mutationFn: async (userIds: string[]) => {
+        mutationFn: async (assignments: PreviewAssignment[]) => {
+            const paymentResults = [];
+
+            // Phase 1: Process payments for each assignment
+            for (const assignment of assignments) {
+                const { data: paymentResponse, error: paymentError } = await supabase.functions.invoke(
+                    'process-assignment-payment',
+                    {
+                        body: {
+                            userId: assignment.user_id,
+                            setRef: assignment.set_ref,
+                            setPrice: assignment.set_price || 100.00
+                        }
+                    }
+                );
+
+                if (paymentError || !paymentResponse?.success) {
+                    // Note: The Edge Function automatically handles rollback internally
+                    // (cancels deposit if transport fails). Here we just log the successful
+                    // payment IDs in case manual cleanup is needed later.
+                    if (paymentResults.length > 0) {
+                        console.warn('Previous successful payments before error:', paymentResults.map(r => ({
+                            depositId: r.depositPaymentIntentId,
+                            transportId: r.transportPaymentIntentId
+                        })));
+                    }
+
+                    // Get user email for error dialog
+                    const { data: userData } = await supabase
+                        .from('users')
+                        .select('email')
+                        .eq('user_id', assignment.user_id)
+                        .single();
+
+                    throw {
+                        userName: assignment.user_name,
+                        userEmail: paymentResponse?.userEmail || userData?.email || 'Email no disponible',
+                        errorMessage: paymentResponse?.error || paymentError?.message || 'Error desconocido',
+                        errorCode: paymentResponse?.errorCode || 'unknown'
+                    };
+                }
+
+                paymentResults.push(paymentResponse);
+            }
+
+            // Phase 2: If all payments succeeded, confirm assignments in database
+            const userIds = assignments.map(a => a.user_id);
             const { data, error } = await supabase.rpc("confirm_assign_sets_to_users", {
                 p_user_ids: userIds,
             });
-            if (error) throw error;
+
+            if (error) {
+                // Log payment IDs that may need manual cleanup in Stripe Dashboard
+                console.error('Database operation failed after payments. Manual cleanup may be needed:');
+                console.error('Payment IntentIDs:', paymentResults.map(r => ({
+                    depositId: r.depositPaymentIntentId,
+                    transportId: r.transportPaymentIntentId,
+                    note: 'Transport already captured - may need refund. Deposit can be cancelled.'
+                })));
+
+                throw new Error(`Error en base de datos: ${error.message}. Los pagos fueron procesados pero las asignaciones no se guardaron. Revisa Stripe Dashboard.`);
+            }
+
             return data as ConfirmedEnvio[];
         },
         onSuccess: (data: ConfirmedEnvio[]) => {
             setConfirmedEnvios(data);
             setViewMode("confirmed");
             setPreviewAssignments([]);
-            toast.success(`¡Éxito! Se han confirmado ${data.length} asignaciones`);
+            toast.success(`¡Éxito! Se procesaron ${data.length} pagos y asignaciones`);
             queryClient.invalidateQueries({ queryKey: ["admin-set-assignment-inventory"] });
             queryClient.invalidateQueries({ queryKey: ["admin-shipments"] });
         },
-        onError: (error: Error) => {
-            toast.error("Error al confirmar asignaciones: " + error.message);
+        onError: (error: any) => {
+            // If error has payment info, show dialog
+            if (error.userName && error.errorMessage) {
+                setPaymentErrorDialog({
+                    open: true,
+                    userName: error.userName,
+                    userEmail: error.userEmail,
+                    errorMessage: error.errorMessage,
+                    errorCode: error.errorCode
+                });
+            } else {
+                toast.error("Error al confirmar asignaciones: " + (error.message || error));
+            }
         },
     });
 
@@ -124,8 +210,7 @@ const SetAssignment = () => {
     };
 
     const handleConfirmAssignments = () => {
-        const userIds = previewAssignments.map((a) => a.user_id);
-        confirmMutation.mutate(userIds);
+        confirmMutation.mutate(previewAssignments);
     };
 
     const handleCancelPreview = () => {
@@ -326,6 +411,36 @@ const SetAssignment = () => {
                             className="bg-destructive hover:bg-destructive/90"
                         >
                             Eliminar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={paymentErrorDialog.open} onOpenChange={(open) => setPaymentErrorDialog({ ...paymentErrorDialog, open })}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Error en el Procesamiento de Pago</AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-2">
+                            <div>
+                                <strong>Usuario:</strong> {paymentErrorDialog.userName}
+                            </div>
+                            <div>
+                                <strong>Email:</strong> {paymentErrorDialog.userEmail}
+                            </div>
+                            <div className="mt-2 p-3 bg-red-50 dark:bg-red-950 rounded border border-red-200 dark:border-red-800">
+                                <strong>Error:</strong> {paymentErrorDialog.errorMessage}
+                            </div>
+                            {paymentErrorDialog.errorCode === "insufficient_funds" && (
+                                <div className="mt-2 text-sm text-muted-foreground">
+                                    El usuario no tiene fondos suficientes para completar la transacción.
+                                    La asignación no se ha realizado.
+                                </div>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => setPaymentErrorDialog({ open: false, userName: "", userEmail: "", errorMessage: "", errorCode: "" })}>
+                            Aceptar
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
