@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
@@ -24,13 +25,15 @@ interface CheckoutFormProps {
     onSuccess: () => void;
     onError: (message: string) => void;
     onCancel: () => void;
+    planName: string;
 }
 
-const CheckoutForm = ({ onSuccess, onError, onCancel }: CheckoutFormProps) => {
+const CheckoutForm = ({ onSuccess, onError, onCancel, planName }: CheckoutFormProps) => {
     const stripe = useStripe();
     const elements = useElements();
     const [isProcessing, setIsProcessing] = useState(false);
     const { toast } = useToast();
+    const { updateProfile } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -55,6 +58,11 @@ const CheckoutForm = ({ onSuccess, onError, onCancel }: CheckoutFormProps) => {
                 variant: "destructive",
             });
         } else if (paymentIntent && paymentIntent.status === "succeeded") {
+            // Update user subscription status immediately on success
+            await updateProfile({
+                subscription_status: 'active',
+                subscription_type: planName
+            });
             onSuccess();
         }
 
@@ -173,6 +181,7 @@ const StripePaymentModal = ({
                             onSuccess={() => setIsSuccess(true)}
                             onError={(msg) => setErrorMsg(msg)}
                             onCancel={onClose}
+                            planName={planName}
                         />
                     </Elements>
                 )}

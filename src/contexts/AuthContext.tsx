@@ -16,7 +16,6 @@ export interface Profile {
   city: string | null;
   province: string | null;
   phone: string | null;
-  subscription_id: string | null;
   subscription_status: string | null;
   subscription_type: string | null;
 }
