@@ -19,11 +19,6 @@ export interface Profile {
   subscription_id: string | null;
   subscription_status: string | null;
   subscription_type: string | null;
-  pudo_id_correos: string | null;
-  pudo_nombre: string | null;
-  pudo_direccion_completa: string | null;
-  pudo_tipo: string | null;
-  pudo_fecha_seleccion: string | null;
 }
 
 interface AuthContextType {
