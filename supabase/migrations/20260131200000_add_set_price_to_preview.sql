@@ -1,6 +1,9 @@
 -- Update preview function to include set_price from sets table
 -- Uses COALESCE to provide 100 EUR default if set_price is NULL
 
+-- Drop the function first to allow changing the return table definition
+DROP FUNCTION IF EXISTS public.preview_assign_sets_to_users();
+
 CREATE OR REPLACE FUNCTION public.preview_assign_sets_to_users()
 RETURNS TABLE (
     user_id UUID,

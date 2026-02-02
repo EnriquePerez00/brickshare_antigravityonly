@@ -1,6 +1,9 @@
 -- Update confirm_assign_sets_to_users to include set_price in return
 -- This allows the function to be used for payment processing integration
 
+-- Drop the function first to allow changing the return table definition
+DROP FUNCTION IF EXISTS public.confirm_assign_sets_to_users(UUID[]);
+
 CREATE OR REPLACE FUNCTION public.confirm_assign_sets_to_users(p_user_ids UUID[])
 RETURNS TABLE (
     envio_id UUID, 

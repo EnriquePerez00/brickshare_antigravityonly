@@ -1,4 +1,4 @@
-project_id = "nqgeayfodndgsqwnlext"
+project_id = "tevoogkifiszfontzkgd"
 
 [functions.delete-user]
 verify_jwt = true

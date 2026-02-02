@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle, MapPin, Phone, Mail, Pencil, Package, ArrowLeftRight } from "lucide-react";
+import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle, MapPin, Phone, Mail, Pencil, Package, ArrowLeftRight, Building2, Info } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
@@ -22,15 +22,47 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { useSets } from "@/hooks/useProducts";
 import { useOrders, useReturnSet } from "@/hooks/useOrders";
 import ProfileCompletionModal from "@/components/ProfileCompletionModal";
+import PudoSelector from "@/components/PudoSelector";
+import { toast } from "sonner";
+import { useUserPudoPoint, useSavePudoPoint } from "@/hooks/usePudo";
 
 const Dashboard = () => {
-  const { user, profile, isLoading: authLoading, deleteUserAccount } = useAuth();
+  const { user, profile, isLoading: authLoading, deleteUserAccount, updateProfile } = useAuth();
   const { wishlistIds, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
   const { data: sets = [], isLoading: setsLoading } = useSets(100);
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
+  const { data: pudoPoint } = useUserPudoPoint();
+  const savePudoMutation = useSavePudoPoint();
   const returnMutation = useReturnSet();
   const navigate = useNavigate();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isPudoSelectorOpen, setIsPudoSelectorOpen] = useState(false);
+
+  const handlePudoSelect = async (point: any) => {
+    try {
+      await savePudoMutation.mutateAsync({
+        correos_id_pudo: point.id_correos_pudo,
+        correos_nombre: point.nombre,
+        correos_tipo_punto: point.tipo_punto,
+        correos_direccion_calle: point.direccion,
+        correos_codigo_postal: point.cp,
+        correos_ciudad: point.ciudad,
+        correos_provincia: point.ciudad, // Update if provincia is available
+        correos_pais: "España",
+        correos_direccion_completa: `${point.direccion}, ${point.cp} ${point.ciudad}`,
+        correos_latitud: point.lat,
+        correos_longitud: point.lng,
+        correos_horario_apertura: point.horario,
+        correos_disponible: true,
+      });
+
+      toast.success("Punto de entrega actualizado correctamente");
+      setIsPudoSelectorOpen(false);
+    } catch (error) {
+      console.error("Error updating PUDO:", error);
+      toast.error("Error al actualizar el punto de entrega");
+    }
+  };
 
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedEnvioId, setSelectedEnvioId] = useState<string | null>(null);
@@ -323,6 +355,78 @@ const Dashboard = () => {
             )}
           </motion.div>
 
+          {/* Correos PUDO Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.45 }}
+            className="mt-16 pt-8 border-t border-border"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                  <MapPin className="h-5 w-5 text-yellow-600" />
+                </div>
+                <h2 className="text-xl font-display font-bold text-foreground">
+                  Punto de Entrega Correos (PUDO)
+                </h2>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPudoSelectorOpen(true)}
+                className="gap-2 border-yellow-200 hover:bg-yellow-50 text-yellow-700"
+              >
+                <MapPin className="h-4 w-4" />
+                {pudoPoint?.correos_id_pudo ? "Cambiar punto" : "Seleccionar punto"}
+              </Button>
+            </div>
+
+            <div className="bg-card rounded-2xl p-6 shadow-card border border-border/50">
+              {pudoPoint?.correos_id_pudo ? (
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 p-2 rounded-full bg-primary/10">
+                      {pudoPoint.correos_tipo_punto === 'Oficina' ? (
+                        <Building2 className="h-6 w-6 text-primary" />
+                      ) : (
+                        <Package className="h-6 w-6 text-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground flex items-center gap-2">
+                        {pudoPoint.correos_nombre}
+                        <Badge variant="secondary" className="font-normal text-[0.65rem] uppercase py-0 px-1.5 h-4">
+                          {pudoPoint.correos_tipo_punto}
+                        </Badge>
+                      </h3>
+                      <p className="text-sm text-muted-foreground">{pudoPoint.correos_direccion_completa}</p>
+                      {pudoPoint.correos_fecha_seleccion && (
+                        <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-tight">
+                          Seleccionado el {new Date(pudoPoint.correos_fecha_seleccion).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-xs p-3 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 flex items-center gap-2 max-w-xs">
+                    <Info className="h-4 w-4 shrink-0" />
+                    <p>Todos tus próximos envíos y devoluciones se gestionarán por defecto a través de este punto.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 flex flex-col items-center">
+                  <MapPin className="h-10 w-10 text-muted-foreground/30 mb-2" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    No has seleccionado ningún punto de recogida de Correos.
+                  </p>
+                  <Button onClick={() => setIsPudoSelectorOpen(true)}>
+                    Configurar ahora
+                  </Button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
           {/* Security & Data Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -332,9 +436,9 @@ const Dashboard = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-muted-foreground" />
+                <User className="h-5 w-5 text-muted-foreground" />
                 <h2 className="text-xl font-display font-bold text-foreground">
-                  Seguridad y Datos
+                  Datos de contacto
                 </h2>
               </div>
               <Button
@@ -427,6 +531,14 @@ const Dashboard = () => {
       <ProfileCompletionModal
         open={showProfileModal}
         onClose={() => setShowProfileModal(false)}
+      />
+
+      <PudoSelector
+        isOpen={isPudoSelectorOpen}
+        onClose={() => setIsPudoSelectorOpen(false)}
+        onSelect={handlePudoSelect}
+        initialZipCode={profile?.zip_code || undefined}
+        initialAddress={profile?.address || undefined}
       />
 
       <AlertDialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>

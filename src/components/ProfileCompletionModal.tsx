@@ -15,13 +15,13 @@ interface ProfileCompletionModalProps {
 const ProfileCompletionModal = ({ open, onClose }: ProfileCompletionModalProps) => {
   const { profile, updateProfile, refreshProfile } = useAuth();
   const { toast } = useToast();
-  
+
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || "",
-    direccion: "",
-    codigo_postal: "",
-    ciudad: "",
-    telefono: "",
+    address: profile?.address || "",
+    zip_code: profile?.zip_code || "",
+    city: profile?.city || "",
+    phone: profile?.phone || "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,10 +29,7 @@ const ProfileCompletionModal = ({ open, onClose }: ProfileCompletionModalProps) 
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { error } = await updateProfile({
-      ...formData,
-      profile_completed: true,
-    });
+    const { error } = await updateProfile(formData);
 
     if (error) {
       toast({
@@ -42,7 +39,7 @@ const ProfileCompletionModal = ({ open, onClose }: ProfileCompletionModalProps) 
       });
     } else {
       toast({
-        title: "¡Perfil completado!",
+        title: "¡Datos actualizados!",
         description: "Tus datos de contacto se han guardado correctamente",
       });
       await refreshProfile();
@@ -83,14 +80,14 @@ const ProfileCompletionModal = ({ open, onClose }: ProfileCompletionModalProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="direccion">Dirección</Label>
+            <Label htmlFor="address">Dirección</Label>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="direccion"
+                id="address"
                 placeholder="Calle, número, piso..."
-                value={formData.direccion}
-                onChange={(e) => handleChange("direccion", e.target.value)}
+                value={formData.address}
+                onChange={(e) => handleChange("address", e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -98,35 +95,35 @@ const ProfileCompletionModal = ({ open, onClose }: ProfileCompletionModalProps) 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="codigo_postal">Código postal</Label>
+              <Label htmlFor="zip_code">Código postal</Label>
               <Input
-                id="codigo_postal"
+                id="zip_code"
                 placeholder="28001"
-                value={formData.codigo_postal}
-                onChange={(e) => handleChange("codigo_postal", e.target.value)}
+                value={formData.zip_code}
+                onChange={(e) => handleChange("zip_code", e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="ciudad">Ciudad</Label>
+              <Label htmlFor="city">Ciudad</Label>
               <Input
-                id="ciudad"
+                id="city"
                 placeholder="Madrid"
-                value={formData.ciudad}
-                onChange={(e) => handleChange("ciudad", e.target.value)}
+                value={formData.city}
+                onChange={(e) => handleChange("city", e.target.value)}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="telefono">Teléfono de contacto</Label>
+            <Label htmlFor="phone">Teléfono de contacto</Label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="telefono"
+                id="phone"
                 type="tel"
                 placeholder="+34 600 000 000"
-                value={formData.telefono}
-                onChange={(e) => handleChange("telefono", e.target.value)}
+                value={formData.phone}
+                onChange={(e) => handleChange("phone", e.target.value)}
                 className="pl-10"
               />
             </div>
