@@ -137,10 +137,14 @@ const faqs = [
   },
 ];
 
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
 const ComoFunciona = () => {
   const { startSubscription, isLoading: subscriptionLoading } = useSubscription();
-  const { isAdmin, isOperador, isLoading: authLoading } = useAuth();
+  const { isAdmin, isOperador, isLoading: authLoading, user, profile, refreshProfile } = useAuth(); // Added user, profile, refreshProfile
   const navigate = useNavigate();
+  const { toast } = useToast(); // Added toast
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -157,16 +161,76 @@ const ComoFunciona = () => {
   }, [isAdmin, isOperador, authLoading, navigate]);
 
   const handleSubscribe = async (plan: any) => {
-    setLoadingPlan(plan.name);
-    const result = await startSubscription(plan.name, plan.priceId);
-
-    if (result && result.clientSecret) {
-      setClientSecret(result.clientSecret);
-      setSelectedPlan(plan);
-      setIsStripeModalOpen(true);
+    if (!user) {
+      navigate("/auth");
+      return;
     }
 
-    setLoadingPlan(null);
+    setLoadingPlan(plan.name);
+
+    try {
+      // Check if user already has an active subscription
+      if (profile?.subscription_status === 'active') {
+
+        if (profile.subscription_type === plan.name) {
+          toast({
+            title: "Plan Actual",
+            description: "Ya tienes este plan activo.",
+            variant: "default",
+          });
+          setLoadingPlan(null);
+          return;
+        }
+
+        console.log("Switching subscription for user:", user.id);
+        const { data, error } = await supabase.functions.invoke('change-subscription', {
+          body: {
+            userId: user.id,
+            newPriceId: plan.priceId,
+            newPlanName: plan.name
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.action === 'upgrade') {
+          // Open modal to pay the difference
+          setClientSecret(data.clientSecret);
+          setSelectedPlan(plan);
+          setIsStripeModalOpen(true);
+        } else {
+          // Downgrade or no charge - Success immediately
+          await refreshProfile(); // Refresh profile to get updated subscription data
+          toast({
+            title: "Suscripción Actualizada",
+            description: data.action === 'downgrade'
+              ? "Tu plan ha sido actualizado y hemos procesado la devolución de la diferencia."
+              : "Tu plan ha sido actualizado correctamente.",
+            className: "bg-green-100 border-green-200 dark:bg-green-900/30 dark:border-green-800",
+          });
+          navigate("/catalogo");
+        }
+
+      } else {
+        // New subscription logic
+        const result = await startSubscription(plan.name, plan.priceId);
+
+        if (result && result.clientSecret) {
+          setClientSecret(result.clientSecret);
+          setSelectedPlan(plan);
+          setIsStripeModalOpen(true);
+        }
+      }
+    } catch (error: any) {
+      console.error("Error subscribing:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo procesar la solicitud.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPlan(null);
+    }
   };
 
   if (authLoading || isAdmin || isOperador) {
