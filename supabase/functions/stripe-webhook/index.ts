@@ -48,22 +48,32 @@ serve(async (req) => {
 
                 // Try to get plan from subscription metadata or items
                 const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-                const plan = subscription.metadata.plan || "Brick Starter"; // Default or fallback
+                const plan = subscription.metadata.plan;
                 const userId = subscription.metadata.user_id;
 
-                console.log(`Invoice paid for user ${userId}, plan ${plan}`);
+                console.log(`Invoice paid for customer ${customerId}. Plan from metadata: ${plan}. UserID: ${userId}`);
 
                 if (customerId) {
+                    const updateData: any = {
+                        subscription_status: "active",
+                        subscription_id: subscriptionId
+                    };
+
+                    // Only update subscription_type if we have it in metadata
+                    // This prevents overwriting a correct value with a fallback if metadata isn't ready
+                    if (plan) {
+                        updateData.subscription_type = plan;
+                    }
+
                     const { error } = await supabase
                         .from("users")
-                        .update({
-                            subscription_status: "active",
-                            subscription_type: plan,
-                            subscription_id: subscriptionId
-                        })
+                        .update(updateData)
                         .eq("stripe_customer_id", customerId);
 
-                    if (error) throw error;
+                    if (error) {
+                        console.error(`Database update error for customer ${customerId}:`, error);
+                        throw error;
+                    }
                 }
                 break;
             }

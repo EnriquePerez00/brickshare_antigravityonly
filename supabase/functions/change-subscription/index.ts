@@ -7,22 +7,28 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
     httpClient: Stripe.createFetchHttpClient(),
 });
 
-const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Credentials": "true",
-};
-
 serve(async (req) => {
+    const origin = req.headers.get("origin") || "";
+    const corsHeaders = {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+        "Access-Control-Allow-Credentials": "true",
+        "Content-Type": "application/json",
+    };
+
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
 
     try {
-        const { userId, newPriceId, newPlanName } = await req.json();
+        const body = await req.json();
+        console.log("Request Body received:", JSON.stringify(body));
+
+        const { userId, newPriceId, newPlanName } = body;
 
         if (!userId || !newPriceId) {
-            return new Response(JSON.stringify({ error: "userId and newPriceId are required" }), {
+            console.error("Missing required fields:", { userId, newPriceId });
+            return new Response(JSON.stringify({ error: "userId and newPriceId are required", received: body }), {
                 status: 400,
                 headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
@@ -32,86 +38,126 @@ serve(async (req) => {
         const sbKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
         if (!sbUrl || !sbKey) {
-            throw new Error("Missing Supabase environment variables");
+            throw new Error("Missing Supabase environment variables on server");
         }
 
         const supabase = createClient(sbUrl, sbKey);
 
         // 1. Get user profile
+        console.log(`Fetching profile for user: ${userId}`);
         const { data: userProfile, error: profileError } = await supabase
             .from("users")
             .select("stripe_customer_id")
             .eq("user_id", userId)
             .maybeSingle();
 
-        if (profileError || !userProfile?.stripe_customer_id) {
-            throw new Error("User has no Stripe Customer ID or profile not found");
+        if (profileError) {
+            console.error("Supabase profile error:", profileError);
+            throw new Error(`Profile fetch error: ${profileError.message}`);
+        }
+
+        if (!userProfile?.stripe_customer_id) {
+            console.error("No stripe_customer_id found for user:", userId);
+            throw new Error(`User ${userId} has no Stripe Customer ID associated`);
         }
 
         const customerId = userProfile.stripe_customer_id;
+        console.log(`Found Stripe Customer ID: ${customerId}`);
 
-        // 2. Find Active Subscription
+        // 2. Find Active or Trialing Subscription
         const subscriptions = await stripe.subscriptions.list({
             customer: customerId,
-            status: "active",
-            limit: 1,
+            status: "all",
+            limit: 10,
         });
 
-        if (subscriptions.data.length === 0) {
-            throw new Error("No active subscription found to update");
+        const currentSubscription = subscriptions.data.find((s: any) =>
+            ["active", "trialing", "past_due"].includes(s.status)
+        );
+
+        if (!currentSubscription) {
+            console.error(`No valid subscription found for customer ${customerId}. Statuses found:`, subscriptions.data.map(s => s.status));
+            throw new Error(`No active or valid subscription found to update for customer ${customerId}`);
         }
 
-        const currentSubscription = subscriptions.data[0];
         const currentItemId = currentSubscription.items.data[0].id;
+        console.log(`Current Sub: ${currentSubscription.id}, Current Item: ${currentItemId}`);
 
-        // 3. Check for Upgrade/Downgrade (Preview Invoice)
-        // We simulate the update to see the cost
-        const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
-            customer: customerId,
-            subscription: currentSubscription.id,
-            subscription_items: [{
-                id: currentItemId,
-                price: newPriceId,
-            }],
-            subscription_proration_behavior: 'always_invoice',
-        });
+        // 3. Get Prices to compare (for Upgrade vs Downgrade logic)
+        const currentPriceId = currentSubscription.items.data[0].price.id;
+        const currentPrice = await stripe.prices.retrieve(currentPriceId);
+        const newPrice = await stripe.prices.retrieve(newPriceId);
+
+        const currentAmount = currentPrice.unit_amount || 0;
+        const newAmount = newPrice.unit_amount || 0;
+        const isUpgrade = newAmount > currentAmount;
+
+        console.log(`Priceline Change: ${currentAmount} -> ${newAmount} (Type: ${isUpgrade ? 'UPGRADE' : 'DOWNGRADE/SAME'})`);
+
+        // 4. Preview Invoice
+        let upcomingInvoice;
+        try {
+            upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+                customer: customerId,
+                subscription: currentSubscription.id,
+                subscription_items: [{
+                    id: currentItemId,
+                    price: newPriceId,
+                }],
+            });
+        } catch (invoiceError: any) {
+            console.error("Stripe retrieveUpcoming error:", invoiceError);
+            throw new Error(`Stripe Preview Error: ${invoiceError.message}`);
+        }
 
         const amountDue = upcomingInvoice.amount_due;
-        const currency = upcomingInvoice.currency;
+        console.log(`Amount Due on next invoice: ${amountDue}`);
 
-        console.log(`Update preview: amount_due=${amountDue} ${currency}`);
-
-        if (amountDue > 0) {
-            // UPGRADE: Charge the difference immediately
+        if (isUpgrade) {
+            // UPGRADE: Usually requires immediate payment of difference
+            console.log("Processing UPGRADE...");
             const updatedSubscription = await stripe.subscriptions.update(currentSubscription.id, {
                 items: [{
                     id: currentItemId,
                     price: newPriceId,
                 }],
                 proration_behavior: 'always_invoice',
-                payment_behavior: 'pending_if_incomplete',
+                payment_behavior: 'default_incomplete',
+                payment_settings: { save_default_payment_method: 'on_subscription' },
                 expand: ['latest_invoice.payment_intent'],
-                metadata: {
-                    user_id: userId,
-                    plan: newPlanName,
-                    type: "upgrade"
-                }
             });
 
-            // @ts-ignore
-            const clientSecret = updatedSubscription.latest_invoice.payment_intent.client_secret;
+            // Cast latest_invoice to get access to payment_intent
+            const latestInvoice = updatedSubscription.latest_invoice as any;
+            const paymentIntent = latestInvoice?.payment_intent;
 
-            return new Response(JSON.stringify({
-                action: 'upgrade',
-                clientSecret: clientSecret,
-                amount: amountDue
-            }), {
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
+            if (paymentIntent && typeof paymentIntent === 'object' && paymentIntent.client_secret) {
+                return new Response(JSON.stringify({
+                    action: 'upgrade',
+                    clientSecret: paymentIntent.client_secret,
+                    amount: amountDue
+                }), {
+                    headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+            } else {
+                // No payment intent required (maybe price difference is 0 due to timing, or credit exists)
+                await supabase.from("users").update({
+                    subscription_type: newPlanName,
+                    subscription_status: "active"
+                }).eq("user_id", userId);
 
-        } else if (amountDue < 0) {
-            // DOWNGRADE: Process Refund
-            // 1. Update subscription first
+                return new Response(JSON.stringify({
+                    action: 'upgrade_no_payment_needed',
+                    amount: amountDue > 0 ? amountDue : 0
+                }), {
+                    headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+            }
+
+        } else if (newAmount < currentAmount) {
+            // DOWNGRADE: Subscription items update and possible refund
+            console.log("Processing DOWNGRADE...");
+
             await stripe.subscriptions.update(currentSubscription.id, {
                 items: [{
                     id: currentItemId,
@@ -125,54 +171,42 @@ serve(async (req) => {
                 }
             });
 
-            // 2. Calculate refund amount (absolute value)
-            const refundAmount = Math.abs(amountDue);
-
-            // 3. Find a charge to refund (latest successful charge)
-            const charges = await stripe.charges.list({
-                customer: customerId,
-                limit: 1,
-            });
-
+            // If there's a negative amount due, it's a credit that we might want to refund
             let refundId = null;
-            if (charges.data.length > 0) {
-                const lastCharge = charges.data[0];
-                try {
-                    const refund = await stripe.refunds.create({
-                        charge: lastCharge.id,
-                        amount: refundAmount, // Refund the difference
-                        metadata: {
-                            reason: "Downgrade difference refund"
-                        }
-                    });
-                    refundId = refund.id;
-                } catch (e) {
-                    console.error("Refund failed:", e);
-                    // If refund fails (e.g., charge too old or already refunded), we log it but don't fail the request entirely
-                    // Ideally we would return a warning
+            if (amountDue < 0) {
+                const refundAmount = Math.abs(amountDue);
+                const charges = await stripe.charges.list({ customer: customerId, limit: 1 });
+
+                if (charges.data.length > 0) {
+                    try {
+                        const refund = await stripe.refunds.create({
+                            charge: charges.data[0].id,
+                            amount: refundAmount,
+                            metadata: { reason: "Downgrade difference refund" }
+                        });
+                        refundId = refund.id;
+                    } catch (e) {
+                        console.error("Refund failed (user might still have credit):", e);
+                    }
                 }
             }
 
-            // Update local DB profile immediately for downgrade as there is no payment confirmation flow
-            await supabase
-                .from("users")
-                .update({
-                    subscription_type: newPlanName,
-                    // Status remains active
-                })
-                .eq("user_id", userId);
+            await supabase.from("users").update({
+                subscription_type: newPlanName,
+                subscription_status: "active"
+            }).eq("user_id", userId);
 
             return new Response(JSON.stringify({
                 action: 'downgrade',
-                message: 'Subscription updated and refund processed',
-                refundId: refundId
+                refundId: refundId,
+                message: refundId ? 'Plan updated and refund processed' : 'Plan updated'
             }), {
                 headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
 
         } else {
-            // No price change (Same price or exact wash)
-            // Just update
+            // SAME PRICE CHANGE
+            console.log("Processing PLAN CHANGE (same price)...");
             await stripe.subscriptions.update(currentSubscription.id, {
                 items: [{
                     id: currentItemId,
@@ -180,14 +214,15 @@ serve(async (req) => {
                 }],
                 metadata: {
                     user_id: userId,
-                    plan: newPlanName
+                    plan: newPlanName,
+                    type: "plan_change"
                 }
             });
 
-            await supabase
-                .from("users")
-                .update({ subscription_type: newPlanName })
-                .eq("user_id", userId);
+            await supabase.from("users").update({
+                subscription_type: newPlanName,
+                subscription_status: "active"
+            }).eq("user_id", userId);
 
             return new Response(JSON.stringify({
                 action: 'no_charge',
@@ -197,9 +232,12 @@ serve(async (req) => {
             });
         }
 
-    } catch (error) {
-        console.error("Error changing subscription:", error);
-        return new Response(JSON.stringify({ error: error.message }), {
+    } catch (error: any) {
+        console.error("Error in change-subscription function:", error.message);
+        return new Response(JSON.stringify({
+            error: error.message,
+            stack: error.stack // Optional: helps debug in the console
+        }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

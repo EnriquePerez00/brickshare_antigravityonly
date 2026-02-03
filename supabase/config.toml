@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.submit-donation]
 verify_jwt = false
+
+[functions.change-subscription]
+verify_jwt = true
