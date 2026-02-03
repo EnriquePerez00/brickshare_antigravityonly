@@ -279,7 +279,7 @@ const Dashboard = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {orders.map((order) => {
+                      {orders.map((order, index) => {
                         const getStatusBadge = (status: string) => {
                           const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
                             preparacion: { label: "En Preparación", variant: "outline" },
@@ -302,7 +302,8 @@ const Dashboard = () => {
                           });
                         };
 
-                        const canReturn = order.estado_envio === 'entregado' || order.estado_envio === 'active';
+                        // Only the most recent order (index 0) can be returned, and only if it's delivered
+                        const canReturn = index === 0 && order.estado_envio === 'entregado';
 
                         return (
                           <tr key={order.id} className="hover:bg-muted/50 transition-colors">
@@ -331,7 +332,7 @@ const Dashboard = () => {
                                   disabled={returnMutation.isPending}
                                 >
                                   <ArrowLeftRight className="h-3.5 w-3.5" />
-                                  Devolver
+                                  Solicitar devolución
                                 </Button>
                               )}
                             </td>

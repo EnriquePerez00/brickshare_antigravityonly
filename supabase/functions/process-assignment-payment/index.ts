@@ -128,7 +128,7 @@ serve(async (req) => {
             });
         }
 
-        // 3. FIRST: Create PaymentIntent for Deposit (Fianza) - Authorization only
+        // 3. FIRST: Create PaymentIntent for Deposit (Fianza) - Immediate capture (Custody)
         const depositAmount = Math.round(finalSetPrice * 100); // Convert to cents
         let depositPaymentIntent;
 
@@ -140,8 +140,8 @@ serve(async (req) => {
                 payment_method: paymentMethod,
                 off_session: true,
                 confirm: true,
-                capture_method: "manual", // Authorization only, no capture
-                description: `Fianza por set ${setRef}`,
+                capture_method: "automatic", // Immediate charge, held in custody
+                description: `Fianza en custodia por set ${setRef}`,
                 metadata: {
                     user_id: userId,
                     set_ref: setRef,
@@ -149,11 +149,11 @@ serve(async (req) => {
                 }
             });
 
-            console.log(`Deposit authorization created: ${depositPaymentIntent.id}, status: ${depositPaymentIntent.status}`);
+            console.log(`Deposit charge created: ${depositPaymentIntent.id}, status: ${depositPaymentIntent.status}, amount: ${finalSetPrice} EUR`);
 
-            // Check if authorization was successful
-            if (depositPaymentIntent.status !== "requires_capture") {
-                throw new Error(`Deposit authorization failed with status: ${depositPaymentIntent.status}`);
+            // Check if capture was successful
+            if (depositPaymentIntent.status !== "succeeded") {
+                throw new Error(`Deposit payment failed with status: ${depositPaymentIntent.status}`);
             }
 
         } catch (error: any) {
@@ -180,10 +180,11 @@ serve(async (req) => {
 
         // 4. SECOND: Create PaymentIntent for Transport - Immediate charge
         let transportPaymentIntent;
+        const shippingCost = parseInt(Deno.env.get("COSTE_ENVIO_DEVOLUCION") ?? "10");
 
         try {
             transportPaymentIntent = await stripe.paymentIntents.create({
-                amount: 1000, // 10.00 EUR
+                amount: shippingCost * 100, // Using environment variable
                 currency: "eur",
                 customer: stripeCustomerId,
                 payment_method: paymentMethod,
@@ -198,7 +199,7 @@ serve(async (req) => {
                 }
             });
 
-            console.log(`Transport charge created: ${transportPaymentIntent.id}, status: ${transportPaymentIntent.status}`);
+            console.log(`Transport charge created: ${transportPaymentIntent.id}, status: ${transportPaymentIntent.status}, amount: ${shippingCost} EUR`);
 
             // Check if charge was successful
             if (transportPaymentIntent.status !== "succeeded") {
@@ -236,7 +237,7 @@ serve(async (req) => {
             depositPaymentIntentId: depositPaymentIntent.id,
             transportPaymentIntentId: transportPaymentIntent.id,
             depositAmount: depositAmount / 100,
-            transportAmount: 10.00
+            transportAmount: shippingCost
         }), {
             status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
