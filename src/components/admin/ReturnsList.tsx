@@ -1,4 +1,5 @@
-import { useShipments } from "@/hooks/useShipments";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
     Table,
     TableBody,
@@ -7,97 +8,286 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { ClipboardList } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Loader2, Edit2, AlertCircle, ClipboardList } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface ReturnItem {
+    id: string; // envio uuid
+    user_id: string;
+    set_id: string; // we need set_id to update status
+    created_at: string;
+    estado_envio: string;
+    users: {
+        full_name: string | null;
+        email: string | null;
+    };
+    sets: { // Joining sets
+        id: string;
+        lego_ref: string | null; // set_ref
+        name: string;
+        set_status: string | null;
+    } | null; // It might be null if left join fails, but shouldn't
+}
 
 const ReturnsList = () => {
-    const { data: allData, isLoading } = useShipments();
+    const [returns, setReturns] = useState<ReturnItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<ReturnItem | null>(null);
+    const [newStatus, setNewStatus] = useState<string>("");
+    const [isUpdating, setIsUpdating] = useState(false);
+    const { toast } = useToast();
+    const { user } = useAuth(); // Ensure auth context is ready
 
-    // Filter only those in return process or with return-related fields populated
-    const returns = allData?.filter(s =>
-        ['devuelto', 'en_transito_retorno'].includes(s.estado_envio) ||
-        s.fecha_solicitud_devolucion !== null
-    );
-
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return "-";
+    const fetchReturns = async () => {
+        setIsLoading(true);
         try {
-            return format(new Date(dateString), "dd/MM/yyyy", { locale: es });
-        } catch (e) {
-            return "-";
+            // Fetch envios with status 'devolucion' (User said 'devuelto', assuming 'devolucion' is the db value)
+            const { data, error } = await supabase
+                .from("envios")
+                .select(`
+                    id,
+                    user_id,
+                    created_at,
+                    estado_envio,
+                    set_id,
+                    users (
+                        full_name,
+                        email
+                    ),
+                    sets (
+                        id,
+                        lego_ref,
+                        name,
+                        set_status
+                    )
+                `)
+                .eq("estado_envio", "devolucion") // Filtering by returned shipments
+                .order("created_at", { ascending: false });
+
+            if (error) throw error;
+
+            console.log("Returns fetched:", data);
+            setReturns(data as any); // Type casting for simplicity here
+        } catch (error: any) {
+            console.error("Error fetching returns:", error);
+            toast({
+                title: "Error",
+                description: "No se pudieron cargar las devoluciones.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchReturns();
+    }, []);
+
+    const handleEditClick = (item: ReturnItem) => {
+        setSelectedItem(item);
+        setNewStatus(item.sets?.set_status || "inactivo");
+        setIsDialogOpen(true);
+    };
+
+    const handleConfirmUpdate = async () => {
+        if (!selectedItem || !selectedItem.sets) return;
+
+        setIsUpdating(true);
+        try {
+            // Call the RPC function we just created
+            const { error } = await supabase.rpc("update_set_status_from_return", {
+                p_set_id: selectedItem.sets.id,
+                p_new_status: newStatus
+            });
+
+            if (error) throw error;
+
+            toast({
+                title: "Estado actualizado",
+                description: `El set ha pasado a estado "${newStatus}".`,
+                className: "bg-green-100 border-green-200 dark:bg-green-900/30 dark:border-green-800",
+            });
+
+            // Refresh list
+            await fetchReturns();
+            setIsDialogOpen(false);
+        } catch (error: any) {
+            console.error("Error updating status:", error);
+            toast({
+                title: "Error",
+                description: error.message || "No se pudo actualizar el estado.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const getStatusBadgeVariant = (status: string) => {
+        switch (status) {
+            case "activo": return "default"; // green-ish usually or default primary
+            case "inactivo": return "secondary"; // gray
+            case "en reparacion": return "destructive"; // red/orange or maybe we want a warning color?
+            default: return "outline";
         }
     };
 
     if (isLoading) {
-        return <div className="animate-pulse space-y-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-12 bg-muted rounded"></div>)}
-        </div>;
+        return (
+            <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
     }
 
-    if (!returns || returns.length === 0) {
+    if (returns.length === 0) {
         return (
-            <div className="text-center py-12 bg-card rounded-xl border border-dashed border-border">
-                <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground text-lg">No hay devoluciones registradas o en proceso.</p>
+            <div className="text-center p-8 bg-muted/20 rounded-xl border border-dashed border-muted-foreground/30">
+                <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-3 opacity-50" />
+                <h3 className="text-lg font-medium text-foreground">No hay devoluciones pendientes</h3>
+                <p className="text-muted-foreground">No se encontraron envíos en estado 'devolucion'.</p>
+                {/* Debug hint */}
+                <Button variant="ghost" size="sm" onClick={fetchReturns} className="mt-4">
+                    Refrescar
+                </Button>
             </div>
         );
     }
 
     return (
-        <div className="bg-card rounded-xl border border-border overflow-x-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>ID_usuario</TableHead>
-                        <TableHead>set_num</TableHead>
-                        <TableHead>fecha_asignacio</TableHead>
-                        <TableHead>fecha_recogida_al</TableHead>
-                        <TableHead>proveedor_envio</TableHead>
-                        <TableHead>fecha_entrega_u</TableHead>
-                        <TableHead>fecha_solicitud_devoluc</TableHead>
-                        <TableHead>proveedor_recogida</TableHead>
-                        <TableHead>fecha_entrega_usuario</TableHead>
-                        <TableHead>fecha_recepcion_almac</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {returns.map((shipment) => (
-                        <TableRow key={shipment.id}>
-                            <TableCell className="font-medium text-xs truncate max-w-[100px]" title={shipment.users?.full_name || shipment.user_id}>
-                                {shipment.users?.full_name || shipment.user_id.substring(0, 8)}
-                            </TableCell>
-                            <TableCell>
-                                {shipment.orders?.sets?.set_ref || "-"}
-                            </TableCell>
-                            <TableCell>
-                                {formatDate(shipment.fecha_asignada)}
-                            </TableCell>
-                            <TableCell>
-                                {formatDate(shipment.fecha_recogida_almacen)}
-                            </TableCell>
-                            <TableCell>
-                                {shipment.proveedor_envio || "-"}
-                            </TableCell>
-                            <TableCell>
-                                {formatDate(shipment.fecha_entrega_real)}
-                            </TableCell>
-                            <TableCell>
-                                {formatDate(shipment.fecha_solicitud_devolucion)}
-                            </TableCell>
-                            <TableCell>
-                                {shipment.proveedor_recogida || "-"}
-                            </TableCell>
-                            <TableCell>
-                                {formatDate(shipment.fecha_entrega_usuario)}
-                            </TableCell>
-                            <TableCell>
-                                {formatDate(shipment.fecha_recepcion_almacen)}
-                            </TableCell>
+        <div className="space-y-4">
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Fecha</TableHead>
+                            <TableHead>Usuario</TableHead>
+                            <TableHead>Set Ref</TableHead>
+                            <TableHead>Estado Set Actual</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {returns.map((item) => (
+                            <TableRow key={item.id}>
+                                <TableCell>
+                                    {new Date(item.created_at).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col">
+                                        <span className="font-medium">{item.users?.full_name || "Sin nombre"}</span>
+                                        <span className="text-xs text-muted-foreground">{item.users?.email}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-mono font-bold bg-muted px-2 py-1 rounded">
+                                            {item.sets?.lego_ref || "N/A"}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                                            {item.sets?.name}
+                                        </span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant={getStatusBadgeVariant(item.sets?.set_status || "")}>
+                                        {item.sets?.set_status || "Desconocido"}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleEditClick(item)}
+                                        title="Editar estado del set"
+                                    >
+                                        <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Actualizar Estado del Set</DialogTitle>
+                        <DialogDescription>
+                            Cambia el estado del set <strong>{selectedItem?.sets?.lego_ref}</strong>.
+                            Esta acción actualizará el inventario automáticamente.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                Nuevo Estado
+                            </label>
+                            <Select value={newStatus} onValueChange={setNewStatus}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un estado" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="activo">Activo (Disponible)</SelectItem>
+                                    <SelectItem value="inactivo">Inactivo</SelectItem>
+                                    <SelectItem value="en reparacion">En Reparación</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {newStatus === "en reparacion" && (
+                            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-3 flex gap-3 text-amber-800 dark:text-amber-200 text-sm">
+                                <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                                <p>
+                                    Al marcar como "En Reparación", se incrementará en 1 la unidad en "En Reparación".
+                                    (Nota: No se descontará de "En Devolución" automáticamente).
+                                </p>
+                            </div>
+                        )}
+
+                        {newStatus === "activo" && (
+                            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-3 flex gap-3 text-blue-800 dark:text-blue-200 text-sm">
+                                <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                                <p>
+                                    Al marcar como "Activo", se incrementará en 1 el stock central.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isUpdating}>
+                            Cancelar
+                        </Button>
+                        <Button onClick={handleConfirmUpdate} disabled={isUpdating}>
+                            {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Confirmar Cambio
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
