@@ -6,6 +6,7 @@ import { Truck, ClipboardList, Boxes, Settings, UserPlus } from "lucide-react";
 import SetAssignment from "@/components/admin/SetAssignment";
 import ShipmentsList from "@/components/admin/ShipmentsList";
 import ReturnsList from "@/components/admin/ReturnsList";
+import MaintenanceList from "@/components/admin/MaintenanceList";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -75,10 +76,10 @@ const Operations = () => {
                     </TabsContent>
 
                     <TabsContent value="maintenance">
-                        <div className="bg-card p-8 rounded-xl border border-border text-center">
-                            <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                            <h3 className="text-lg font-semibold">Taller de Mantenimiento</h3>
-                            <p className="text-muted-foreground">Próximamente: Registro de higienización y conteo de piezas.</p>
+                        <div className="bg-card p-4 rounded-xl border border-border">
+                            <h3 className="text-xl font-semibold mb-2">Registro de sets en mantenimiento</h3>
+                            <p className="text-muted-foreground mb-6">Administra los sets que están siendo reparados o higienizados. Completa el mantenimiento para devolverlos al stock central.</p>
+                            <MaintenanceList />
                         </div>
                     </TabsContent>
                 </Tabs>

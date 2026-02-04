@@ -69,11 +69,11 @@ const ProductCard = ({
       className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-all hover:-translate-y-1 flex flex-col h-full"
     >
       {/* Image Container */}
-      <div className="relative aspect-square bg-secondary/30 overflow-hidden shrink-0">
+      <div className="relative aspect-square bg-secondary/10 overflow-hidden shrink-0">
         <img
           src={imageUrl}
           alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
         />
 
         {/* Wishlist Button */}
@@ -93,24 +93,23 @@ const ProductCard = ({
             <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
           )}
         </button>
-
-        {/* Theme Badge */}
-        <div className="absolute bottom-3 left-3">
-          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground shadow-sm">
-            {theme}
-          </span>
-        </div>
       </div>
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-grow">
-        {/* Line 1: Theme, Name, Lego Ref */}
-        <div className="mb-2">
-          <h3 className="font-display font-bold text-foreground leading-tight line-clamp-2 min-h-[2.5rem]">
-            <span className="text-primary/70 text-xs mr-1">{theme}</span>
+        {/* Line 1: Theme & Name */}
+        <div className="mb-2 space-y-1">
+          <div className="text-sm font-bold text-primary uppercase tracking-wide">
+            {theme}
+          </div>
+          <h3 className="font-display text-sm text-foreground leading-snug line-clamp-2 min-h-[2.5rem]">
             {name}
-            {legoRef && <span className="text-muted-foreground ml-2 text-xs font-mono">#{legoRef}</span>}
           </h3>
+          {legoRef && (
+            <div className="text-xs font-mono text-muted-foreground pt-1">
+              REF: {legoRef}
+            </div>
+          )}
         </div>
 
         {/* Line 2: Age Range, Piece Count */}

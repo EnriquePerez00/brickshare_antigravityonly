@@ -26,11 +26,12 @@ const Auth = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; policy?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; policy?: string }>({});
 
   const { signIn, signUp, signInWithGoogle, resetPassword, updateUserPassword, user, isAdmin, isOperador, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ const Auth = () => {
   }, [user, isAdmin, isOperador, authLoading, navigate]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string; policy?: string } = {};
+    const newErrors: { email?: string; password?: string; confirmPassword?: string; policy?: string } = {};
 
     if (mode !== "update-password") {
       const emailResult = emailSchema.safeParse(email);
@@ -68,6 +69,12 @@ const Auth = () => {
       const passwordResult = passwordSchema.safeParse(password);
       if (!passwordResult.success) {
         newErrors.password = passwordResult.error.errors[0].message;
+      }
+
+      if (mode === "update-password") {
+        if (password !== confirmPassword) {
+          newErrors.confirmPassword = "Las contraseñas no coinciden";
+        }
       }
     }
 
@@ -295,6 +302,30 @@ const Auth = () => {
                 </div>
                 {errors.password && (
                   <p className="text-xs text-destructive">{errors.password}</p>
+                )}
+              </div>
+            )}
+
+            {mode === "update-password" && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Repite la contraseña"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                    }}
+                    className={`pl-10`}
+                    required
+                  />
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs text-destructive">{errors.confirmPassword}</p>
                 )}
               </div>
             )}

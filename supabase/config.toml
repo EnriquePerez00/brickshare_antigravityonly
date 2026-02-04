@@ -8,3 +8,7 @@ verify_jwt = false
 
 [functions.change-subscription]
 verify_jwt = true
+
+[functions.add-lego-set]
+verify_jwt = false
+

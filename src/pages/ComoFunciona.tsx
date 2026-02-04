@@ -75,10 +75,10 @@ const plans = [
 ];
 
 const commonFeatures = [
-  { icon: Package, text: "1 set por mes" },
+  { icon: Package, text: "Intercambios ilimitados" },
   { icon: Clock, text: "Tiempo de uso ilimitado" },
-  { icon: ShieldCheck, text: "Pérdida de 5-6 piezas pequeñas cubierta (95% de casos)" },
-  { icon: Truck, text: "Envío y devolución gratuitos" }
+  { icon: ShieldCheck, text: "Seguro de piezas pequeñas incluido" },
+  { icon: Truck, text: "Envío urgente (10€/trayecto)" }
 ];
 
 const steps = [
@@ -106,19 +106,24 @@ const steps = [
 
 const faqs = [
   {
-    question: "¿Cómo funciona la suscripción?",
-    answer: "Dependiendo del tipo de suscripción tienes acceso a un catálogo de sets más amplio y a un número de envíos por mes determinado. Solo puedes tener 1 set a la vez por suscripción.",
+    question: "¿Cómo funcionan los envíos y cambios?",
+    answer: "¡Sin límites! Puedes disfrutar de tantos sets como quieras al mes. En cuanto entregas tu set actual en el punto de recogida, te enviamos el siguiente. Cada envío tiene un coste logístico de 10€ (estamos trabajando para reducirlo).",
+    icon: Truck,
+  },
+  {
+    question: "¿Puedo cambiar de suscripción?",
+    answer: "Sí, en cualquier momento. Si haces un 'upgrade' a un plan superior, solo abonarás la parte proporcional, manteniendo tu ciclo de facturación actual. Para 'downgrades', el cambio se aplica al siguiente ciclo.",
+    icon: RotateCcw,
+  },
+  {
+    question: "¿Qué es el cargo de fianza?",
+    answer: "Al generar un envío, se realiza una retención (2º cargo) equivalente al valor de mercado del set. ¡Tranquilo! Este importe se devuelve automáticamente cuando recibimos y validamos el set de vuelta. Es nuestra garantía para mantener el servicio activo.",
     icon: CreditCard,
   },
   {
-    question: "¿Qué pasa si pierdo alguna pieza pequeña?",
-    answer: "¡No te preocupes! Es completamente normal. Nosotros reponemos las piezas pequeñas sin ningún coste adicional para ti.",
+    question: "¿Qué pasa si pierdo piezas o figuras?",
+    answer: "Queremos que juegues tranquilo. Las piezas pequeñas comunes NO se cobran. Sin embargo, las figuras originales (minifiguras) y piezas exclusivas son costosas; si faltan, tendremos que descontar su valor de la fianza para poder completar el set para el siguiente usuario.",
     icon: Puzzle,
-  },
-  {
-    question: "¿Y si pierdo una pieza grande o una figurilla?",
-    answer: "En ese caso, nosotros completamos el set, pero te pediremos que abones el importe de la pieza o figurilla perdida.",
-    icon: AlertCircle,
   },
   {
     question: "¿Puedo darme de baja cuando quiera?",
@@ -127,14 +132,8 @@ const faqs = [
   },
   {
     question: "¿Cuántos sets puedo tener a la vez?",
-    answer: "Con cada suscripción solo puedes tener 1 set a la vez. Cuando lo devuelvas, podrás solicitar el siguiente de tu wishlist.",
-    icon: Package,
-  },
-  {
-    question: "¿Qué incluye cada tipo de suscripción?",
-    answer: "Cada plan ofrece acceso a diferentes niveles de catálogo y número de envíos mensuales. Los planes superiores incluyen sets más exclusivos y mayor frecuencia de intercambio.",
-    icon: CheckCircle,
-  },
+    answer: "Con cada suscripción solo puedes tener 1 set a la vez. Cuando lo devuelvas, te enviamos otro de tu wishlist...pero te explico un truco, si tienes un amigo que tambien está suscrito.. por que no intercanviais los sets y consturís el doble ?"
+  }
 ];
 
 import { supabase } from "@/integrations/supabase/client";

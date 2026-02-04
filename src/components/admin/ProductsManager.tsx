@@ -38,11 +38,9 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, Wand2, Loader2, FileText } from "lucide-react";
+import { Pencil, Trash2, Wand2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLegoEnrichment } from "@/hooks/useLegoEnrichment";
-import Papa from "papaparse";
-import { useRef } from "react";
 
 
 const setSchema = z.object({
@@ -65,6 +63,8 @@ type SetFormData = z.infer<typeof setSchema>;
 
 const ProductsManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importMode, setImportMode] = useState<'set' | 'pieces'>('set');
   const [editingSet, setEditingSet] = useState<any>(null);
   const queryClient = useQueryClient();
   const { fetchLegoData, isLoading: isEnriching } = useLegoEnrichment();
@@ -105,39 +105,7 @@ const ProductsManager = () => {
     },
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (data: SetFormData) => {
-      const skillBoostArray = data.skill_boost
-        ? data.skill_boost.split(",").map((s) => s.trim())
-        : null;
 
-      const { error } = await supabase.from("sets").insert({
-        set_name: data.set_name,
-        set_ref: data.set_ref || null,
-        set_description: data.set_description || null,
-        set_theme: data.set_theme,
-        set_age_range: data.set_age_range,
-        set_piece_count: data.set_piece_count,
-        set_image_url: data.set_image_url || null,
-        skill_boost: skillBoostArray,
-        year_released: data.year_released,
-        set_weight: data.set_weight || null,
-        set_minifigs: data.set_minifigs || null,
-        set_dim: data.set_dim || null,
-        catalogue_visibility: data.catalogue_visibility === "yes",
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-sets"] });
-      toast.success("Set created successfully");
-      setIsDialogOpen(false);
-      form.reset();
-    },
-    onError: (error) => {
-      toast.error("Failed to create set: " + error.message);
-    },
-  });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: SetFormData }) => {
@@ -228,81 +196,11 @@ const ProductsManager = () => {
     }
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        const data = results.data as any[];
-        if (data.length === 0) {
-          toast.error("El archivo CSV está vacío");
-          return;
-        }
-
-        const refs = data.map((row: any) => row.REF).filter(Boolean);
-        if (refs.length > 0) {
-          const { data: existingSets, error: checkError } = await supabase
-            .from("sets")
-            .select("set_ref")
-            .in("set_ref", refs);
-
-          if (checkError) {
-            toast.error("Error verificando duplicados: " + checkError.message);
-            return;
-          }
-
-          if (existingSets && existingSets.length > 0) {
-            const existingRefs = existingSets.map((s) => s.set_ref).join(", ");
-            toast.error(`Set(s) ya en la bb.dd: ${existingRefs}`);
-            return;
-          }
-        }
-
-        const setsToInsert = data.map((row: any) => ({
-          set_name: row.Rebrickable_name || "Unknown Set",
-          set_ref: row.REF || null,
-          set_description: row.Brickset_description || null,
-          set_theme: row.Rebrickable_Theme || "Unknown",
-          set_age_range: row.Brickset_age_range || "N/A",
-          set_piece_count: parseInt(row.bircklink_parts || row.Bricklink_parts) || 0,
-          set_image_url: row.Rebrickable_Image_URL || null,
-          set_weight: parseFloat(row["Bricklink_weight(gr)"]) || 0,
-          set_minifigs: parseInt(row.Bricklink_minifigs) || 0,
-          set_dim: row.Bricklink_dim || null,
-          year_released: parseInt(row.Rebrickable_Released) || null,
-          skill_boost: null,
-          catalogue_visibility: true,
-        }));
-
-        try {
-          const { error } = await supabase.from("sets").insert(setsToInsert);
-          if (error) throw error;
-          toast.success(`${setsToInsert.length} sets importados correctamente`);
-          queryClient.invalidateQueries({ queryKey: ["admin-sets"] });
-        } catch (error: any) {
-          toast.error("Error al importar sets: " + error.message);
-        }
-      },
-      error: (error) => {
-        toast.error("Error al leer el archivo CSV: " + error.message);
-      },
-    });
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
 
   const handleSubmit = (data: SetFormData) => {
     if (editingSet) {
       updateMutation.mutate({ id: editingSet.id, data });
-    } else {
-      createMutation.mutate(data);
     }
   };
 
@@ -318,27 +216,41 @@ const ProductsManager = () => {
         <CardTitle>Gestión de Sets LEGO</CardTitle>
         <div className="flex gap-4 items-center">
           <div className="flex gap-2">
-            <input
-              type="file"
-              accept=".csv"
-              className="hidden"
-              ref={fileInputRef}
-              onChange={handleCSVUpload}
-            />
+
 
             <Button
               size="sm"
-              onClick={() => fileInputRef.current?.click()}
+              variant="outline"
+              className="mr-2"
+              onClick={() => {
+                setImportMode('set');
+                setIsImportDialogOpen(true);
+              }}
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Set
+              <Wand2 className="h-4 w-4 mr-2" />
+              Import Set (Ref)
             </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              className="mr-2"
+              onClick={() => {
+                setImportMode('pieces');
+                setIsImportDialogOpen(true);
+              }}
+            >
+              <Wand2 className="h-4 w-4 mr-2" />
+              Import Pieces (x Set)
+            </Button>
+
+
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
-                    {editingSet ? "Edit Set" : "Add New Set"}
+                    Edit Set
                   </DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
@@ -566,13 +478,12 @@ const ProductsManager = () => {
                       >
                         Cancel
                       </Button>
+
                       <Button
                         type="submit"
-                        disabled={
-                          createMutation.isPending || updateMutation.isPending
-                        }
+                        disabled={updateMutation.isPending}
                       >
-                        {editingSet ? "Update" : "Create"}
+                        Update
                       </Button>
                     </div>
                   </form>
@@ -581,7 +492,7 @@ const ProductsManager = () => {
             </Dialog>
           </div>
         </div>
-      </CardHeader>
+      </CardHeader >
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center py-8">
@@ -637,8 +548,167 @@ const ProductsManager = () => {
             </Table>
           </div>
         )}
+
       </CardContent>
+      <ImportSetDialog
+        isOpen={isImportDialogOpen}
+        mode={importMode}
+        onClose={() => setIsImportDialogOpen(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["admin-sets"] });
+          setIsImportDialogOpen(false);
+        }}
+      />
     </Card >
+  );
+};
+
+const ImportSetDialog = ({ isOpen, mode, onClose, onSuccess }: { isOpen: boolean; mode: 'set' | 'pieces'; onClose: () => void; onSuccess: () => void }) => {
+  const [ref, setRef] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [previewData, setPreviewData] = useState<any>(null);
+  const [step, setStep] = useState<'input' | 'preview'>('input');
+
+  const handleReset = () => {
+    setRef("");
+    setPreviewData(null);
+    setStep('input');
+    setIsLoading(false);
+  };
+
+  const handleClose = () => {
+    handleReset();
+    onClose();
+  };
+
+  const handlePreview = async () => {
+    if (!ref) {
+      toast.error("Please enter a reference");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('add-lego-set', {
+        body: { set_ref: ref, action: 'preview' }
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
+
+      setPreviewData(data.data);
+      setStep('preview');
+    } catch (err: any) {
+      console.error("Preview error:", err);
+      toast.error("Failed to fetch preview: " + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImport = async () => {
+    setIsLoading(true);
+    try {
+      const action = mode === 'pieces' ? 'import_pieces' : 'import';
+      const { data, error } = await supabase.functions.invoke('add-lego-set', {
+        body: { set_ref: ref, action }
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
+
+      toast.success(data.message || "Operation successful");
+      onSuccess();
+      handleClose();
+    } catch (err: any) {
+      console.error("Import error:", err);
+      toast.error("Failed to import: " + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>
+            {mode === 'pieces' ? 'Import Pieces Only' : 'Import Set from Rebrickable'}
+          </DialogTitle>
+          <div className="text-sm text-muted-foreground">
+            {step === 'input'
+              ? "Enter the LEGO set reference to preview details."
+              : "Review the set details below before importing."}
+          </div>
+        </DialogHeader>
+
+        <div className="py-4">
+          {step === 'input' ? (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="ref" className="text-right text-sm font-medium">
+                LEGO Ref
+              </label>
+              <Input
+                id="ref"
+                value={ref}
+                onChange={(e) => setRef(e.target.value)}
+                placeholder="e.g. 75078-1"
+                className="col-span-3"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handlePreview();
+                }}
+              />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {previewData && (
+                <div className="flex gap-4">
+                  {previewData.set_image_url && (
+                    <img
+                      src={previewData.set_image_url}
+                      alt={previewData.set_name}
+                      className="w-24 h-24 object-contain rounded border"
+                    />
+                  )}
+                  <div className="space-y-1 text-sm">
+                    <p><span className="font-semibold">Ref:</span> {previewData.set_ref}</p>
+                    <p><span className="font-semibold">Name:</span> {previewData.set_name}</p>
+                    <p><span className="font-semibold">Theme:</span> {previewData.set_theme}</p>
+                    <p><span className="font-semibold">Year:</span> {previewData.year_released}</p>
+                    <p><span className="font-semibold">Parts:</span> {previewData.set_piece_count}</p>
+                  </div>
+                </div>
+              )}
+              <div className="bg-yellow-50 p-3 rounded text-xs text-yellow-800 border border-yellow-200">
+                <p className="font-semibold mb-1">Warning:</p>
+                {mode === 'pieces' ? (
+                  <p>This will <strong>replace all existing pieces</strong> for this set in the database. The set must already exist.</p>
+                ) : (
+                  <p>Importing will create the set as <strong>Active</strong> and overwrite any existing inventory for this reference.</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          {step === 'input' ? (
+            <Button onClick={handlePreview} disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Preview
+            </Button>
+          ) : (
+            <Button onClick={handleImport} disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {mode === 'pieces' ? 'Confirm Import Pieces' : 'Confirm Import Set'}
+            </Button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

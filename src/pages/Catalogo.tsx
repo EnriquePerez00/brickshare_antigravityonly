@@ -102,12 +102,13 @@ const sampleSets = [
 ];
 
 const themes = ["City", "Technic", "Creator", "Friends", "Star Wars", "Architecture"];
-const ageRanges = ["5-7 años", "6-12 años", "7-12 años", "8-12 años", "8-14 años", "9-16 años", "10-16 años"];
+const ageRanges = ["4+", "6+", "9+", "12+", "18+"];
 const pieceRanges = [
   { label: "Menos de 300", min: 0, max: 299 },
   { label: "300-500", min: 300, max: 500 },
   { label: "500-800", min: 500, max: 800 },
-  { label: "Más de 800", min: 800, max: 10000 }
+  { label: "800-1200", min: 800, max: 1200 },
+  { label: "Más de 1200", min: 1201, max: 100000 }
 ];
 
 const Catalogo = () => {

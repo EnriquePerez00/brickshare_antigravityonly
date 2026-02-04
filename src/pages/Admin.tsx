@@ -5,7 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SetsManager from "@/components/admin/ProductsManager";
 import PiecePurchaseManager from "@/components/admin/PiecePurchaseManager";
 import InventoryManager from "@/components/admin/InventoryManager";
-import { ShoppingCart, Package, Boxes } from "lucide-react";
+import InventoryPiecesManager from "@/components/admin/InventoryPiecesManager";
+import { ShoppingCart, Package, Boxes, Puzzle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -43,7 +44,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="sets" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
             <TabsTrigger value="sets" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Sets
@@ -54,7 +55,11 @@ const Admin = () => {
             </TabsTrigger>
             <TabsTrigger value="inventory" className="flex items-center gap-2">
               <Boxes className="h-4 w-4" />
-              Inventario
+              Inventario Sets
+            </TabsTrigger>
+            <TabsTrigger value="inventory-pieces" className="flex items-center gap-2">
+              <Puzzle className="h-4 w-4" />
+              Inventario pieces
             </TabsTrigger>
           </TabsList>
 
@@ -68,6 +73,10 @@ const Admin = () => {
 
           <TabsContent value="inventory">
             <InventoryManager />
+          </TabsContent>
+
+          <TabsContent value="inventory-pieces">
+            <InventoryPiecesManager />
           </TabsContent>
         </Tabs>
       </div>
