@@ -16,7 +16,7 @@ const ShipmentsList = () => {
     // Filter active shipments and sort by updated_at DESC (most recent first)
     const activeShipments = shipments
         ?.filter(s =>
-            ['preparacion', 'ruta_envio', 'devolucion', 'ruta_devolucion'].includes(s.estado_envio)
+            ['preparacion', 'ruta_envio', 'devuelto', 'ruta_devolucion'].includes(s.estado_envio)
         )
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
@@ -26,7 +26,7 @@ const ShipmentsList = () => {
                 return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">En Preparación</Badge>;
             case 'ruta_envio':
                 return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">En Camino</Badge>;
-            case 'devolucion':
+            case 'devuelto':
                 return <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300">Devolución Solicitada</Badge>;
             case 'ruta_devolucion':
                 return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">En Devolución</Badge>;

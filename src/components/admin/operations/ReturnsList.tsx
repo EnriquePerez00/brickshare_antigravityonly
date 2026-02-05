@@ -41,9 +41,10 @@ interface ReturnItem {
     };
     sets: { // Joining sets
         id: string;
-        lego_ref: string | null; // set_ref
-        name: string;
-        set_status: string | null;
+        set_ref: string | null; // set_ref
+        set_name: string;
+        set_weight: number | null; // Changed from set_status to set_weight
+        set_status: string | null; // Keeping status for internal logic if needed
     } | null; // It might be null if left join fails, but shouldn't
 }
 
@@ -60,7 +61,7 @@ const ReturnsList = () => {
     const fetchReturns = async () => {
         setIsLoading(true);
         try {
-            // Fetch envios with status 'devolucion' (User said 'devuelto', assuming 'devolucion' is the db value)
+            // Fetch envios with status 'devuelto'
             const { data, error } = await supabase
                 .from("envios")
                 .select(`
@@ -75,12 +76,14 @@ const ReturnsList = () => {
                     ),
                     sets (
                         id,
-                        lego_ref,
-                        name,
+                        set_ref,
+                        set_name,
+                        set_weight,
                         set_status
                     )
                 `)
-                .eq("estado_envio", "devolucion") // Filtering by returned shipments
+                .eq("estado_envio", "devuelto") // Filtering by returned shipments
+                .eq("estado_manipulacion", false) // Show only unprocessed returns
                 .order("created_at", { ascending: false });
 
             if (error) throw error;
@@ -90,8 +93,8 @@ const ReturnsList = () => {
         } catch (error: any) {
             console.error("Error fetching returns:", error);
             toast({
-                title: "Error",
-                description: "No se pudieron cargar las devoluciones.",
+                title: "Error al cargar devoluciones",
+                description: `Error: ${error.message || error.code || JSON.stringify(error)}`,
                 variant: "destructive",
             });
         } finally {
@@ -101,6 +104,7 @@ const ReturnsList = () => {
 
     useEffect(() => {
         fetchReturns();
+        console.log("ReturnsList mounted - Checking devuelto");
     }, []);
 
     const handleEditClick = (item: ReturnItem) => {
@@ -114,10 +118,10 @@ const ReturnsList = () => {
 
         setIsUpdating(true);
         try {
-            // Call the RPC function we just created
             const { error } = await supabase.rpc("update_set_status_from_return", {
                 p_set_id: selectedItem.sets.id,
-                p_new_status: newStatus
+                p_new_status: newStatus,
+                p_envio_id: selectedItem.id
             });
 
             if (error) throw error;
@@ -165,7 +169,7 @@ const ReturnsList = () => {
             <div className="text-center p-8 bg-muted/20 rounded-xl border border-dashed border-muted-foreground/30">
                 <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-3 opacity-50" />
                 <h3 className="text-lg font-medium text-foreground">No hay devoluciones pendientes</h3>
-                <p className="text-muted-foreground">No se encontraron envíos en estado 'devolucion'.</p>
+                <p className="text-muted-foreground">No se encontraron envíos en estado 'devuelto'.</p>
                 {/* Debug hint */}
                 <Button variant="ghost" size="sm" onClick={fetchReturns} className="mt-4">
                     Refrescar
@@ -183,7 +187,7 @@ const ReturnsList = () => {
                             <TableHead>Fecha</TableHead>
                             <TableHead>Usuario</TableHead>
                             <TableHead>Set Ref</TableHead>
-                            <TableHead>Estado Set Actual</TableHead>
+                            <TableHead>Peso Referencia</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -202,17 +206,17 @@ const ReturnsList = () => {
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <span className="font-mono font-bold bg-muted px-2 py-1 rounded">
-                                            {item.sets?.lego_ref || "N/A"}
+                                            {item.sets?.set_ref || "N/A"}
                                         </span>
                                         <span className="text-xs text-muted-foreground truncate max-w-[150px]">
-                                            {item.sets?.name}
+                                            {item.sets?.set_name}
                                         </span>
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant={getStatusBadgeVariant(item.sets?.set_status || "")}>
-                                        {item.sets?.set_status || "Desconocido"}
-                                    </Badge>
+                                    <div className="flex items-center gap-1 font-mono text-sm">
+                                        <span>{item.sets?.set_weight ? `${item.sets.set_weight}g` : "N/A"}</span>
+                                    </div>
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button
@@ -235,7 +239,7 @@ const ReturnsList = () => {
                     <DialogHeader>
                         <DialogTitle>Actualizar Estado del Set</DialogTitle>
                         <DialogDescription>
-                            Cambia el estado del set <strong>{selectedItem?.sets?.lego_ref}</strong>.
+                            Cambia el estado del set <strong>{selectedItem?.sets?.set_ref}</strong>.
                             Esta acción actualizará el inventario automáticamente.
                         </DialogDescription>
                     </DialogHeader>
@@ -243,16 +247,15 @@ const ReturnsList = () => {
                     <div className="grid gap-4 py-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                Nuevo Estado
+                                Situacion test
                             </label>
                             <Select value={newStatus} onValueChange={setNewStatus}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Selecciona un estado" />
+                                    <SelectValue placeholder="Selecciona resultado del test" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="activo">Activo (Disponible)</SelectItem>
-                                    <SelectItem value="inactivo">Inactivo</SelectItem>
-                                    <SelectItem value="en reparacion">En Reparación</SelectItem>
+                                    <SelectItem value="activo">Peso OK (Mover a Stock)</SelectItem>
+                                    <SelectItem value="en reparacion">Faltan Piezas (Mover a Reparación)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -261,8 +264,7 @@ const ReturnsList = () => {
                             <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-3 flex gap-3 text-amber-800 dark:text-amber-200 text-sm">
                                 <AlertCircle className="h-5 w-5 flex-shrink-0" />
                                 <p>
-                                    Al marcar como "En Reparación", se incrementará en 1 la unidad en "En Reparación".
-                                    (Nota: No se descontará de "En Devolución" automáticamente).
+                                    Se marcará como "En Reparación" (+1 Ud).
                                 </p>
                             </div>
                         )}
@@ -271,7 +273,7 @@ const ReturnsList = () => {
                             <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-3 flex gap-3 text-blue-800 dark:text-blue-200 text-sm">
                                 <AlertCircle className="h-5 w-5 flex-shrink-0" />
                                 <p>
-                                    Al marcar como "Activo", se incrementará en 1 el stock central.
+                                    Se marcará como "Activo/Stock".
                                 </p>
                             </div>
                         )}

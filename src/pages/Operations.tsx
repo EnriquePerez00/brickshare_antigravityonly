@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Truck, ClipboardList, Boxes, Settings, UserPlus } from "lucide-react";
-import SetAssignment from "@/components/admin/SetAssignment";
-import ShipmentsList from "@/components/admin/ShipmentsList";
-import ReturnsList from "@/components/admin/ReturnsList";
-import MaintenanceList from "@/components/admin/MaintenanceList";
+import SetAssignment from "@/components/admin/operations/SetAssignment";
+import ShipmentsList from "@/components/admin/operations/ShipmentsList";
+import ReturnsList from "@/components/admin/operations/ReturnsList";
+import MaintenanceList from "@/components/admin/inventory/MaintenanceList";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 

@@ -117,7 +117,7 @@ const InventoryManager = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Fetch all sets to map lego_ref to set_id
+    // Fetch all sets to map set_ref to set_id
     const { data: allSets, error: setsError } = await supabase
       .from("sets")
       .select("id, set_ref");
