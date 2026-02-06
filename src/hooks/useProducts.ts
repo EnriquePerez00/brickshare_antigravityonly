@@ -34,3 +34,21 @@ export const useSets = (limit = 20, offset = 0) => {
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 };
+
+export const useFeaturedSets = (limit = 4) => {
+  return useQuery({
+    queryKey: ["featured-sets", limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sets")
+        .select("id, set_name, set_description, set_image_url, set_theme, set_age_range, set_piece_count, skill_boost, created_at, year_released, set_weight, catalogue_visibility, set_ref")
+        .eq("catalogue_visibility", true)
+        .order("set_piece_count", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data as SetData[];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+  });
+};

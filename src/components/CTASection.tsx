@@ -6,9 +6,9 @@ import { Link } from "react-router-dom";
 const CTASection = () => {
   const benefits = [
     "Sets ilimitados cada mes",
-    "Envío y devolución gratis",
+    "Entrega y recogida flexible",
     "Higiene garantizada",
-    "Cancelación flexible"
+    "Cancelación en cualquier momento"
   ];
 
   return (
@@ -79,7 +79,7 @@ const CTASection = () => {
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="text-lg px-8" asChild>
-                  <Link to="/planes">
+                  <Link to="/como-funciona">
                     Ver planes y precios
                   </Link>
                 </Button>

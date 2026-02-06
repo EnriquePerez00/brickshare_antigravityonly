@@ -141,7 +141,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const ComoFunciona = () => {
   const { startSubscription, isLoading: subscriptionLoading } = useSubscription();
-  const { isAdmin, isOperador, isLoading: authLoading, user, profile, refreshProfile } = useAuth(); // Added user, profile, refreshProfile
+  const { isLoading: authLoading, user, profile, refreshProfile } = useAuth(); // Added user, profile, refreshProfile
   const navigate = useNavigate();
   const { toast } = useToast(); // Added toast
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
@@ -149,15 +149,7 @@ const ComoFunciona = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (isAdmin) {
-        navigate("/admin");
-      } else if (isOperador) {
-        navigate("/operaciones");
-      }
-    }
-  }, [isAdmin, isOperador, authLoading, navigate]);
+
 
   const handleSubscribe = async (plan: any) => {
     if (!user) {
@@ -232,13 +224,7 @@ const ComoFunciona = () => {
     }
   };
 
-  if (authLoading || isAdmin || isOperador) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -317,7 +303,7 @@ const ComoFunciona = () => {
         </section>
 
         {/* Subscription Plans Section */}
-        <section className="py-20 bg-gradient-to-br from-secondary/5 via-background to-primary/5">
+        <section id="planes" className="py-20 bg-gradient-to-br from-secondary/5 via-background to-primary/5">
           <div className="container mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

@@ -24,11 +24,22 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import Papa from "papaparse";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const InventoryManager = () => {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [editingInventory, setEditingInventory] = useState<any>(null); // Re-added state for edit dialog if needed later, though currently using just for delete in list.
   // Actually re-reading the code in previous turn, `handleEdit` was there but removed in my specific view? 
   // Wait, I refactored it heavily in step 126 and might have removed handleEdit/deleteMutation but left the calls?
@@ -64,9 +75,11 @@ const InventoryManager = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-inventory-sets"] });
       toast.success("Inventario eliminado correctamente");
+      setItemToDelete(null);
     },
     onError: (error) => {
       toast.error("Error al eliminar inventario: " + error.message);
+      setItemToDelete(null);
     },
   });
 
@@ -301,7 +314,7 @@ const InventoryManager = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => deleteMutation.mutate(item.id)}
+                            onClick={() => setItemToDelete(item.id)}
                             disabled={deleteMutation.isPending}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -380,6 +393,26 @@ const InventoryManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente este registro de inventario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => itemToDelete && deleteMutation.mutate(itemToDelete)}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

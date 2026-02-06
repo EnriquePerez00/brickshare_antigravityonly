@@ -4,47 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
 
-// Sample sets for preview
-const sampleSets = [
-  {
-    id: "1",
-    name: "City - Estación de Bomberos",
-    imageUrl: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
-    theme: "City",
-    ageRange: "6-12 años",
-    pieceCount: 509,
-    skillBoost: "Motricidad fina, trabajo en equipo"
-  },
-  {
-    id: "2",
-    name: "LEGO Technic Excavadora",
-    imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
-    theme: "Technic",
-    ageRange: "9-16 años",
-    pieceCount: 834,
-    skillBoost: "Lógica, mecánica"
-  },
-  {
-    id: "3",
-    name: "Creator - Casa Familiar",
-    imageUrl: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&h=400&fit=crop",
-    theme: "Creator",
-    ageRange: "8-12 años",
-    pieceCount: 728,
-    skillBoost: "Creatividad, visión espacial"
-  },
-  {
-    id: "4",
-    name: "Friends - Centro Comercial",
-    imageUrl: "https://images.unsplash.com/photo-1599623560574-39d485900c95?w=400&h=400&fit=crop",
-    theme: "Friends",
-    ageRange: "7-12 años",
-    pieceCount: 446,
-    skillBoost: "Imaginación, juego social"
-  }
-];
+import { useFeaturedSets } from "@/hooks/useProducts";
+import { useWishlist } from "@/hooks/useWishlist";
+import { Loader2 } from "lucide-react";
 
 const FeaturedProducts = () => {
+  const { data: featuredSets = [], isLoading } = useFeaturedSets();
+  const { isWishlisted, toggleWishlist } = useWishlist();
   return (
     <section className="py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -86,12 +52,28 @@ const FeaturedProducts = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {sampleSets.map((setData) => (
-            <ProductCard
-              key={setData.id}
-              {...setData}
-            />
-          ))}
+          {isLoading ? (
+            <div className="col-span-full flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            featuredSets.map((setData) => (
+              <ProductCard
+                key={setData.id}
+                id={setData.id}
+                name={setData.set_name}
+                imageUrl={setData.set_image_url || "/placeholder.svg"}
+                theme={setData.set_theme}
+                ageRange={setData.set_age_range}
+                pieceCount={setData.set_piece_count}
+                skillBoost={Array.isArray(setData.skill_boost) ? setData.skill_boost.join(", ") : ""}
+                legoRef={setData.set_ref || undefined}
+                description={setData.set_description}
+                isWishlisted={isWishlisted(setData.id)}
+                onWishlistToggle={toggleWishlist}
+              />
+            ))
+          )}
         </div>
       </div>
     </section>

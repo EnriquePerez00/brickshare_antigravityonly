@@ -50,7 +50,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
+                <Link to="/como-funciona" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
                   Preguntas frecuentes
                 </Link>
               </li>
@@ -79,6 +79,11 @@ const Footer = () => {
               <li>
                 <Link to="/donaciones" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
                   Donaciones
+                </Link>
+              </li>
+              <li>
+                <Link to="/terminos-y-condiciones" className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors">
+                  Términos y Condiciones
                 </Link>
               </li>
             </ul>

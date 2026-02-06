@@ -5,6 +5,7 @@ import { User, Heart, Award, Loader2, Trash2, Shield, AlertTriangle, MapPin, Pho
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
+import ProductRow from "@/components/ProductRow";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,7 +28,7 @@ import { toast } from "sonner";
 import { useUserPudoPoint, useSavePudoPoint } from "@/hooks/usePudo";
 
 const Dashboard = () => {
-  const { user, profile, isLoading: authLoading, deleteUserAccount, updateProfile } = useAuth();
+  const { user, profile, isLoading: authLoading, deleteUserAccount, updateProfile, isAdmin, isOperador } = useAuth();
   const { wishlistIds, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
   const { data: sets = [], isLoading: setsLoading } = useSets(100);
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
@@ -85,10 +86,16 @@ const Dashboard = () => {
   }, [profile, authLoading]);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
+    if (!authLoading) {
+      if (!user) {
+        navigate("/auth");
+      } else if (isAdmin) {
+        navigate("/admin");
+      } else if (isOperador) {
+        navigate("/operaciones");
+      }
     }
-  }, [user, authLoading, navigate]);
+  }, [user, isAdmin, isOperador, authLoading, navigate]);
 
   if (authLoading) {
     return (
@@ -219,9 +226,9 @@ const Dashboard = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : wishlistSets.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="flex flex-col gap-3">
                 {wishlistSets.map((set) => (
-                  <ProductCard
+                  <ProductRow
                     key={set.id}
                     id={set.id}
                     name={set.set_name}

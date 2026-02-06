@@ -19,8 +19,9 @@ import LegalNotice from "./pages/LegalNotice";
 import Donaciones from "./pages/Donaciones";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
-
 import Contacto from "./pages/Contacto";
+import ScrollToTop from "./components/ScrollToTop";
+import TerminosCondiciones from "./pages/TerminosCondiciones";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/catalogo" element={<Catalogo />} />
@@ -44,6 +46,7 @@ const App = () => (
             <Route path="/operaciones" element={<Operations />} />
             <Route path="/privacidad" element={<PrivacyPolicy />} />
             <Route path="/terminos" element={<Terms />} />
+            <Route path="/terminos-y-condiciones" element={<TerminosCondiciones />} />
             <Route path="/cookies" element={<PrivacyPolicy />} /> {/* Using Privacy for now as it contains cookie info */}
             <Route path="/aviso-legal" element={<LegalNotice />} />
             <Route path="/donaciones" element={<Donaciones />} />
