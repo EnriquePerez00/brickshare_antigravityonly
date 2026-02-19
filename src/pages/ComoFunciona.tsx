@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import HygieneSection from "@/components/HygieneSection";
 import {
   Accordion,
   AccordionContent,
@@ -301,6 +302,9 @@ const ComoFunciona = () => {
             </div>
           </div>
         </section>
+
+        {/* Hygiene Section */}
+        <HygieneSection />
 
         {/* Subscription Plans Section */}
         <section id="planes" className="py-20 bg-gradient-to-br from-secondary/5 via-background to-primary/5">

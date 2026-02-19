@@ -1,27 +1,27 @@
 import { motion } from "framer-motion";
-import { Shield, Sparkles, ThermometerSun, CheckCircle2 } from "lucide-react";
+import { Shield, Sparkles, ThermometerSun, Droplets, Wind } from "lucide-react";
 
 const HygieneSection = () => {
   const steps = [
     {
-      icon: ThermometerSun,
-      title: "Desinfección térmica",
-      description: "Tratamiento a alta temperatura que elimina el 99.9% de gérmenes y bacterias."
-    },
-    {
       icon: Sparkles,
-      title: "Limpieza ultrasónica",
-      description: "Tecnología que alcanza cada rincón de las piezas más complejas."
+      title: "Descontaminación Ultrasónica",
+      description: "Elimina aceites cutáneos y biofilm en rincones inaccesibles. Una limpieza total sin desgastar las piezas."
     },
     {
-      icon: CheckCircle2,
-      title: "Control de calidad",
-      description: "Revisión pieza a pieza para garantizar sets completos y en perfecto estado."
+      icon: ThermometerSun,
+      title: "Hidrólisis Enzimática",
+      description: "Química médica avanzada que digiere la suciedad de forma biológica, asegurando una desinfección microscópica."
     },
     {
-      icon: Shield,
-      title: "Sellado hermético",
-      description: "Empaquetado individual que mantiene la higiene hasta tu hogar."
+      icon: Droplets,
+      title: "Aclarado de Alta Pureza",
+      description: "Agua purificada sin cal ni cloro para un acabado espejo que devuelve el brillo y color vibrante original."
+    },
+    {
+      icon: Wind,
+      title: "Secado por Convección Filtrada",
+      description: "Aire caliente filtrado que evita micro-arañazos y asegura la ausencia total de humedad interna."
     }
   ];
 
@@ -47,7 +47,7 @@ const HygieneSection = () => {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground mb-6"
           >
-            Higiene de nivel hospitalario
+            Higiene de grado casi hospitalario
           </motion.h2>
 
           <motion.p
@@ -57,8 +57,8 @@ const HygieneSection = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-lg text-muted-foreground leading-relaxed"
           >
-            Cada set pasa por un riguroso proceso de higienización profesional. 
-            Tu familia juega con piezas más limpias que si las compraras nuevas.
+            Piezas microbiológicamente seguras para jugar y estéticamente perfectas para exhibir.
+            No solo limpiamos sets; protegemos la salud de tu familia y el valor de tu colección.
           </motion.p>
         </div>
 
@@ -76,21 +76,21 @@ const HygieneSection = () => {
               {index < steps.length - 1 && (
                 <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-primary/30 to-transparent z-0" />
               )}
-              
+
               <div className="bg-card rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-shadow relative z-10">
                 {/* Step number */}
                 <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full gradient-hero flex items-center justify-center text-sm font-bold text-primary-foreground">
                   {index + 1}
                 </div>
-                
+
                 <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                   <step.icon className="h-7 w-7 text-primary" />
                 </div>
-                
+
                 <h3 className="text-lg font-display font-semibold text-foreground mb-2">
                   {step.title}
                 </h3>
-                
+
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {step.description}
                 </p>
