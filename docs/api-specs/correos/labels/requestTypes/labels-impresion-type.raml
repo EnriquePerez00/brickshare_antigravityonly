@@ -1,0 +1,35 @@
+#%RAML 1.0 DataType
+type: object
+properties: 
+  labelOrderType:
+    type:  number
+    required: false
+    description: Indicates how the label type generated  will be sorted.  1 (addressee.internationalDestinyPoBox), 2 (addressee.company), 3 (addressee.lastName1), 4 (package.packageId), 5 (package.clientReference) 
+    example: 2
+  labelFormat:
+    type:  number
+    required: true
+    description: Indicates if the generation will be in XML (1), PDF (2) or ZPL (3). For customs documentation CN22 and CN23, only PDF format is permitted.
+    example: 2
+  labelPrintMode:
+    type:  number
+    required: true
+    description: Indicate whether the generation will be done in A4 format (1) or labeler (2).
+    example: 1
+  labelPrintInitialPosition:
+    type:  number
+    required: false
+    description: Starting position of the first label
+    example: 1
+  clientLogo:
+    type:  string
+    required: false
+    description: Base 64 image of the client's logo. It should only be indicated for pallet delivery (XPPCCOOF)
+    example: ZWplbXBsbw==
+  shipments:
+    type: 
+      items:
+        type: string
+    required: true
+    description: Shipment list
+    example: ["EXAMPLEXX00614790135001Z","EXAMPLEX00000100135001D","EXAMPLEXX00614680135001N"]

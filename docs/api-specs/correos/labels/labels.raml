@@ -1,0 +1,264 @@
+#%RAML 1.0
+title: API for the generation of labels, CN22 and CN23 documents 
+baseUri: https://api1.correos.es/support/labels/api/v1/
+protocols: https
+description: '<b>ENGLISH:</b><br>
+The API offers services for the generation of labels corresponding to national and international shipments, as well as CN22, CN23, DCAF and DDP documentation.<br>
+<b>ESPAÑOL:</b> <br>
+La API ofrece servicios para la generación de etiquetas correspondientes a envíos nacionales e internacionales, así como documentación CN22, CN23, DCAF y DDP.<br> ' 
+version: v1
+
+types:
+  labelsRequestTagType: !include requestTypes/labels-request-label-type.raml
+  labelsResponseTagType: !include responseTypes/labels-response-label-type.raml
+  labelsRequestDcafType: !include requestTypes/labels-request-dcaf-ddp-type.raml
+  labelsResponseDcafType: !include responseTypes/labels-response-dcaf-ddp-type.raml
+  labelsResponseDocumentsBackofficeType:  !include responseTypes/labels-response-backoffice-type.raml
+  error400: !include responseTypes/errors/error400.raml
+  error401: !include responseTypes/errors/error401.raml
+  error403: !include responseTypes/errors/error403.raml
+  error404: !include responseTypes/errors/error404.raml
+  error500: !include responseTypes/errors/error500.raml
+
+/labels/print:
+  post:
+    displayName: labelsprintpost
+    description: Print labels and customs documentation (CN22, CN23). As input it has the shipping codes for which the label needs to be obtained, label type (label, customs documentation or all), the output format (PDF, ZPL or XML), the format of printing (A4, label maker) and the starting position of the first label. As output, the labels of all unified shipments will be obtained in a PDF or ZPL based 64. It will also be possible to obtain the label data in XML format for customization by the client.
+    headers: 
+      Authorization:
+        description:  Used to send a valid OAuth 2 access token
+        type: string
+        required: true
+        example: Bearer test  
+    body: 
+      application/json:
+        type: labelsRequestTagType
+        example: !include examples/labels-generate-request-label.json
+    responses:
+      "201":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'            
+        description: Success
+        body:
+          application/json:
+            type: labelsResponseTagType
+            examples: 
+              ok: !include examples/labels-generate-response-label-pdf-ok.json        
+      "400":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Bad Request
+        body:
+          application/json:
+            type: error400
+            example: !include examples/errors/error400.json
+      "401":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Unauthorized
+        body:
+          application/json:
+            type: error401
+            example: !include examples/errors/error401.json
+      "403":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Forbidden
+        body:
+          application/json:
+            type: error403
+            example: !include examples/errors/error403.json
+      "404":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Not Found
+        body:
+          application/json:
+            type: error404
+            example: !include examples/errors/error404.json
+      "500":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Internal Server Error
+        body:
+          application/json:
+            type: error500
+            example: !include examples/errors/error500.json
+/documents/print:
+  post:
+    displayName: documentsprintpost
+    description: Documentation printing (DCAF and DDP). As input, it receives data such as the contract number and the customer number, address, town, postal code, number of shipments, the place of signature, ID of the signatory and name of the signatory. As output, the DCAF or DDP document will be obtained in PDF format in base 64.  
+    body: 
+      application/json:
+        type: labelsRequestDcafType
+        example: !include examples/labels-generate-request-dcaf-ddp.json
+    responses:
+      "201":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'            
+        description: Success
+        body:
+          application/json:
+            type: labelsResponseDcafType
+            examples: 
+              ok: !include examples/labels-generate-response-dcaf-pdf-ok.json         
+      "400":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: BadRequest
+        body:
+          application/json:
+            type: error400
+            example: !include examples/errors/error400.json
+      "401":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Unauthorized
+        body:
+          application/json:
+            type: error401
+            example: !include examples/errors/error401.json
+      "403":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Forbidden
+        body:
+          application/json:
+            type: error403
+            example: !include examples/errors/error403.json
+      "404":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Not Found
+        body:
+          application/json:
+            type: error404
+            example: !include examples/errors/error404.json
+      "500":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Internal Server Error
+        body:
+          application/json:
+            type: error500
+            example: !include examples/errors/error500.json
+/documents/backoffice/{shipment}:
+  uriParameters:
+    shipment:
+      type: string
+      displayName: Preregistered code.
+      description: Preregistered code.
+      example: 'EXAMPLE0058710128002Z'
+  get:
+    displayName: documentsBackofficeGet
+    description: Service that consult the information associated with the package.
+    headers: 
+      Authorization:
+        description: Used to send a valid OAuth 2 access token
+        type: string
+        required: true
+        example: Bearer test
+    responses:
+      "201":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Success
+        body:
+          application/json:
+            type: labelsResponseDocumentsBackofficeType
+            examples:
+              ok: !include examples/labels-document-backoffice-response.json
+      "400":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: BadRequest
+        body:
+          application/json:
+            type: error400
+            example: !include examples/errors/error400.json
+      "401":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Unauthorized
+        body:
+          application/json:
+            type: error401
+            example: !include examples/errors/error401.json
+      "403":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Forbidden
+        body:
+          application/json:
+            type: error403
+            example: !include examples/errors/error403.json
+      "404":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Not Found
+        body:
+          application/json:
+            type: error404
+            example: !include examples/errors/error404.json
+      "500":
+        headers:
+          Content-Type:
+            description: content type
+            type: string
+            example: 'application/json'
+        description: Internal Server Error
+        body:
+          application/json:
+            type: error500
+            example: !include examples/errors/error500.json

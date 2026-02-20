@@ -1,0 +1,8 @@
+{
+  "code": "400",
+  "message": "Bad request",
+  "moreInformation": {
+    "description": "The request was bad",
+    "link": "www.correos.es"
+  }
+}

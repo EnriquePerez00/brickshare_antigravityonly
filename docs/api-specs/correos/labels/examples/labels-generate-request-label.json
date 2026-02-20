@@ -1,0 +1,13 @@
+{
+	"application": "APPNAME",
+	"documentationType": 0,
+	"print": {
+		"labelOrderType": 2,
+		"labelFormat": 2,
+		"labelPrintMode": 1,
+		"labelPrintInitialPosition": 1,
+		"shipments": [
+			"EXAMPLEXX00000070103182G"
+		]
+	}
+}

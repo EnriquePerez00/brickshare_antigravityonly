@@ -1,0 +1,17 @@
+#%RAML 1.0 DataType
+type: object
+properties: 
+  code:
+    type: string
+    required: false
+    description: HTTP status code
+    example: "403"
+  message:
+    type: string
+    required: false
+    description: HTTP Status message
+    example: "Forbidden"
+  moreInformation:
+    type:  !include moreinfo.raml
+    required: false
+    description: Additional error information 

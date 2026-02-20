@@ -26,6 +26,10 @@ export interface ShipmentData {
     costo_envio: number | null;
     transportista: string | null;
     notas_adicionales: string | null;
+    correos_shipment_id: string | null;
+    label_url: string | null;
+    pickup_id: string | null;
+    last_tracking_update: string | null;
     created_at: string;
     updated_at: string;
     users?: {

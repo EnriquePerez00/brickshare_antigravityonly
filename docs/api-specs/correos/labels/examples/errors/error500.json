@@ -1,0 +1,8 @@
+{
+  "code": "500",
+  "message": "Server error",
+  "moreInformation": {
+    "description": "There was an error on the server end",
+    "link": "www.correos.es"
+  }
+}

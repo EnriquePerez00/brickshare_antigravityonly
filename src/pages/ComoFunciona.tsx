@@ -133,7 +133,8 @@ const faqs = [
   },
   {
     question: "¿Cuántos sets puedo tener a la vez?",
-    answer: "Con cada suscripción solo puedes tener 1 set a la vez. Cuando lo devuelvas, te enviamos otro de tu wishlist...pero te explico un truco, si tienes un amigo que tambien está suscrito.. por que no intercanviais los sets y consturís el doble ?"
+    answer: "Con cada suscripción solo puedes tener 1 set a la vez. Cuando lo devuelvas, te enviamos otro de tu wishlist...pero te explico un truco, si tienes un amigo que tambien está suscrito.. por que no intercanviais los sets y consturís el doble ?",
+    icon: Puzzle,
   }
 ];
 

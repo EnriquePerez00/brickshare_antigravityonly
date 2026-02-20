@@ -1,0 +1,28 @@
+#%RAML 1.0 DataType
+type: object
+properties: 
+  entryDate:
+    type: string
+    required: false
+    description: Document generation date. <table><thead><th>Size</th><th>Type</th><th>Required</th></thead><tbody><tr><td></td><td>String</td><td>Yes</td></tr></tbody></table>
+    example: '16/08/2023'
+  shipment:
+    type: string
+    required: false
+    description: Shipment code. <table><thead><th>Size</th><th>Type</th><th>Required</th></thead><tbody><tr><td></td><td>String</td><td>Yes</td></tr></tbody></table>
+    example: 'EXAMPLEX00000510128002W'
+  documentationType:
+    type: number
+    required: true
+    description: Shipment label type to be print  1 (label), 2 (CN22, CN23), 0 (all types) <table><thead><th>Size</th><th>Type</th><th>Required</th></thead><tbody><tr><td></td><td>Number</td><td>No</td></tr></tbody></table>
+    example: 1
+  request:
+    type: object
+    required: true
+    description: Input JSON request. <table><thead><th>Size</th><th>Type</th><th>Required</th></thead><tbody><tr><td></td><td>JSON</td><td>Yes</td></tr></tbody></table>
+    example: !include ../examples/labels-generate-request-label.json
+  response:
+    type: object
+    required: false
+    description: Output JSON request. <table><thead><th>Size</th><th>Type</th><th>Required</th></thead><tbody><tr><td></td><td>JSON</td><td>No</td></tr></tbody></table>
+    example: !include ../examples/labels-generate-response-label-pdf-ok.json

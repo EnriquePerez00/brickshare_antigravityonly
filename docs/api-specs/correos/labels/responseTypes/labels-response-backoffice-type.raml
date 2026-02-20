@@ -1,0 +1,14 @@
+#%RAML 1.0 DataType
+type: object
+properties: 
+  results:
+    type: array
+    items: !include labels-result-backoffice-type.raml
+    required: false
+    description: List with detailed information about the impressions generated for the indicated package.  Click Show to review the detail  <table><thead><th>Size</th><th>Type</th><th>Required</th></thead><tbody><tr><td></td><td>Array</td><td>Yes</td></tr></tbody></table>
+  error:
+    type: string
+    required: false
+    description: Error Description. <table><thead><th>Size</th><th>Type</th><th>Required</th></thead><tbody><tr><td></td><td>String</td><td>No</td></tr></tbody></table>
+    example: 'No se ha encontrado documentación para el código de bulto indicado'
+    

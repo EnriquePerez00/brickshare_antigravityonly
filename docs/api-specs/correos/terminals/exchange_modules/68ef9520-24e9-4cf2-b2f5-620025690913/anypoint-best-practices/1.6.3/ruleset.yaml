@@ -1,0 +1,1543 @@
+#%Validation Profile 1.0
+profile: Anypoint Best Practices
+description: This ruleset contains over 30 best practices for APIs to be used,
+  maintained, and consumed across Anypoint Platform and beyond.
+violation:
+  - api-must-have-title
+  - base-url-pattern-server
+  - camel-case-fields
+  - define-path-params
+  - define-path-template-variables
+  - duplicated-entry-in-enum
+  - media-type-headers-response
+  - no-2xx-response
+  - no-eval-in-markdown
+  - no-script-tags-in-markdown
+  - operations-must-have-identifiers
+  - path-declarations-must-exist
+  - path-not-include-query
+  - provide-examples
+  - resource-use-lowercase
+  - use-schemas-requests
+  - use-schemas-responses
+warning:
+  - api-must-have-description
+  - api-must-have-documentation
+  - date-only-representation
+  - date-time-representation
+  - headers-must-have-descriptions
+  - heterogeneous-union
+  - nil-union-antipattern
+  - node-shapes-must-have-descriptions
+  - non-scalar-url-parameters
+  - not-anonymous-types
+  - open-schemas-ignored
+  - operations-must-have-descriptions
+  - path-keys-no-trailing-slash
+  - preferred-media-type-representations
+  - property-shape-ranges-must-have-descriptions
+  - query-params-must-have-descriptions
+  - request-response-antipattern
+  - responses-must-have-descriptions
+  - standard-delete-status-codes
+  - standard-get-status-codes
+  - standard-post-status-codes
+  - standard-put-status-codes
+  - unsupported-response-schema-shapes
+validations:
+  api-must-have-description:
+    message: Provide the description for the API.
+    targetClass: apiContract.WebAPI
+    propertyConstraints:
+      core.description:
+        minCount: 1
+    examples:
+      valid: |
+        #%RAML 1.0
+          title: Ruleset API
+          description: "some description"
+      invalid: |
+        #%RAML 1.0
+        title: Ruleset API
+  api-must-have-documentation:
+    message: Provide the documentation for the API.
+    targetClass: apiContract.WebAPI
+    propertyConstraints:
+      core.documentation:
+        minCount: 1
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        documentation:
+        - title:  Some title
+          content: |
+            Welcome to the API Documentation.
+      invalid: |
+        #%RAML 1.0
+        title: example api
+  api-must-have-title:
+    message: Provide the title for the API.
+    targetClass: apiContract.WebAPI
+    propertyConstraints:
+      core.name:
+        minCount: 1
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+      invalid: |
+        #%RAML 1.0
+        version: 1.0.0
+  base-url-pattern-server:
+    message: "'{{core.urlTemplate}}' should include “api” and the version of the API
+      in the base URL. For example, `domain/api/v1`"
+    targetClass: apiContract.Server
+    or:
+      - propertyConstraints:
+          core.urlTemplate:
+            pattern: /api/v[0-9]+
+      - propertyConstraints:
+          core.urlTemplate:
+            pattern: /api/[0-9].[0.9]
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: example api
+        baseUri: /api/v1/something
+      invalid: |
+        #%RAML 1.0
+        title: example api
+        baseUri: /domain/something
+  camel-case-fields:
+    message: Field '{{shacl.name}}' should use camelCase. Avoid underscores.
+    targetClass: shacl.PropertyShape
+    propertyConstraints:
+      shacl.name:
+        pattern: ^[a-z]+[1-9]?([A-Z][a-z1-9]+)*$
+    examples:
+      valid: |
+        properties:
+          nameOfPerson:
+            type: string
+            example: "John"
+      invalid: |
+        properties:
+          name_of_person:
+            type: string
+            example: "John"
+  date-only-representation:
+    message: |
+      Use standard date formats: ISO8601 Use calendar date:
+        2016-10-27
+    targetClass: shapes.ScalarShape
+    rego: |
+      # IF 
+
+      # 'name' contains word date
+      name := object.get(x, "http://www.w3.org/ns/shacl#name",[])
+      regex.match(`([-_]|^)[dD]ate([-_A-Z]|$)|([a-z])Date([-_A-Z]|$)`, name)
+
+      # AND 
+
+      # 'dataType' is not 'xsd.dateTime'
+      data_types := { r |
+        data_type = $node["http://www.w3.org/ns/shacl#datatype"]["@id"]
+        r := data_type
+      }
+      not data_types["http://www.w3.org/2001/XMLSchema#dateTime"]
+
+      # AND
+
+      # 'format' is not 'date-time'
+      formats := object.get($node, "http://a.ml/vocabularies/shapes#format",[])
+      not formats["date-time"]
+
+      # THEN
+
+      # 'dataType' is 'xsd.date' 
+      valid_data_types = { r |
+        data_type = data_types[_]
+        data_type = "http://www.w3.org/2001/XMLSchema#date"
+        r := data_type
+      }
+
+      # 'format' is either 'date' or 'date-only'
+      accepted_formats = ["date", "date-only"]
+      valid_formats = { r |
+        format = formats[_]
+        accepted_formats[format]
+        r := format
+      }
+
+      $result := count(valid_data_types | valid_formats) > 0
+    examples:
+      valid: |
+        date:
+          type: date
+          example: "2016-10-27"
+          description: The first date on which the payment will be sent
+      invalid: |
+        date:
+        type: string 
+        example: "1994-11-05T08:15:30-05:00"
+        description: This is clearly not a date but a date time
+  date-time-representation:
+    message: >
+      Field '{{shacl.name}}' should use the following ISO8601 standard date-time
+      formats for timestaps encoding properties:
+
+      - UTC
+        - 2016-10-27T13:42:21+00:00 (+00:00 is the time zone offset)
+        - 2016-10-27T13:42:21Z (Z is a place holder for local time zone)
+    targetClass: shapes.ScalarShape
+    if:
+      propertyConstraints:
+        shacl.name:
+          in:
+            - createdAt
+            - updatedAt
+    then:
+      propertyConstraints:
+        shapes.format:
+          minCount: 1
+          in:
+            - date-time
+            - rfc3339
+    examples:
+      valid: |
+        createdAt:
+          type: datetime
+          example: 2016-02-28T16:41:41.090Z
+          format: rfc3339 # the default, so needn't be specified
+      invalid: |
+        updatedAt:
+          type: datetime
+          example: Sun, 28 Feb 2016 16:41:41 GMT
+          format: rfc2616
+  define-path-params:
+    message: Parameters referenced in the path string must be defined
+    targetClass: apiContract.Operation
+    rego: >
+      # obtain the endpoint that contains this operation
+
+      target_class[endpoints_raw] with data.class as "http://a.ml/vocabularies/apiContract#EndPoint"
+
+      endpoints = nodes_array with data.nodes as endpoints_raw
+
+      endpoint := endpoints[_]
+
+      operations_in_endpoint = nodes_array with data.nodes as endpoint["http://a.ml/vocabularies/apiContract#supportedOperation"]
+
+      operation_in_endpoint = operations_in_endpoint[_]
+
+      operation_in_endpoint["@id"] = x["@id"] # endpoint contains this operation
+
+
+      # retrieve path variables from endpoint
+
+      path = endpoint["http://a.ml/vocabularies/apiContract#path"]
+
+      path_variables = {v | ms = regex.find_all_string_submatch_n("{([a-zA-Z0-9_-]+)}", path, -1); m = ms[_]; v = m[1] }
+
+
+      # retrieve the uri parameters declared by this endpoint
+
+      endpoint_uri_parameters = {uri_parameter |
+        nested_nodes[parameters] with data.nodes as object.get(endpoint, "http://a.ml/vocabularies/apiContract#parameter", [])
+        parameter = parameters[_]
+        parameter["http://a.ml/vocabularies/apiContract#binding"] = "path"
+        uri_parameter = parameter
+      }
+
+
+      # retrieve the uri parameters declared by this operation
+
+      operation_uri_parameters = {uri_parameter |
+        nested_nodes[requests] with data.nodes as object.get($node, "http://a.ml/vocabularies/apiContract#expects", [])
+        request = requests[_]
+        nested_nodes[parameters] with data.nodes as object.get(request, "http://a.ml/vocabularies/apiContract#uriParameter", [])
+        parameter = parameters[_]
+        parameter["http://a.ml/vocabularies/apiContract#binding"] = "path"
+        uri_parameter = parameter
+      }
+
+
+      # filter virtual parameters
+
+      virtual_parameters = { virtual_parameter | 
+        parameters = endpoint_uri_parameters | operation_uri_parameters
+        parameter = parameters[_]
+        source_maps = find with data.link as object.get(parameter, "http://a.ml/vocabularies/document-source-maps#sources", {})
+        virtual_element = find with data.link as object.get(source_maps, "http://a.ml/vocabularies/document-source-maps#virtual-element", {})
+        virtual_element["http://a.ml/vocabularies/document-source-maps#element"] = parameter["@id"]
+        virtual_element["http://a.ml/vocabularies/document-source-maps#value"] = "true"
+        virtual_parameter = parameter
+      }
+
+
+      # extract names from all uri parameters
+
+      parameter_names = {name |
+        parameters = (endpoint_uri_parameters | operation_uri_parameters) - virtual_parameters
+        parameter = parameters[_]
+        name = parameter["http://a.ml/vocabularies/core#name"]
+      }
+
+
+      $result = (count(path_variables - parameter_names) == 0)
+    examples:
+      valid: |
+        /test/{path-variable}:
+          uriParameters:
+            path-variable:
+              type: string
+          get: {}
+      invalid: |
+        /test/{path-variable}:
+          get: {}
+  define-path-template-variables:
+    message: Unused path parameters in path template
+    targetClass: apiContract.Operation
+    rego: >
+      # obtain the endpoint that contains this operation
+
+      target_class[endpoints_raw] with data.class as "http://a.ml/vocabularies/apiContract#EndPoint"
+
+      endpoints = nodes_array with data.nodes as endpoints_raw
+
+      endpoint := endpoints[_]
+
+      operations_in_endpoint = nodes_array with data.nodes as endpoint["http://a.ml/vocabularies/apiContract#supportedOperation"]
+
+      operation_in_endpoint = operations_in_endpoint[_]
+
+      operation_in_endpoint["@id"] = x["@id"] # endpoint contains this operation
+
+
+      # retrieve path variables from endpoint
+
+      path = endpoint["http://a.ml/vocabularies/apiContract#path"]
+
+      path_variables = {v | ms = regex.find_all_string_submatch_n("{([a-zA-Z0-9_-]+)}", path, -1); m = ms[_]; v = m[1] }
+
+
+      # retrieve the uri parameters declared by this endpoint
+
+      endpoint_uri_parameters = {uri_parameter |
+        nested_nodes[parameters] with data.nodes as object.get(endpoint, "http://a.ml/vocabularies/apiContract#parameter", [])
+        parameter = parameters[_]
+        parameter["http://a.ml/vocabularies/apiContract#binding"] = "path"
+        uri_parameter = parameter
+      }
+
+
+      # retrieve the uri parameters declared by this operation
+
+      operation_uri_parameters = {uri_parameter |
+        nested_nodes[requests] with data.nodes as object.get($node, "http://a.ml/vocabularies/apiContract#expects", [])
+        request = requests[_]
+        nested_nodes[parameters] with data.nodes as object.get(request, "http://a.ml/vocabularies/apiContract#uriParameter", [])
+        parameter = parameters[_]
+        parameter["http://a.ml/vocabularies/apiContract#binding"] = "path"
+        uri_parameter = parameter
+      }
+
+
+      # filter virtual parameters
+
+      virtual_parameters = { virtual_parameter | 
+        parameters = endpoint_uri_parameters | operation_uri_parameters
+        parameter = parameters[_]
+        source_maps = find with data.link as object.get(parameter, "http://a.ml/vocabularies/document-source-maps#sources", {})
+        virtual_element = find with data.link as object.get(source_maps, "http://a.ml/vocabularies/document-source-maps#virtual-element", {})
+        virtual_element["http://a.ml/vocabularies/document-source-maps#element"] = parameter["@id"]
+        virtual_element["http://a.ml/vocabularies/document-source-maps#value"] = "true"
+        virtual_parameter = parameter
+      }
+
+
+      # extract names from all uri parameters
+
+      parameter_names = {name |
+        parameters = (endpoint_uri_parameters | operation_uri_parameters) - virtual_parameters
+        parameter = parameters[_]
+        name = parameter["http://a.ml/vocabularies/core#name"]
+      }
+
+
+      $result = (count(parameter_names - path_variables) == 0)
+    examples:
+      valid: |
+        /test/{path-variable}:
+          uriParameters:
+            path-variable:
+              type: string
+          get: {}
+      invalid: |
+        /test:
+        uriParameters:
+          path-variable_with_special-characters:
+            type: string
+        get: {}
+  duplicated-entry-in-enum:
+    message: Enum values must be unique.
+    targetClass: shapes.ScalarShape
+    rego: >
+      enum = object.get($node, "http://www.w3.org/ns/shacl#in",[])
+
+      enumValues = find with data.link as enum
+
+      props = [r | d = enumValues[_]; is_object(d); n=find with data.link as d; r=n["http://a.ml/vocabularies/data#value"] ]
+
+      propsSet = {r | v = props[_]; r=v}
+
+      $result = (count(props) == count(propsSet))
+    examples:
+      valid: |
+        types:
+          housingType:
+            type: string
+            enum: [apartment, studio, house]
+      invalid: |
+        types:
+          housingType:
+            type: string
+            enum: [apartment, studio, house, apartment]
+  headers-must-have-descriptions:
+    message: Header '{{core.name}}' must have description.
+    targetClass: apiContract.Parameter
+    if:
+      propertyConstraints:
+        apiContract.binding:
+          pattern: header
+    then:
+      propertyConstraints:
+        core.description:
+          minCount: 1
+    examples:
+      valid: |
+        responses:
+          200:
+            description: All profiles
+            headers:
+              content-type:
+                description: a header
+                type: string
+                example:
+                  'application/json'
+      invalid: |
+        responses:
+          200:
+            description: All profiles
+            headers:
+              content-type:
+                type: string
+                example:
+                  'application/json'
+  heterogeneous-union:
+    message: Do not use 'unionType' as it contains union of different kinds (for
+      example objects and scalars). Use object shapes with scalar
+      flags/properties instead.
+    documentation: |
+      Unions between different types are not a good design practice. Object
+      shapes with scalar flags/properties are an acceptable alternative.
+    targetClass: shapes.AnyShape
+    rego: >
+      nested_nodes[members_xone] with data.nodes as
+      object.get($node,"http://www.w3.org/ns/shacl#xone",[])
+
+      nested_nodes[members_or] with data.nodes as object.get($node,"http://www.w3.org/ns/shacl#or",[])
+
+      nested_nodes[members_anyof] with data.nodes as object.get($node,"http://a.ml/vocabularies/shapes#anyOf",[])
+
+      members = array.concat(members_xone, array.concat(members_or, members_anyof))
+
+      types := { type |
+        member := members[_]
+        member_types := member["@type"]
+        maybe_type = member_types[_]
+        maybe_type != "http://a.ml/vocabularies/shapes#Shape"
+        maybe_type != "http://www.w3.org/ns/shacl#Shape"
+        maybe_type != "http://a.ml/vocabularies/shapes#AnyShape"
+        maybe_type != "http://a.ml/vocabularies/document#DomainElement"
+        type = maybe_type
+      }
+
+      $result = (count(types) <= 1) # 0 if there is no xone,or,anyof at all
+    examples:
+      valid: |
+        types:
+          unionType:
+            type: date-only|string
+            example: "Hello, world!"
+      invalid: |
+        types:
+          unionType:
+            type: array|integer
+            example: 5
+  media-type-headers-response:
+    message: |
+      "Response '{{apiContract.statusCode}}', must Use: ‘Content-Type’ header"
+    targetClass: apiContract.Response
+    if:
+      not:
+        propertyConstraints:
+          apiContract.statusCode:
+            in:
+              - 204
+    then:
+      propertyConstraints:
+        apiContract.header:
+          atLeast:
+            count: 1
+            validation:
+              propertyConstraints:
+                core.name:
+                  in:
+                    - Content-Type
+                    - content-type
+    examples:
+      valid: |
+        responses:
+          200:
+            description: All profiles
+            headers:
+              content-type:
+                description: Content Type
+                type: string
+                example:
+                  'application/json'
+      invalid: |
+        responses:
+          200:
+            description: All profiles
+            headers:
+              someheader:
+                description: definetly not content type
+                type: string
+                example:
+                  'nothingrelevant'
+  nil-union-antipattern:
+    message: |
+      Nullable types might lead to null pointer errors.
+      Use the optional properties instead.
+    targetClass: shapes.AnyShape
+    rego: >
+      nested_nodes[members_xone] with data.nodes as
+      object.get($node,"http://www.w3.org/ns/shacl#xone",[])
+
+      nested_nodes[members_or] with data.nodes as object.get($node,"http://www.w3.org/ns/shacl#or",[])
+
+      nested_nodes[members_anyof] with data.nodes as object.get($node,"http://a.ml/vocabularies/shapes#anyOf",[])
+
+      members = array.concat(members_xone, array.concat(members_or, members_anyof))
+
+      count(members) == 2
+
+      types := { type |
+        member := members[_]
+        member_types := member["@type"]
+        maybe_type = member_types[_]
+        maybe_type != "http://a.ml/vocabularies/shapes#Shape"
+        maybe_type != "http://www.w3.org/ns/shacl#Shape"
+        maybe_type != "http://a.ml/vocabularies/shapes#AnyShape"
+        maybe_type != "http://a.ml/vocabularies/document#DomainElement"
+        type = maybe_type
+      }
+
+      count(types) > 1
+
+      $result = types["http://a.ml/vocabularies/shapes#NilShape"]
+    examples:
+      valid: |
+        types:
+          unionType:
+            type: date-only|string
+            example: "Hello, world!"
+      invalid: |
+        types:
+          unionType:
+            type: string|nil
+            example: "Hello, world!"
+  no-2xx-response:
+    message: >
+      HTTP resources not returning a 2xx success response do not describe normal
+      responses from the API.
+    targetClass: apiContract.Operation
+    propertyConstraints:
+      apiContract.returns:
+        atLeast:
+          count: 1
+          validation:
+            propertyConstraints:
+              apiContract.statusCode:
+                pattern: 2[0-9][0-9]
+    examples:
+      valid: |
+        get:
+          responses:
+            200:
+              description: All profiles
+              headers:
+                content-type:
+                  description: a header
+                  type: string
+                  example:
+                    'application/json'
+            404:
+              description: Not found
+      invalid: |
+        get:
+          responses:
+            404:
+              description: Not found
+            500:
+              description: some error
+            # no 200 response here
+  no-eval-in-markdown:
+    message: Don not use `eval()` in markdown.
+    documentation: >
+      This rule protects against cross-site scripting (XSS) attacks that could
+      happen when you add description
+
+      documents from third parties and use the parsed content rendered in HTML/JS. If one of those third parties
+
+      does something like inject `eval()` JavaScript statements, it could lead to an XSS attack.
+    targetClass: apiContract.WebAPI
+    not:
+      propertyConstraints:
+        core.description:
+          pattern: eval\(
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: ANG Governance xAPI
+        description: ANG Governance xAPI
+      invalid: |
+        #%RAML 1.0
+        title: ANG Governance xAPI
+        description: ANG Governance xAPI eval(...)
+  no-script-tags-in-markdown:
+    message: Do not use script tags in markdown
+    documentation: >
+      This rule protects against a potential exploit, that can occur when you
+      add description documents from third parties then
+
+      generate HTML documentation. If one of those third parties does something like inject `<script>` tags, they
+
+      could easily execute arbitrary code on your domain.
+    targetClass: apiContract.WebAPI
+    not:
+      propertyConstraints:
+        core.description:
+          pattern: <script>
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: ANG Governance xAPI
+        description: ANG Governance xAPI
+      invalid: |
+        #%RAML 1.0
+        title: ANG Governance xAPI
+        description: ANG Governance xAPI <script>
+  node-shapes-must-have-descriptions:
+    message: Shape '{{shacl.name}}' should have a description.
+    targetClass: shacl.NodeShape
+    propertyConstraints:
+      core.description:
+        minCount: 1
+    examples:
+      valid: |
+        types:
+          MessgeResult:
+            type: object
+            description: "some description"
+            additionalProperties: false
+            properties:
+              count:
+                type: integer
+      invalid: |
+        types:
+          MessageResult:
+            type: object # missing description
+            additionalProperties: false
+            properties:
+              count:
+                type: integer
+  non-scalar-url-parameters:
+    message: Do not encode '{{core.name}}' into URL parameters. Use the body of the
+      HTTP request instead.
+    documentation: >
+      Encoding complex objects into URL parameters is not a standardized way of
+      passing information that cannot be
+
+      automatically processed. Complex information should be passed in the body of the HTTP request.
+    targetClass: apiContract.Parameter
+    if:
+      or:
+        - propertyConstraints:
+            apiContract.binding:
+              pattern: path
+        - propertyConstraints:
+            apiContract.binding:
+              pattern: query
+    then:
+      or:
+        - propertyConstraints:
+            shapes.schema / shacl.datatype:
+              minCount: 1
+        - propertyConstraints:
+            shapes.schema / shapes.items / shacl.datatype:
+              minCount: 1
+    examples:
+      valid: |
+        /endpoint:
+          get:
+            displayName: get
+            queryParameters:
+              someParam:
+                  type: string[]
+      invalid: |
+        /endpoint:
+          get:
+            displayName: get
+            queryParameters:
+              someParam:
+                  type: object
+  not-anonymous-types:
+    message: >
+      Instead of inlining the definition of schemas in HTTP responses,
+
+      reference declared types to provide descriptive names for the federated types.
+    targetClass: apiContract.Operation
+    if:
+      propertyConstraints:
+        apiContract.method:
+          pattern: get
+    then:
+      propertyConstraints:
+        apiContract.returns / apiContract.payload:
+          nested:
+            if:
+              propertyConstraints:
+                core.mediaType:
+                  pattern: application/json
+                shapes.schema:
+                  minCount: 1
+            then:
+              propertyConstraints:
+                shapes.schema / sourcemaps.sources / sourcemaps.declared-element:
+                  minCount: 1
+    examples:
+      valid: |
+        200:
+          description: Ok!
+          headers:
+            content-type:
+              description: a header
+              type: string
+              example:
+                'application/json'
+          body:
+            application/json:
+              type: MessageResult
+      invalid: |
+        200:
+          description: Ok!
+          body:
+            application/json:
+              type: object
+              description: "some description"
+              additionalProperties: false
+              properties:
+                count:
+                  type: integer
+                message:
+                  type: string
+  open-schemas-ignored:
+    message: >
+      "'{{shacl.name}}' is an open schema. Use `additionalProperties: false`
+      make it a closed schema instead."
+    documentation: >
+      Open schemas with a set of variable properties cannot be pre-processed by
+      clients.
+
+      Define a closed schema with a finite set of properties described statically in the API definition.
+
+      AsyncAPI or OAS API definitions' object schemas are open by default and must be explicitly
+
+      closed using `additionalProperties: false`.
+    targetClass: shacl.NodeShape
+    not:
+      propertyConstraints:
+        shacl.closed:
+          in:
+            - "false"
+    examples:
+      valid: |
+        types:
+          MessageResult:
+            type: object
+            description: "some description"
+            additionalProperties: false
+            properties:
+              count:
+                type: integer
+      invalid: |
+        types:
+          MessageResult:
+            type: object # needs aditionalProperties: false
+            description: "some description"
+            properties:
+              count:
+                type: integer
+  operations-must-have-descriptions:
+    message: Provide descriptions for the operations.
+    targetClass: apiContract.Operation
+    propertyConstraints:
+      core.description:
+        minCount: 1
+    examples:
+      valid: |
+        /events:
+          get:
+            displayName: get
+            description: Gets a stream of results
+            responses:
+              200:
+                description: Ok!
+                body:
+                  application/json:
+                    type: string
+      invalid: |
+        /events:
+          get:
+            displayName: get # missing description
+            responses:
+              200:
+                body:
+                  application/json:
+                    type: string
+  operations-must-have-identifiers:
+    message: Provide identifiers or display names for the operations.
+    targetClass: apiContract.Operation
+    propertyConstraints:
+      core.name:
+        minCount: 1
+    examples:
+      valid: |
+        /events:
+          get:
+            displayName: get
+            description: Gets a stream of results
+            responses:
+              200:
+                description: Ok!
+                body:
+                  application/json:
+                    type: string
+      invalid: |
+        /events:
+          get: # missing displayName/identifier
+            description: Gets a stream of results 
+            responses:
+              200:
+                description: Ok!
+                body:
+                  application/json:
+                    type: string
+  path-declarations-must-exist:
+    message: Path parameter declarations are required. '{{apiContract.path}}' is
+      invalid.
+    targetClass: apiContract.EndPoint
+    not:
+      propertyConstraints:
+        apiContract.path:
+          pattern: "{}"
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events{somepath}:
+      invalid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events{}:
+  path-keys-no-trailing-slash:
+    message: Path keys should not end with a trailing slash. '{{apiContract.path}}'
+      is invalid.
+    documentation: >
+      Keep trailing slashes off of paths, as it can cause some confusion. Some
+      web tooling (like mock servers, real
+
+      servers, code generators, application frameworks, etc.) will treat example.com/foo and example.com/foo/ as the
+
+      same thing, but other tooling will not. Avoid any confusion by just documenting them without the slash, and maybe
+
+      some tooling will let people shove a / on there when they're using it or maybe not, but at least the docs are
+
+      suggesting how it should be done properly.
+    targetClass: apiContract.EndPoint
+    not:
+      propertyConstraints:
+        apiContract.path:
+          pattern: \/$
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events:
+      invalid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events/:
+  path-not-include-query:
+    message: "{{apiContract.path}} is invalid. Don't put query string items in the
+      path. They belong in parameters with `in: query`."
+    targetClass: apiContract.EndPoint
+    not:
+      propertyConstraints:
+        apiContract.path:
+          pattern: .*\?.*
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events:
+      invalid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events?somequery:
+  preferred-media-type-representations:
+    message: Do not use '{{core.mediaType}}' as media type. If there is no standard
+      media type and format, use extensible formats such as JSON
+      (application/json) and XML (application/xml).
+    targetClass: apiContract.Payload
+    propertyConstraints:
+      core.mediaType:
+        in:
+          - application/json
+          - application/xml
+    examples:
+      valid: |
+        responses:
+          200:
+            description: Ok!
+            body:
+              application/xml:
+                type: string
+      invalid: |
+        responses:
+          200:
+            body:
+              text/html:
+                type: string
+                example: Text!
+  property-shape-ranges-must-have-descriptions:
+    message: Provide descriptions for properties.
+    targetClass: shacl.PropertyShape
+    propertyConstraints:
+      shapes.range / core.description:
+        minCount: 1
+    examples:
+      valid: |
+        types:
+          MessgeResult:
+            type: object
+            additionalProperties: false
+            properties:
+              count:
+                type: integer
+                description: "some count"
+      invalid: |
+        types:
+          MessgeResult:
+            type: object
+            additionalProperties: false
+            properties:
+              count:
+                type: integer # no description here
+  provide-examples:
+    message: Always include examples in requests and responses.
+    targetClass: apiContract.Payload
+    rego: >
+      schema = find with data.link as
+      $node["http://a.ml/vocabularies/shapes#schema"]
+
+
+      nested_nodes[examples] with data.nodes as object.get(schema, "http://a.ml/vocabularies/apiContract#examples", [])
+
+
+      # schemas declared inline 
+
+      tracked_schema_examples = { element |
+        example = examples[_]
+        sourcemap = find with data.link as object.get(example, "http://a.ml/vocabularies/document-source-maps#sources", [])
+        tracked_element = find with data.link as object.get(sourcemap, "http://a.ml/vocabularies/document-source-maps#tracked-element", [])
+        values_contains(tracked_element["http://a.ml/vocabularies/document-source-maps#value"], x["@id"])
+        element := example
+      }
+        
+      # schemas located in declarations and referenced, without any sourcemap
+
+      declared_examples = { element |
+        example = examples[_]
+        not example["http://a.ml/vocabularies/document-source-maps#sources"]
+        element := example
+      }
+        
+      # schemas located in declarations and referenced, with sourcemaps but not tracked
+
+      untracked_examples = { element |
+        example = examples[_]
+        sourcemap = find with data.link as object.get(example, "http://a.ml/vocabularies/document-source-maps#sources", [])
+        not sourcemap["http://a.ml/vocabularies/document-source-maps#tracked-element"]
+        element := example
+      }
+
+
+      $result := count(tracked_schema_examples | declared_examples | untracked_examples) > 0
+    examples:
+      valid: |
+        responses:
+          200:
+            description: Ok!
+            body:
+              application/json:
+                type: string
+                example: Hello!
+      invalid: |
+        responses:
+          200:
+            description: Ok!
+            body:
+              application/json:
+                type: string # no example here
+  query-params-must-have-descriptions:
+    message: "Query parameter: '{{core.name}}' must have a description."
+    targetClass: apiContract.Parameter
+    if:
+      propertyConstraints:
+        apiContract.binding:
+          pattern: query
+    then:
+      propertyConstraints:
+        core.description:
+          minCount: 1
+    examples:
+      valid: >
+        /events:
+          get:
+            queryParameters:
+              organization:
+                displayName: Organization
+                type: string
+                description: Organization to use, if none is sent the organization for the user is used.
+      invalid: |
+        /events:
+          get:
+            queryParameters:
+              organization:
+                displayName: Organization
+                type: string # Missing description
+  request-response-antipattern:
+    message: "'{{shacl.name}}' is using the request/response anti-pattern."
+    documentation: >
+      Resource schemas should describe the information of the exposed resource,
+      not a Request/Response RPC message wrapper containing the resource and
+      out-of-band information. For example instead of using a schema like
+      `MyResourceRequest` or `MyResourceResponse` use `MyResource`.
+    targetClass: shacl.NodeShape
+    not:
+      or:
+        - propertyConstraints:
+            shacl.name:
+              pattern: .*(r|R)equest.*
+        - propertyConstraints:
+            shacl.name:
+              pattern: .*(r|R)esponse.*
+    examples:
+      valid: |
+        /endpoint:
+          get:
+            body:
+              application/json:
+                type: Person
+            responses:
+              200:
+                  body:
+                    application/json:
+                      type: Person
+      invalid: |
+        /endpoint:
+          get:
+            body:
+              application/json:
+                type: PersonRequest
+            responses:
+              200:
+                  body:
+                    application/json:
+                      type: PersonResponse # this is an anti-pattern
+  resource-use-lowercase:
+    message: "'{{apiContract.path}}' should be lowercase."
+    documentation: |
+      Naming conventions for resources:
+      - Use lowercase (example: /accounts)
+      - For resources with more than 2 words
+          - use lowercase for both words (example: /lineitems) or
+          - use kebab-case (aka spinal-case) (example: /line-items)
+    targetClass: apiContract.EndPoint
+    propertyConstraints:
+      apiContract.path:
+        pattern: ^[a-z1-9\/\{\}-]+$
+    examples:
+      valid: |
+        /events-get:
+          get:
+            description: Gets a stream of report results
+            responses:
+              200:
+                description: Ok!
+      invalid: |
+        /Events-Get:
+          get:
+            description: Gets a stream of report results
+            responses:
+              200:
+                description: Ok!
+  responses-must-have-descriptions:
+    message: Response '{{core.name}}' should have a description.
+    targetClass: apiContract.Response
+    propertyConstraints:
+      core.description:
+        minCount: 1
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: Example
+        events/:
+          get:
+            responses:
+              200:
+                description: OK
+                application/json:
+                  type: string
+                  example: Hello!
+      invalid: |
+        #%RAML 1.0
+        title: Example
+        events/:
+          get:
+            responses:
+              200: # no description
+                body:
+                  application/json:
+                    type: string
+                    example: Hello!
+  standard-delete-status-codes:
+    message: Avoid non-standard status codes for DELETE operations.
+    documentation: >
+      The following response codes should be used as standard for DELETE
+      operations:
+      200,202,204,400,401,403,404,405,406,408,409,410,429,500,502,503,504,509,510,511,550,598,599].
+      Avoid not defined return codes.
+    targetClass: apiContract.Operation
+    if:
+      propertyConstraints:
+        apiContract.method:
+          pattern: delete
+    then:
+      propertyConstraints:
+        apiContract.returns / apiContract.statusCode:
+          in:
+            - "200"
+            - "202"
+            - "204"
+            - "400"
+            - "401"
+            - "403"
+            - "404"
+            - "405"
+            - "406"
+            - "408"
+            - "409"
+            - "410"
+            - "429"
+            - "500"
+            - "502"
+            - "503"
+            - "504"
+            - "509"
+            - "510"
+            - "511"
+            - "550"
+            - "598"
+            - "599"
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events:
+          delete:
+            description: Gets a stream of report results
+            responses:
+              200: # Valid status code
+                  description: Ok!
+                  body:
+                    application/json:
+                      type: string
+                      example: Hello!
+      invalid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events:
+          delete:
+            description: Gets a stream of report results
+            responses:
+              203: # Invalid status code
+                body:
+                  application/json:
+                    type: string
+  standard-get-status-codes:
+    message: Avoid non-standard status codes for GET operations.
+    documentation: >
+      The following response codes should be used as standard for GET
+      operations:
+      200,204,304,400,401,403,404,405,406,408,410,412,415,429,500,502,503,504,509,510,511,550,598,599.
+      Avoid not defined return codes.
+    targetClass: apiContract.Operation
+    if:
+      propertyConstraints:
+        apiContract.method:
+          pattern: get
+    then:
+      propertyConstraints:
+        apiContract.returns / apiContract.statusCode:
+          in:
+            - "200"
+            - "204"
+            - "304"
+            - "400"
+            - "401"
+            - "403"
+            - "404"
+            - "405"
+            - "406"
+            - "408"
+            - "410"
+            - "412"
+            - "415"
+            - "429"
+            - "500"
+            - "502"
+            - "503"
+            - "504"
+            - "509"
+            - "510"
+            - "511"
+            - "550"
+            - "598"
+            - "599"
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events:
+          delete:
+            description: Gets a stream of report results
+            responses:
+              200: # Valid status code
+                  description: Ok!
+                  body:
+                    application/json:
+                      type: string
+                      example: Hello!
+      invalid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events:
+          delete:
+            description: Gets a stream of report results
+            responses:
+              203: # Invalid status code
+                body:
+                  application/json:
+                    type: string
+  standard-post-status-codes:
+    message: Avoid non-standard status codes for POST operations.
+    documentation: >
+      The following response codes should be used as standard for POST
+      operations:
+      201,202,400,401,403,404,405,406,408,409,410,415,429,500,502,503,504,509,510,511,550,598,599.
+      Avoid not defined return codes.
+    targetClass: apiContract.Operation
+    if:
+      propertyConstraints:
+        apiContract.method:
+          pattern: post
+    then:
+      propertyConstraints:
+        apiContract.returns / apiContract.statusCode:
+          in:
+            - "201"
+            - "202"
+            - "400"
+            - "401"
+            - "403"
+            - "404"
+            - "405"
+            - "406"
+            - "408"
+            - "409"
+            - "410"
+            - "415"
+            - "429"
+            - "500"
+            - "502"
+            - "503"
+            - "504"
+            - "509"
+            - "510"
+            - "511"
+            - "550"
+            - "598"
+            - "599"
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events:
+          post:
+            description: Gets a stream of report results
+            responses:
+              201: # Valid status code
+                  description: Ok!
+                  body:
+                    application/json:
+                      type: string
+                      example: Hello!
+      invalid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events:
+          post:
+            description: Gets a stream of report results
+            responses:
+              203: # Invalid status code
+                body:
+                  application/json:
+                    type: string
+  standard-put-status-codes:
+    documentation: Avoid non-standard status codes for PUT operations.
+    message: >
+      The following response codes should be used as standard for PUT
+      operations:
+      200,202,204,400,401,403,404,405,406,408,409,410,412,415,429,500,502,503,504,509,510,511,550,598,599.
+      Avoid not defined return codes.
+    targetClass: apiContract.Operation
+    if:
+      propertyConstraints:
+        apiContract.method:
+          pattern: put
+    then:
+      propertyConstraints:
+        apiContract.returns / apiContract.statusCode:
+          in:
+            - "200"
+            - "202"
+            - "204"
+            - "400"
+            - "401"
+            - "403"
+            - "404"
+            - "405"
+            - "406"
+            - "408"
+            - "409"
+            - "410"
+            - "412"
+            - "415"
+            - "429"
+            - "500"
+            - "502"
+            - "503"
+            - "504"
+            - "509"
+            - "510"
+            - "511"
+            - "550"
+            - "598"
+            - "599"
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events:
+          put:
+            description: Gets a stream of report results
+            responses:
+              200: # Valid status code
+                  description: Ok!
+                  body:
+                    application/json:
+                      type: string
+                      example: Hello!
+      invalid: |
+        #%RAML 1.0
+        title: example api
+        version: 1.0.0
+        /events:
+          put:
+            description: Gets a stream of report results
+            responses:
+              203: # Invalid status code
+                body:
+                  application/json:
+                    type: string
+  unsupported-response-schema-shapes:
+    message: |
+      Use supported response schema shapes.
+    documentation: >
+      This datatype is not supported and will create a problem when adding the
+      API to Anypoint DataGraph.
+    targetClass: shapes.AnyShape
+    not:
+      or:
+        - propertyConstraints:
+            "@type":
+              pattern: .*MatrixShape
+        - propertyConstraints:
+            "@type":
+              pattern: .*SchemaShape
+        - propertyConstraints:
+            "@type":
+              pattern: .*FileShape
+        - propertyConstraints:
+            "@type":
+              pattern: .*TupleShape
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: API
+        version: 1.0
+        types:
+          Person:
+            properties:
+              name: string
+              surname: string
+      invalid: |
+        #%RAML 1.0
+        title: API
+        version: 1.0
+        types:
+          File:
+            type: file
+  use-schemas-requests:
+    message: >
+      Use schemas or data types in the specification to determine the format of
+      the request bodies.
+    targetClass: apiContract.Request
+    if:
+      propertyConstraints:
+        apiContract.payload:
+          minCount: 1
+    then:
+      propertyConstraints:
+        apiContract.payload / shapes.schema:
+          minCount: 1
+          nested:
+            propertyConstraints:
+              "@type":
+                containsSome:
+                  - http://a.ml/vocabularies/shapes#ArrayShape
+                  - http://a.ml/vocabularies/shapes#UnionShape
+                  - http://a.ml/vocabularies/shapes#SchemaShape
+                  - http://a.ml/vocabularies/shapes#FileShape
+                  - http://a.ml/vocabularies/shapes#ScalarShape
+                  - http://www.w3.org/ns/shacl#NodeShape
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: Ruleset API
+        mediaType: 
+        - application/json
+        /abc:
+        get:
+          body:
+            type: string
+      invalid: |
+        #%RAML 1.0
+        title: Ruleset API
+        mediaType: 
+        - application/json
+        /abc:
+        get:
+            body:
+              type: any
+  use-schemas-responses:
+    message: >
+      Use schemas or data types in the specification to determine the format of
+      the response bodies.
+    targetClass: apiContract.Response
+    if:
+      propertyConstraints:
+        apiContract.payload:
+          minCount: 1
+    then:
+      propertyConstraints:
+        apiContract.payload / shapes.schema:
+          minCount: 1
+          nested:
+            or:
+              - propertyConstraints:
+                  "@type":
+                    containsSome:
+                      - http://a.ml/vocabularies/shapes#ArrayShape
+                      - http://a.ml/vocabularies/shapes#UnionShape
+                      - http://a.ml/vocabularies/shapes#SchemaShape
+                      - http://a.ml/vocabularies/shapes#FileShape
+                      - http://a.ml/vocabularies/shapes#ScalarShape
+                      - http://www.w3.org/ns/shacl#NodeShape
+              - propertyConstraints:
+                  shacl.and | shacl.or | shacl.xone | shacl.if | shacl.else | shacl.then:
+                    minCount: 1
+    examples:
+      valid: |
+        #%RAML 1.0
+        title: Ruleset API
+        mediaType:
+        - application/json
+        /abc:
+        get:
+          responses:
+            200:
+            body:
+              type: string
+      invalid: |
+        #%RAML 1.0
+        title: Ruleset API
+        mediaType:
+        - application/json
+        /abc:
+        get:
+          responses:
+            200:
+            body:
+              type: any

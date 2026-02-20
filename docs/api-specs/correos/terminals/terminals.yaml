@@ -1,0 +1,2758 @@
+openapi: 3.0.0
+info:
+  title: terminals
+  description: |
+    MASTER service of terminals. Provides services to obtain master data of citypaq's terminals. Available
+    operations: Obtain all data from terminal, Obtain All Terminals By Filters,
+    Obtain All Terminal Manufacturers, Obtain Historical Data From Given Terminal,
+    Obtain Not Closed Historical Data From Given Terminal, Deleted Database Information,
+    Obtain All Terminal Park.
+  contact:
+    name: Correos
+  version: v1
+servers:
+- url: https://api1.correos.es/logistics/terminals/api/v1
+tags:
+- name: MASTER of terminals
+  description: LOGMAE
+paths:
+  /homepaqs/{codHomepaq}:
+    get:
+      tags:
+      - Operations with terminals
+      summary: Obtain all data from terminal.
+      description: Obtain all data from given terminal.
+      operationId: /homepaqs/codHomepaq
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      - name: codHomepaq
+        example: S0000213D
+        in: path
+        description: Terminal code
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitypaqsDTO"
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+  /qr:
+    post:
+      tags:
+      - Generate QR code if requested
+      summary: "Given an identifier and a network, generate a QR code if requested."
+      description: "Given an identifier and a network, generate a QR code if requested."
+      operationId: GenerateQR
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Request to obtain a QR code
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateQrRequestDTO'
+        required: true
+      responses:
+        "200":
+          description: Response to obtain a QR code
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateQrResponseDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+      x-codegen-request-body-name: GenerateQrRequestDTO
+  /homepaqs:
+    get:
+      tags:
+      - Operations with terminals
+      summary: "Obtain all terminals by filter. If you want to filter by geolocation,\
+        \ you must specify only the following parameters: longitude, latitude, distance,\
+        \ visible, currPage and itemsPage. currPage and itemsPage are only mandatory\
+        \ if you want to receive the result in a pageable way. If you want to obtain\
+        \ data from all terminals, do not specify any parameters. Otherwise, specify\
+        \ almost one of the following parameters: terminalIdLike, terminalStates,\
+        \ manufacturers, postalCode, provinces, municipality, visible or park."
+      description: "Obtain all terminals by filter."
+      operationId: getHomepaqs
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      - name: terminalIdLike
+        example: S0000213D
+        required: false
+        in: query
+        description: This string value represents the Terminal ID.
+        schema:
+          type: string
+      - name: terminalStates
+        description: "This string value represents the Terminal State. Values\
+              \ --> ACTIVO, PRE-OPERATIVO, CLAUSURADO, CIERRE TEMPORAL or BAJA DEFINITIVA"
+        required: false
+        example: 
+          - ACTIVO
+        in: query
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+            description: "This string value represents the Terminal State. Values\
+              \ --> ACTIVO, PRE-OPERATIVO, CLAUSURADO, CIERRE TEMPORAL or BAJA DEFINITIVA"
+            example: ACTIVO
+      - name: manufacturers
+        example: 
+          - SERMICRO
+        required: false
+        in: query
+        description: This string value represents the Manufacturer.
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+      - name: postalCode
+        required: false
+        example: "28020"
+        in: query
+        description: This string value represents the Postal Code.
+        schema:
+          type: string
+      - name: municipality
+        required: false
+        example: "MADRID"
+        in: query
+        description: This string value represents the Municipality.
+        schema:
+          type: string
+      - name: provinces
+        required: false
+        example: 
+          - MADRID
+        in: query
+        description: This string value represents the Province.
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+      - name: longitude
+        required: false
+        example: 0.512341421
+        in: query
+        description: Longitude of the position in ETRS89
+        schema:
+          type: number
+      - name: latitude
+        required: false
+        example: 0.542141231
+        in: query
+        description: Latitude of the position in ETRS89
+        schema:
+          type: number
+      - name: distance
+        required: false
+        example: 100
+        in: query
+        description: Maximum distance between position and terminal in meters
+        schema:
+          type: number
+      - name: visible
+        required: false
+        example: 1
+        in: query
+        description: Terminal visibility index to be displayed on the map
+        schema:
+          type: number
+      - name: park
+        required: false
+        example: 
+          - "ESPAÑA"
+        in: query
+        description: This string value represents the Terminals Park.
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+      - name: postalCodeBeg
+        required: false
+        example: "28"
+        in: query
+        description: Postal code that starts with entered string.
+        schema:
+          type: string
+      - name: currPage
+        required: false
+        example: "0"
+        in: query
+        description: Represents the page that you want to receive if you want the
+          paginated data.
+        schema:
+          type: string
+      - name: itemsPage
+        required: false
+        example: "10"
+        in: query
+        description: Represents the number of results per page that you want to receive
+          if you want the paginated data.
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "Terminal info. If you send as queryParam itemsPage and currPage\
+            \ to receive the paginated data in geolocation filter, you will receive\
+            \ the full response. If you do not send itemsPage and currPage as queryParam,\
+            \ you will only receive the list inside the content object."
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerminalInfoListPageableDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+    post:
+      tags:
+      - Operations with terminals
+      summary: Obtain all data from terminal filtered by idTerminals list and manufacturers
+        list.
+      description: Obtain all data from terminal filtered by idTerminals list and
+        manufacturers list.
+      operationId: postHompaqs
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Terminal id list and manufacturer list
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/filterTerminalsIDsAndManufacturersRequestDTO'
+        required: true
+      responses:
+        "200":
+          description: Terminal info.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/findByIDsAndManufacturersListResponseDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+      x-codegen-request-body-name: filterTerminalsIDsAndManufacturers
+  /homepaqs/manufacturers:
+    get:
+      tags:
+      - Operations with terminals
+      summary: Obtain all terminal manufacturers.
+      description: Obtain all terminal manufacturers.
+      operationId: /homepaqs/manufacturers
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Manufacturers info.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManufacturersDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+  /historicalTerminal/{idTerminal}:
+    get:
+      tags:
+      - Operations with terminals
+      summary: Obtain historical data from given terminal.
+      description: Obtain historical data from given terminal.
+      operationId: /historicalerminal/idTerminal
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      - name: idTerminal
+        required: true
+        example: S0000213D
+        in: path
+        description: Terminal code
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Terminal data.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoricalTerminalListDTO'
+        "400":
+          description: The server could not understand the request due to invalidç
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+  /historicalTerminal/notClosed/{idTerminal}:
+    get:
+      tags:
+      - Operations with terminals
+      summary: Obtain not closed historical data from given terminal.
+      description: Obtain not closed historical data from given terminal.
+      operationId: /historicalTerminal/notClosed/{idTerminal}
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      - name: idTerminal
+        required: true
+        example: S0000213D
+        in: path
+        description: Terminal code
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Terminal data.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoricalTerminalListDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+  /homepaqs/park:
+    get:
+      tags:
+      - Operations with park
+      summary: getallparks.
+      description: getallparks.
+      operationId: getallparks.
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: park info.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/parkListDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+  /homepaqs/offices:
+    get:
+      tags:
+      - Obtains the offices associated to a terminal
+      summary: Obtains the offices associated to a terminal.
+      description: Obtains the offices associated to a terminal.
+      operationId: /homepaqs/offices
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      - name: terminalList
+        required: false
+        example: 
+         - S0000213D
+        description: This string value represents the Terminal code.
+        in: query
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+            description: This string value represents the Terminal code.
+            example: S1000396D
+      responses:
+        "200":
+          description: Offices info.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerminalOfficeResponseDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+  /homepaqs/terminal/office:
+    get:
+      tags:
+      - Obtains the offices associated to a codired
+      summary: Obtains the offices and pudos associated to a codired.
+      description: Obtains the offices associated to a codired.
+      operationId: getOffice
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      - name: codiredList
+        required: true
+        description: This array value represents the Office code.
+        example: 
+          - "2800110"
+        in: query
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+            description: This string value represents the Office code.
+            example: "2800110"
+      responses:
+        "200":
+          description: Terminal info.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerminalInfoListDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+  /homepaqs/updateHighOccupancy:
+    post:
+      tags:
+      - Operations with terminals Index
+      summary: Update Terminal High Occupancy Index.
+      description: Update Terminal High Occupancy Index.
+      operationId: updateHighOccupancy.
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Request for Terminal High Occupancy update
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestHighOccupancyDTO'
+        required: true
+      responses:
+        "200":
+          description: Response for Terminal High Occupancy update
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseHighOccupancyDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+      x-codegen-request-body-name: RequestBookDoorDTO
+  /homepaqs/updateMasterData:
+    post:
+      tags:
+      - Update terminal master information
+      summary: Update terminal master information
+      description: Update terminal master information.
+      operationId: updateMasterData.
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Request for Update terminal information in master
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestTerminalIdDTO'
+        required: true
+      responses:
+        "200":
+          description: Response for Update terminal information in master
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseUpdateMasterDataDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+      x-codegen-request-body-name: RequestTerminalIdDTO
+  /officeAssociations/{operativeUnit}:
+    get:
+      tags:
+      - OfficeAssociations
+      summary: "Get terminals list, active pudos and associated QRs configuration to a office"
+      description: "Get terminals list, active pudos and associated QRs configuration to a office"
+      operationId: OfficeAssociations
+      parameters:
+      - name: Authorization
+        example: Bearer dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Valid Correos Bearer Token
+        required: false
+        schema:
+          type: string
+      - name: client_id
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Id
+        required: true
+        schema:
+          type: string
+      - name: client_secret
+        example: dassadafsdfsadsfdafsdafaf434in3
+        in: header
+        description: Application API Client Secret
+        required: true
+        schema:
+          type: string
+      - name: operativeUnit
+        required: true
+        example: "2800110"
+        in: path
+        description: Operative Unit
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Office Associations
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfficeAssociationsDTO'
+        "400":
+          description: The server could not understand the request due to invalid
+            syntax.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError400'
+        "401":
+          description: Unauthorized, client_id or client_secret invalid.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError401Client_ID'
+        "403":
+          description: Forbidden for this URL
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError403'
+        "404":
+          description: URI not found
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError404'
+        "500":
+          description: The server has encountered an error but it doesn't know how
+            to handle. Try again in a few minutes.
+          headers:
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorDTO'
+components:
+  schemas:
+    CitypaqsDTO:
+      title: CitypaqsDTO
+      type: object
+      properties:
+        address:
+          type: string
+          description: This string value represents the Address.
+          example: SANTUARIO DE VALVERDE
+        municipalityName:
+          type: string
+          description: This string value represents the City.
+          example: Barcelona
+        terminalId:
+          type: string
+          description: This string value represents the Terminal Id
+          example: S1999942D
+        latitudeETRS89:
+          type: number
+          description: This string value represents the Latitude in ETRS89.
+          example: -389709900044
+        longitudeETRS89:
+          type: number
+          description: This string value represents the Longitude in ETRS89.
+          example: -37130309632
+        location:
+          type: string
+          description: This string value represents the Location.
+          example: Barcelona
+        openingDescription:
+          type: string
+          description: This string value represents the Opening Description.
+          example: 24 horas
+        openingTimes:
+          type: boolean
+          description: This boolean value represents the Opening Times.
+          example: false
+        postalCode:
+          type: string
+          description: This string value represents the Postal Code.
+          example: "28020"
+        provinceCode:
+          type: integer
+          description: This integer value represents the Province code.
+          example: 1
+        provinceName:
+          type: string
+          description: This string value represents the Province name.
+          example: BARCELONA
+        distance:
+          type: number
+          description: This string value represents the Distance in meters.
+          example: 200.0
+        park:
+          type: string
+          description: This string value represents the terminal park.
+          example: ESPAÑA
+      description: This body contains terminal information.
+    CitypaqsDataDTO:
+      title: CitypaqsDataDTO
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/CitypaqsDTO'
+      description: This object contains data of type CitypaqsDTO
+    CitypaqsListDataDTO:
+      title: CitypaqsListDataDTO
+      type: array
+      description: This list contains objects of type CitypaqsDTO
+      items:
+        $ref: '#/components/schemas/CitypaqsDTO'
+    OfficeAssociationsDTO:
+      title: OfficeAssociationsDTO
+      type: object
+      properties:
+        citypaqList:
+          $ref: '#/components/schemas/TerminalInfoList'
+        pudosList:
+          $ref: '#/components/schemas/PudosList'
+        generateQRIndex:
+          $ref: '#/components/schemas/QrConfigurationList'
+      description: "This object contains three lists: terminals, active pudos and\
+        \ associated QRs"
+    TerminalInfoList:
+      title: CitypaqsListDataDTO
+      type: array
+      description: Associated terminals list
+      items:
+        $ref: '#/components/schemas/TerminalInfoResponseDTO'
+    PudosList:
+      title: CitypaqsListDataDTO
+      type: array
+      description: Associated pudos list
+      items:
+        $ref: '#/components/schemas/AssociatedPudosDTO'
+    QrConfigurationList:
+      title: CitypaqsListDataDTO
+      type: array
+      description: QRs configuration list
+      items:
+        $ref: '#/components/schemas/QrConfigurationDTO'
+    AssociatedPudosDTO:
+      title: AssociatedPudosDTO
+      type: object
+      properties:
+        unitCode:
+          type: string
+          description: This string value represents the unitCode.
+          example: "2800026"
+        unitName:
+          type: string
+          description: This string value represents the unitName.
+          example: PRUEBA PUNTO CORREOS
+        typeCode:
+          type: string
+          description: This string value represents the typeCode
+          example: PCI
+        busy:
+          type: boolean
+          description: This string value represents the busy indicator.
+          example: false
+        statusCode:
+          type: string
+          description: This string value represents the statusCode.
+          example: "1"
+        visibility:
+          type: boolean
+          description: This boolean value represents the visibility.
+          example: true
+        coorXWGS84:
+          type: string
+          description: This string value represents the coorXWGS84 coordinates.
+          example: "-420859,996193634"
+        coorYWGS84:
+          type: string
+          description: This boolean value represents the coorYWGS84 coordinates.
+          example: "4918613,04203244"
+        coorLatWGS84:
+          type: string
+          description: This string value represents the coorLatWGS84 coordinates.
+          example: "433716,358209264"
+        coorLonWGS84:
+          type: string
+          description: This integer value represents the coorLonWGS84 coordinates.
+          example: "4468172,86586765"
+        address:
+          type: string
+          description: This string value represents the Address.
+          example: BARCELONA
+      description: This object contains data of type AssociatedPudosDTO
+    QrConfigurationDTO:
+      title: QrConfigurationDTO
+      type: object
+      properties:
+        type:
+          type: string
+          description: This string value represents the type.
+          example: PCI
+        generateQR:
+          type: boolean
+          description: This string value represents the generateQR indicator.
+          example: true
+        startDate:
+          type: string
+          description: This string value represents the start date
+          example: 2025-04-28
+      description: This object contains data of type QrConfigurationDTO
+    ApiErrorDTO:
+      title: ApiErrorDTO
+      type: object
+      properties:
+        code:
+          type: string
+          example: "500"
+          description: Description --> Error code
+        message:
+          type: string
+          example: The server has encountered an error but it doesn't know how to
+            handle.
+          description: Description --> Error message description
+        more_error_information:
+          type: object
+          properties:
+            apierror:
+              type: object
+              properties:
+                uuaa:
+                  type: string
+                  description: This string value represents the Service affected.
+                  example: logmae
+                version:
+                  type: string
+                  description: This string value represents the Business version.
+                  example: 0.0.7-SNAPSHOT
+                status:
+                  type: string
+                  description: This string value represents the Error status.
+                  example: INTERNAL_SERVER_ERROR
+                errorCode:
+                  type: string
+                  description: This string value represents the Error code.
+                  example: BUSINESS_ERROR
+                timestamp:
+                  type: string
+                  description: This string value represents the Error timestamp.
+                  example: 09-09-2020 11:41:26
+                message:
+                  type: string
+                  description: This string value represents the Server error.
+                  example: Server error.
+                subErrors:
+                  type: string
+                  description: This string value represents the Sub errors.
+                  example: "null"
+    ApiError401:
+      title: Authentication
+      type: object
+      properties:
+        error:
+          type: string
+          description: Description --> Error description
+          example: Authentication denied
+    ApiError400:
+      title: Bad request
+      type: object
+      properties:
+        error:
+          type: string
+          description: Description --> Error description
+          example: Bad request
+    ApiError403:
+      title: Unauthorized
+      type: object
+      properties:
+        error:
+          type: string
+          description: Description --> Error description
+          example: Unauthorized
+    ApiError401Client_ID:
+      title: Authentication
+      type: object
+      properties:
+        error:
+          type: string
+          description: Description --> Error description
+          example: Invalid Client
+    ApiError404:
+      title: Authentication
+      type: object
+      properties:
+        code:
+          type: string
+          description: Description --> Error description
+          example: "404"
+        message:
+          type: string
+          description: Description --> Error message
+          example: URI not found
+        moreInformation:
+          type: object
+          description: Description --> Error detail
+          properties:
+            description:
+              type: string
+              description: Description --> Error detail description
+              example: URI not found
+            link:
+              type: string
+              description: Description --> Error resource URL
+              example: https://api1-intapp.correospre.es/logistics/terminals/api/v1/
+    filterTerminalsIDsAndManufacturersRequestDTO:
+      title: filterTerminalsIDsAndManufacturersRequestDTO
+      type: object
+      properties:
+        terminalIds:
+          type: array
+          description: List of terminal identifiers by which you want to filter
+          items:
+            type: string
+            description: This string value represents the Terminal ID.
+            example: S1999942D
+        manufacturer:
+          type: array
+          description: List of terminal manufacturers by which you want to filter
+          items:
+            type: string
+            description: This string value represents the Manufacturer.
+            example: Sermicro
+      description: Contains the list of terminal identifiers by which you want to
+        filter the search and the list of terminal manufacturers by which you want
+        to filter the search.
+    findByIDsAndManufacturersListResponseDTO:
+      title: findByIDsAndManufacturersListResponseDTO
+      type: array
+      description: List containing the information of each terminal.
+      items:
+        $ref: '#/components/schemas/TerminalInfoResponseDTO'
+    TerminalInfoListDTO:
+      title: terminalInfoListDTO
+      type: array
+      description: List containing the information of each terminal.
+      items:
+        $ref: '#/components/schemas/TerminalInfoResponseDTO'
+    TerminalInfoResponseDTO:
+      title: TerminalInfoResponseDTO
+      type: object
+      properties:
+        terminalId:
+          type: string
+          description: This string value represents the Terminal ID.
+          example: S1999942D
+        startDateValidity:
+          type: string
+          description: This string value represents the Start Date of Validity.
+          example: 2016-04-05T22:00:00.000+0000
+        endDateValidity:
+          type: string
+          description: This string value represents the End Date of Validity.
+          example: 2016-04-05T22:00:00.000+0000
+        codIdModel:
+          type: string
+          description: This string value represents the Model ID.
+          example: RDECHP1999
+        terminalState:
+          type: string
+          description: "This string value represents the Terminal State. Values -->\
+            \ ACTIVO, PRE-OPERATIVO, CLAUSURADO, CIERRE TEMPORAL o BAJA DEFINITIVA"
+          example: ACTIVO
+        terminalType:
+          type: string
+          description: "This string value represents the Terminal Type. Values -->\
+            \ DOMICILIARIO, DOM PERSONAL or PUBLICO"
+          example: P
+        roadType:
+          type: string
+          description: This string value represents the Road Type.
+          example: CALLE
+        addressName:
+          type: string
+          description: This string value represents the Address Name.
+          example: "SAN BERNARDO, - BARRIO FORTUNA"
+        addressNumber:
+          type: string
+          description: This string value represents the Address Number.
+          example: S/N
+        portalNumber:
+          type: string
+          description: This string value represents the Portal Number.
+          example: "679"
+        blockNumber:
+          type: string
+          description: This string value represents the Block Number.
+          example: "12"
+        stairNumber:
+          type: string
+          description: This string value represents the Stair Number.
+          example: "9"
+        localityCode:
+          type: string
+          description: This string value represents the Locality Code.
+          example: "3"
+        provinceCode:
+          type: string
+          description: This string value represents the Province Code.
+          example: "2"
+        municipalityCode:
+          type: string
+          description: This string value represents the Munucipality Code.
+          example: "1"
+        postalCode:
+          type: string
+          description: This string value represents the Postal Code.
+          example: "28020"
+        channelDescription:
+          type: string
+          description: This string value represents the Channel Description.
+          example: ALIAS PRUEBA SERMICRO
+        channelDetail:
+          type: string
+          description: This string value represents the Channel Detail.
+          example: REPSOL
+        comments:
+          type: string
+          description: This string value represents the Comments.
+          example: TERMINAL DE PRUEBAS
+        scheduleIndex:
+          type: string
+          description: "This string value represents the Schedule Index. Values -->\
+            \ 24 HORAS, EN HORARIO DE APERTURA, DESCONOCIDO"
+          example: "24 HORAS"
+        admissionIndex:
+          type: string
+          description: "This string value represents the Admission Index. Values -->\
+            \ ACTIVO, INACTIVO, DESCONOCIDO"
+          example: S
+        alias:
+          type: string
+          description: This string value represents the Alias.
+          example: ALIAS PRUEBA SERMICRO
+        coorXWGS84:
+          type: string
+          description: This string value represents the Coordinates XWGS84.
+          example: "-420859,996193634"
+        coorYWGS84:
+          type: string
+          description: This string value represents the Coordinates YWGS84.
+          example: "4918613,04203244"
+        coorXETRS89:
+          type: string
+          description: This string value represents the Coordinates XETRS89.
+          example: "433716,358209264"
+        coorYETRS89:
+          type: string
+          description: This string value represents the Coordinates YETRS89.
+          example: "4468172,86586765"
+        latitudeWGS84:
+          type: string
+          description: This string value represents the Latitude WGS84.
+          example: "40,36149087226"
+        longitudeWGS84:
+          type: string
+          description: This string value represents the Longitude WGS84.
+          example: "-3,78064967055"
+        latitudeETRS89:
+          type: string
+          description: This string value represents the Latitude ETRS89.
+          example: "40.361492"
+        longitudeETRS89:
+          type: string
+          description: This string value represents the Longitude ETRS89.
+          example: "-3.7806497"
+        manufacturer:
+          type: string
+          description: This string value represents the Manufacturer.
+          example: sermicro
+        moduleNumber:
+          type: integer
+          description: This integer value represents the Modules Number.
+          example: 1
+        manufacturerId:
+          type: string
+          description: This string value represents the Manufacturer ID.
+          example: "1"
+        doorsXSNumber:
+          type: string
+          description: This string value represents the XS Doors Number.
+          example: "12"
+        doorsSNumber:
+          type: string
+          description: This string value represents the S Doors Number.
+          example: "8"
+        doorsMNumber:
+          type: string
+          description: This string value represents the M Doors Number.
+          example: "5"
+        doorsLNumber:
+          type: string
+          description: This string value represents the L Doors Number.
+          example: "3"
+        doorsXLNumber:
+          type: string
+          description: This string value represents the XL Doors Number.
+          example: "1"
+        location:
+          type: string
+          description: This string value represents the combination of roadType +
+            addressName + addressNumber + channelDescription +  channelDetail postalCode
+            + municipalityName.
+          example: "CALLE VIA DUBLIN 7; (TERMINAL PRUEBAS SERMICRO, TERMINAL PRUEBAS\
+            \ SERMICRO); 28020; MADRID; MADRID"
+        installationDate:
+          type: string
+          description: This string value represents the Installation Date.
+          example: 2016-04-05T22:00:00.000+0000
+        province:
+          type: string
+          description: This string value represents the Province.
+          example: BARCELONA
+        municipality:
+          type: string
+          description: This string value represents the Municipality.
+          example: BADALONA
+        modality:
+          type: string
+          description: "This string value represents the Modality. Values --> T (TERMINAL),\
+            \ E (POST OFFICE), D (Unknown)"
+          example: T
+        visibilityIndex:
+          type: string
+          description: "This string value represents the Visibility Index. Values\
+            \ --> S (SI), N (NO)"
+          example: S
+        locality:
+          type: string
+          description: This string value represents the Locality.
+          example: 'BADALONA '
+        address:
+          type: string
+          description: This string value represents the combination of roadType +
+            addressName + addressNumber + postalCode + municipalityName.
+          example: CALLE VIA DUBLIN 7 28020 MADRID
+        openingDescription:
+          type: string
+          description: "This string value represents the openingDescription. Values\
+            \ --> (24 HORAS, EN HORARIO DE APERTURA, DESCONOCIDO)"
+          example: En horario de apertura
+        openingTimes:
+          type: boolean
+          description: "This boolean value represents the if “openingDescription”\
+            \ equals “EN HORARIO DE APERTURA”, openingTimes is false. if “openingDescription”\
+            \ equals “24 HORAS”, openingTimes is true."
+          example: true
+        distance:
+          type: number
+          description: This string value represents the distance in meters.
+          example: 20.0
+        networkIndex:
+          type: string
+          description: "This string value represents the Network Index. Values -->\
+            \ S (SI), N (NO)"
+          example: S
+        network:
+          type: string
+          description: "This string value represents the Network. Values --> P (OWN),\
+            \ F (FRANCHISEE), D (Unknown)"
+          example: P
+        fullSchedule:
+          type: string
+          description: This string value represents the Full Schedule.
+          example: "L12:00-14:00\\16:00-20:00,M09:00-14:00\\16:00-22:00,X09:00-14:00\\\
+            16:00-22:00,J09:00-14:00\\16:00-14:00\\16:00-22:00,V09:00-15:00,S09:00-15:00,D-"
+        mondaySchedule:
+          type: string
+          description: This string value represents the Monday Schedule.
+          example: 09:00-14:00\16:00-20:00
+        tuesdaySchedule:
+          type: string
+          description: This string value represents the Tuesday Schedule.
+          example: 09:00-14:00\16:00-22:00
+        wednesdaySchedule:
+          type: string
+          description: This string value represents the Wednesday Schedule.
+          example: 09:00-14:00\16:00-22:00
+        thursdaySchedule:
+          type: string
+          description: This string value represents the Thursday Schedule.
+          example: 09:00-14:00\16:00-22:00
+        fridaySchedule:
+          type: string
+          description: This string value represents the Friday Schedule.
+          example: 09:00-14:00\16:00-22:00
+        saturdaySchedule:
+          type: string
+          description: This string value represents the Saturday Schedule.
+          example: 09:00-14:00\16:00-22:00
+        sundaySchedule:
+          type: string
+          description: This string value represents the Sunday Schedule.
+          example: "-"
+        expansionSerialNumber:
+          type: string
+          description: This string value represents the Expansion Serial Number.
+          example: 242532453/657684355
+        simNumber:
+          type: string
+          description: This string value represents the SIM Number.
+          example: "12345679878"
+        locationDescription:
+          type: string
+          description: This string value represents the Terminal location description.
+          example: DESCRIPCION CITYPAQ
+        contactIndex:
+          type: string
+          description: This string value represents the Contact Index.
+          example: S
+        contactName:
+          type: string
+          description: This string value represents the Contact Name.
+          example: NOMBRE APELLIDOS
+        contactEmail:
+          type: string
+          description: This string value represents the Contact Email.
+          example: DIRECCION@EMAIL.COM
+        contactTelephoneNumber:
+          type: string
+          description: This string value represents the Contact Telephone Number.
+          example: "123456789"
+        criticalityIndex:
+          type: string
+          description: This string value represents the Criticality Index.
+          example: S
+        updateField:
+          type: string
+          description: This string value represents the Update Field.
+          example: NETWORK
+        park:
+          type: string
+          description: This string value represents the Terminal park.
+          example: ESPAÑA
+        codired:
+          type: string
+          description: This string value represents the Codired.
+          example: "123456"
+        officeTerminalIndex:
+          type: string
+          description: "This string value represents the Indicador de terminal de\
+            \ oficina. Posibles valores --> OFICINA, DISTRIBUCION o DESCONOCIDO."
+          example: OFICINA
+        modelDescription:
+          type: string
+          description: This string value represents the Homepaq model description.
+          example: Máster Amarillo Pequeño
+        codCid:
+          type: string
+          description: This string value represents the Cid Code.
+          example: Cid code
+        highOccupancy:
+          type: boolean
+          description: This boolean value represents the High Occupancy indicator.
+          example: false
+      description: This response object contains the terminal information
+    HistoricalTerminalDTO:
+      title: HistoricalTerminalDTO
+      type: object
+      properties:
+        codHistoricoTerminal:
+          type: string
+          description: This string value represents the Terminal History Code.
+          example: "3"
+        terminalId:
+          type: string
+          description: This string value represents the Terminal ID.
+          example: S1999942D
+        startDateValidity:
+          type: string
+          description: This string value represents the Start Date of Validity.
+          example: 2016-04-05T22:00:00.000+0000
+        endDateValidity:
+          type: string
+          description: This string value represents the End Date of Validity.
+          example: 2016-04-05T22:00:00.000+0000
+        model:
+          type: string
+          description: This string value represents the Citypaq Model.
+          example: 1ESBOX1M00000
+        terminalStateCode:
+          type: string
+          description: "This string value represents the Terminal State Code. Values\
+            \ --> 1, 2, 3, 4"
+          example: "2"
+        terminalStateDescription:
+          type: string
+          description: "This string value represents the Terminal State Description.\
+            \ Values --> ACTIVO, PRE-OPERATIVO, CLAUSURADO, CIERRE TEMPORAL or BAJA\
+            \ DEFINITIVA"
+          example: ACTIVO
+        terminalTypeCode:
+          type: string
+          description: "This string value represents the Terminal Type Code. Values\
+            \ --> P , M , D"
+          example: "2"
+        terminalTypeDescription:
+          type: string
+          description: "This string value represents the Terminal Type Description.\
+            \ Values --> PUBLICO, DOM PERSONAL, DOMICILIARIO"
+          example: PUBLICO
+        roadType:
+          type: string
+          description: This string value represents the Road Type.
+          example: CALLE
+        addressName:
+          type: string
+          description: This string value represents the Address Name.
+          example: "SAN BERNARDO, - BARRIO FORTUNA"
+        addressNumber:
+          type: string
+          description: This string value represents the Address Number.
+          example: S/N
+        portalNumber:
+          type: string
+          description: This string value represents the Portal Number.
+          example: "679"
+        blockNumber:
+          type: string
+          description: This string value represents the Block Number.
+          example: "12"
+        stairNumber:
+          type: string
+          description: This string value represents the Stair Number.
+          example: "9"
+        localityCode:
+          type: string
+          description: This string value represents the Locality Code.
+          example: "3"
+        postalCode:
+          type: string
+          description: This string value represents the Postal Code.
+          example: "28020"
+        channelDescription:
+          type: string
+          description: This string value represents the Channel Description.
+          example: ALIAS PRUEBA SERMICRO
+        channelDetail:
+          type: string
+          description: This string value represents the Channel Detail.
+          example: REPSOL
+        comments:
+          type: string
+          description: This string value represents the Comments.
+          example: TERMINAL DE PRUEBAS
+        scheduleIndexCode:
+          type: string
+          description: This string value represents the Schedule Index Code.
+          example: "1"
+        scheduleIndexDescription:
+          type: string
+          description: This string value represents the Admission Index Description.
+          example: En horario de apertura
+        admissionIndexCode:
+          type: string
+          description: This string value represents the Admission Index Code.
+          example: D
+        admissionIndexDescription:
+          type: string
+          description: This string value represents the Admission Index Description.
+          example: Desconocido
+        alias:
+          type: string
+          description: This string value represents the Alias.
+          example: Repsol-Hispanidad
+        coorXWGS84:
+          type: string
+          description: This string value represents the Coordinates XWGS84.
+          example: "-420859,996193634"
+        coorYWGS84:
+          type: string
+          description: This string value represents the Coordinates YWGS84.
+          example: "4918613,04203244"
+        coorXETRS89:
+          type: string
+          description: This string value represents the Coordinates XETRS89.
+          example: "433716,358209264"
+        coorYETRS89:
+          type: string
+          description: This string value represents the Coordinates YETRS89.
+          example: "4468172,86586765"
+        latitudWGS84:
+          type: string
+          description: This string value represents the Latitude WGS84.
+          example: "40,36149087226"
+        longitudWGS84:
+          type: string
+          description: This string value represents the Longitude WGS84.
+          example: "-3,78064967055"
+        latitudETRS89:
+          type: string
+          description: This string value represents the Latitude ETRS89.
+          example: "40.361492"
+        longitudETRS89:
+          type: string
+          description: This string value represents the Longitude ETRS89.
+          example: "-3.7806497"
+        manufacturer:
+          type: string
+          description: This string value represents the Manufacturer.
+          example: Azkoyen
+        modulesNumber:
+          type: integer
+          description: This integer value represents the Modules Number.
+          example: 1
+        manufacturerId:
+          type: string
+          description: This string value represents the Manufacturer ID.
+          example: "10164096"
+        installationDate:
+          type: string
+          description: This string value represents the Installation DATE.
+          example: 2016-04-05T22:00:00.000+0000
+        dischargeDate:
+          type: string
+          description: This string value represents the Discharge Date.
+          example: 2016-04-05T22:00:00.000+0000
+        doorsXSNumber:
+          type: string
+          description: This string value represents the XS Doors Number.
+          example: "12"
+        doorsSNumber:
+          type: string
+          description: This string value represents the S Doors Number.
+          example: "8"
+        doorsMNumber:
+          type: string
+          description: This string value represents the M Doors Number.
+          example: "5"
+        doorsLNumber:
+          type: string
+          description: This string value represents the L Doors Number.
+          example: "3"
+        doorsXLNumber:
+          type: string
+          description: This string value represents the XL Doors Number.
+          example: "1"
+        commentsDescription:
+          type: string
+          description: This string value represents the Comments.
+          example: 'RETIRADA A PETICION DEL CLIENTE '
+        updateDate:
+          type: string
+          description: This string value represents the Update Date.
+          example: 2016-04-05T22:00:00.000+0000
+        modality:
+          type: string
+          description: "This string value represents the Modality. Values --> T (TERMINAL),\
+            \ E (POST OFFICE), D (Unknown)"
+          example: T
+        visbilityIndex:
+          type: string
+          description: This string value represents the Visibility Index.
+          example: S
+        province:
+          type: string
+          description: This string value represents the Province.
+          example: BARCELONA
+        municipality:
+          type: string
+          description: This string value represents the Municipality.
+          example: BADALONA
+        locality:
+          type: string
+          description: This string value represents the Locality.
+          example: 'Localidad '
+        networkIndex:
+          type: string
+          description: This string value represents the Network Index.
+          example: S
+        network:
+          type: string
+          description: This string value represents the Network.
+          example: P
+        fullSchedule:
+          type: string
+          description: This string value represents the Full Schedule.
+          example: "L12:00-14:00\\16:00-20:00,M09:00-14:00\\16:00-22:00,X09:00-14:00\\\
+            16:00-22:00,J09:00-14:00\\16:00-14:00\\16:00-22:00,V09:00-15:00,S09:00-15:00,D-"
+        mondaySchedule:
+          type: string
+          description: This string value represents the Monday Schedule.
+          example: 12:00-14:00\16:00-20:00
+        tuesdaySchedule:
+          type: string
+          description: This string value represents the Tuesday Schedule.
+          example: 09:00-14:00\16:00-22:00
+        wednesdaySchedule:
+          type: string
+          description: This string value represents the Wednesday Schedule.
+          example: 09:00-14:00\16:00-22:00
+        thursdaySchedule:
+          type: string
+          description: This string value represents the Thursday Schedule.
+          example: 09:00-14:00\16:00-22:00
+        fridaySchedule:
+          type: string
+          description: This string value represents the Friday Schedule.
+          example: 09:00-14:00\16:00-22:00
+        saturdaySchedule:
+          type: string
+          description: This string value represents the Saturday Schedule.
+          example: 09:00-14:00\16:00-22:00
+        sundaySchedule:
+          type: string
+          description: This string value represents the Sunday Schedule.
+          example: "-"
+        expansionSerialNumber:
+          type: string
+          description: This string value represents the Expansion Serial Number.
+          example: 242532453/657684355
+        simNumber:
+          type: string
+          description: This string value represents the SIM Number.
+          example: "12345679878"
+        locationDescription:
+          type: string
+          description: This string value represents the Terminal location description.
+          example: DESCRIPCION CITYPAQ
+        contactIndex:
+          type: string
+          description: This string value represents the Contact Index.
+          example: S
+        contactName:
+          type: string
+          description: This string value represents the Contact Name.
+          example: NOMBRE APELLIDOS
+        contactEmail:
+          type: string
+          description: This string value represents the Contact Email.
+          example: DIRECCION@EMAIL.COM
+        contactTelephoneNumber:
+          type: string
+          description: This string value represents the Contact Telephone Number.
+          example: "123456789"
+        criticalityIndex:
+          type: string
+          description: This string value represents the Criticality Index.
+          example: S
+        updateField:
+          type: string
+          description: This string value represents the Update Field.
+          example: NETWORK
+        park:
+          type: string
+          description: This string value represents the terminal park.
+          example: ESPAÑA
+        codired:
+          type: string
+          description: This string value represents the Codired.
+          example: "123456"
+        officeTerminalIndex:
+          type: string
+          description: "This string value represents the Indicador de terminal de\
+            \ oficina. Posibles valores --> OFICINA, DISTRIBUCION o DESCONOCIDO."
+          example: OFICINA
+        modelDescription:
+          type: string
+          description: This string value represents the Homepaq model description.
+          example: Máster Amarillo Pequeño
+        codCid:
+          type: string
+          description: This string value represents the Cid Code.
+          example: Cid code
+        highOccupancy:
+          type: boolean
+          description: This boolean value represents the High Occupancy indicator.
+          example: false
+      description: This object contains the terminal historical data
+    ManufacturersDTO:
+      title: manufacturersDTO
+      type: array
+      description: List containing the names of terminal manufacturers.
+      items:
+        type: string
+        description: This string value represents the Manufacturer.
+        example: Sermicro
+    filterTerminalRequestDTO:
+      title: filterTerminalRequestDTO
+      type: object
+      properties:
+        terminalIdLike:
+          type: string
+          description: This string value represents the Terminal ID.
+          example: S1999942D
+        terminalStates:
+          type: array
+          items:
+            type: string
+            description: "This string value represents the Terminal State. Values\
+              \ --> ACTIVO, PRE-OPERATIVO, CLAUSURADO, CIERRE TEMPORAL or BAJA DEFINITIVA"
+            example: ACTIVO
+        manufacturers:
+          type: array
+          items:
+            type: string
+            description: This string value represents the Manufacturer.
+            example: sermicro
+        postalCode:
+          type: string
+          description: This string value represents the Postal Code.
+          example: "28020"
+        municipality:
+          type: string
+          description: This string value represents the Municipality.
+          example: BADALONA
+        provinces:
+          type: array
+          items:
+            type: string
+            description: This string value represents the Province.
+            example: BARCELONA
+        park:
+          type: array
+          items:
+            type: string
+            description: This string value represents the Terminals park.
+            example: ESPAÑA
+      description: This object request contains filters for terminal search
+    HistoricalTerminalListDTO:
+      title: historicalTerminalListDTO
+      type: array
+      description: List containing the history information of the entered terminal.
+      items:
+        $ref: '#/components/schemas/HistoricalTerminalDTO'
+    parkListDTO:
+      title: parkListDTO
+      type: array
+      description: List containing the parks.
+      items:
+        $ref: '#/components/schemas/parkDTO'
+    parkDTO:
+      title: parkDTO
+      type: object
+      properties:
+        parkCode:
+          type: string
+          description: This string value represents the Park Code.
+          example: ESP
+        parkDesc:
+          type: string
+          description: This string value represents the Park Description.
+          example: ESPAÑA
+      description: This object contains information about terminal parks available
+    TerminalOfficeResponseDTO:
+      title: TerminalOfficeResponseDTO
+      type: object
+      properties:
+        result:
+          type: string
+          description: This string value represents the Result OK/ERROR.
+          example: OK
+        terminalOffice:
+          type: array
+          description: List of objects of type terminalOffice
+          items:
+            $ref: '#/components/schemas/TerminalOfficeDTO'
+      description: This response object contains information about terminal office
+    TerminalOfficeDTO:
+      title: TerminalOfficeDTO
+      type: array
+      items:
+            $ref: '#/components/schemas/ItemsTerminalOfficeDTO'
+      description: List containing the offices associated to a terminal.
+    ItemsTerminalOfficeDTO:
+      title: ItemsTerminalOfficeDTO
+      properties:
+        terminalCode:
+          type: string
+          description: This string value represents the Terminal Code.
+          example: S1000396D
+        mailOffice:
+          type: string
+          description: This string value represents the Mail Office.
+          example: "1234567"
+        secondaryOffice:
+          type: array
+          items:
+            type: string
+            description: This string value represents the Secondary office associated
+              to Terminal.
+            example: "1234568"
+      description: Item containing the offices associated to a terminal.
+    RequestHighOccupancyDTO:
+      title: RequestHighOccupancyDTO
+      type: object
+      properties:
+        terminalCode:
+          type: string
+          description: This string value represents the Terminal code.
+          example: S1000396D
+        highOccupancy:
+          type: boolean
+          description: This boolean value represents the High Occupancy indicator
+            true/false.
+          example: false
+      description: Obtect request for terminal High Occupancy update
+    ResponseHighOccupancyDTO:
+      title: ResponseHighOccupancyDTO
+      type: object
+      properties:
+        terminalCode:
+          type: string
+          description: This string value represents the Terminal code.
+          example: S1000396D
+        resultCode:
+          type: string
+          description: This string value represents the Update High Occupancy result
+            code.
+          example: OK
+        resultDescription:
+          type: boolean
+          description: This boolean value represents the Update High Occupancy result
+            description.
+          example: false
+      description: Obtect response for terminal High Occupancy update
+    RequestTerminalIdDTO:
+      title: RequestTerminalIdDTO
+      type: object
+      properties:
+        terminalCode:
+          type: string
+          description: This string value represents the Terminal code.
+          example: S1000396D
+      description: Object response for terminal High Occupancy update
+    ResponseUpdateMasterDataDTO:
+      title: ResponseUpdateMasterDataDTO
+      type: object
+      properties:
+        resultCode:
+          type: string
+          description: This string value represents the result code for Update terminal
+            information.
+          example: OK
+        errorDesc:
+          type: string
+          description: This string value represents the Error description in response.
+          example: OK
+        terminalData:
+          type: array
+          description: List of objects of type terminalData
+          items:
+            $ref: '#/components/schemas/TerminalInfoResponseDTO'
+      description: Obtect response for Update terminal information in master
+    TerminalInfoListPageableDTO:
+      title: TerminalInfoListPageableDTO
+      type: object
+      properties:
+        content:
+          type: array
+          description: This object value represents the terminal information.
+          items:
+            $ref: '#/components/schemas/TerminalInfoResponseDTO'
+        pageable:
+          $ref: '#/components/schemas/pageableDTO'
+        sort:
+          $ref: '#/components/schemas/sortDTO'
+        totalElements:
+          type: integer
+          description: This integer represents the numbers of elements returns by
+            the query
+          example: 3
+        totalPages:
+          type: integer
+          description: This integer represents the total number of pages returns by
+            the query
+          example: 3
+        last:
+          type: boolean
+          description: This boleean represents if the page is the last one
+          example: false
+        size:
+          type: integer
+          description: This integer represents the page size
+          example: 1
+        number:
+          type: integer
+          description: This integer represents the page number
+          example: 0
+        numberOfElements:
+          type: integer
+          description: This integer represents the page number of elements
+          example: 1
+        first:
+          type: boolean
+          description: This boleean represents if the page is the first one
+          example: true
+        empty:
+          type: boolean
+          description: This boleean represents if the page is empty
+          example: false
+      description: List containing the information of each terminal.
+    pageableDTO:
+      title: pageableDTO
+      type: object
+      properties:
+        sort:
+          $ref: '#/components/schemas/sortDTO'
+        pageNumber:
+          type: integer
+          description: This integer represents the page number.
+          example: 0
+        pageSize:
+          type: integer
+          description: This integer represents the page size.
+          example: 1
+        offset:
+          type: integer
+          description: This integer represents how many elements are still to be shown
+            on the following pages.
+          example: 0
+        paged:
+          type: boolean
+          description: This boolean represents if is paginated data.
+          example: true
+        unpaged:
+          type: boolean
+          description: This boolean represents if is unpaginated data.
+          example: false
+      description: This object represents the pageable information
+    sortDTO:
+      title: sortDTO
+      type: object
+      properties:
+        sorted:
+          type: boolean
+          description: This boolean represents if is sorted data.
+          example: false
+        unsorted:
+          type: boolean
+          description: This boolean represents if is unsorted data.
+          example: true
+        empty:
+          type: boolean
+          description: This boleean represents if is sorted data
+          example: true
+      description: This object represents the sort information
+    GenerateQrRequestDTO:
+      title: GenerateQrRequestDTO
+      type: object
+      properties:
+        network:
+          type: string
+          description: This string indicates the network name.
+          example: CELERITA
+        id:
+          type: string
+          description: This string indicates the identifier.
+          example: "2800107"
+        generateQR:
+          type: boolean
+          description: This boolean indicates if QR generation is needed.
+          example: true
+      description: This object contains the information for generating a QR code.
+    GenerateQrResponseDTO:
+      title: GenerateQrResponseDTO
+      type: object
+      properties:
+        postalCode:
+          type: string
+          description: This string indicates the network name.
+          example: "28050"
+        network:
+          type: string
+          description: This string indicates the network name.
+          example: CELERITA
+        id:
+          type: string
+          description: This string indicates the identifier.
+          example: "2800107"
+        name:
+          type: string
+          description: This string indicates the name.
+          example: CORREOSLABS
+        latitude:
+          type: string
+          description: This string indicates the latitude.
+          example: "37.19075623563103"
+        longitude:
+          type: string
+          description: "-3.6247081827539236"
+          example: This string indicates the longitude.
+      description: This object contains the response of QR code generation.

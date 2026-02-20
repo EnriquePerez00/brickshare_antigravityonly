@@ -1,0 +1,8 @@
+{
+  "code": "404",
+  "message": "Not found",
+  "moreInformation": {
+    "description": "The resource you are trying to reach was not found",
+    "link": "www.correos.es"
+  }
+}

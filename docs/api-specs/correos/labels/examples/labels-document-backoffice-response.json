@@ -1,0 +1,24 @@
+{
+    "results": [{
+            "entryDate": "16/08/2023",
+            "shipment": "EXAMPLEXX00000510128002W",
+            "documentationType": 1,
+            "request": {
+                "application": "APPNAME",
+                "documentationType": 1,
+                "print": {
+                    "labelOrderType": 2,
+                    "labelFormat": 3,
+                    "labelPrintMode": 1,
+                    "labelPrintInitialPosition": 1,
+                    "shipments": ["EXAMPLEXX00000510128002W"]
+                }
+            },
+            "response": {
+                "pdf": "PDFBase64",
+                "error": "null"
+            }
+        }
+    ],
+    "error": ""
+}

@@ -1,0 +1,50 @@
+#%RAML 1.0 DataType
+type: object
+properties: 
+  contractNumber:
+    type:  string
+    required: false
+    description: Contract number to be printed in document
+    example: '12345678'
+  clientNumber:
+    type:  string
+    required: false
+    description: Client number to be printed in document
+    example: '98765432'
+  addresseeName:
+    type:  string
+    required: false
+    description: Addressee Name to be printed in document
+    example: Maria Garcia Garcia
+  destinationName:
+    type:  string
+    required: true
+    description: Destination name, the value will be the name of a province or a country
+    example: España
+  destinationCode:
+    type:  string
+    required: false
+    description: Destination code, the value will be the zip code or a country code
+    example: 'ES'
+  shipmentsNumber:
+    type:  string
+    required: false
+    description: Shipments number to be printed in document
+    example: '3'
+  signaturePlace:
+    type: string
+    required: false
+    description: Signature place
+    example: 'Madrid' 
+  signatoryDNI:
+    type: string
+    required: false
+    description: Signatory DNI to be printed
+    example: 34567890G
+  signatoryName:
+    type: string
+    required: false
+    description: Signatory name to be printed
+    example: 'Jose Garcia Garcia'
+  
+ 

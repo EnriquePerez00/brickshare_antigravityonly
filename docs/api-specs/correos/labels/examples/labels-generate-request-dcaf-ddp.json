@@ -1,0 +1,15 @@
+{
+ "application": "APPNAME",
+ "documentationType": 5,
+ "documentData": {
+   "contractNumber": "12345678",
+   "clientNumber": "98765432",
+   "addresseeName": "Maria Garcia Garcia",
+   "destinationName": "España",
+   "destinationCode": "ES",
+   "shipmentsNumber": "3",
+   "signaturePlace": "Madrid",
+   "signatoryDNI": "34567890G",
+   "signatoryName": "Jose Garcia Garcia"
+ }
+}

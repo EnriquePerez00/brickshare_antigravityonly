@@ -1,0 +1,8 @@
+{
+  "code": "401",
+  "message": "Unauthorized",
+  "moreInformation": {
+    "description": "The credentials are invalid",
+    "link": "www.correos.es"
+  }
+}
