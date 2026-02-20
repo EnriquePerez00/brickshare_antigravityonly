@@ -20,18 +20,18 @@ serve(async (req) => {
         const body = await req.text();
         const endpointSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
-        let event;
-        if (endpointSecret) {
-            event = await stripe.webhooks.constructEventAsync(
-                body,
-                signature,
-                endpointSecret,
-                undefined,
-                cryptoProvider
-            );
-        } else {
-            event = JSON.parse(body);
+        if (!endpointSecret) {
+            console.error("STRIPE_WEBHOOK_SECRET is not configured");
+            return new Response("Webhook secret not configured", { status: 500 });
         }
+
+        const event = await stripe.webhooks.constructEventAsync(
+            body,
+            signature,
+            endpointSecret,
+            undefined,
+            cryptoProvider
+        );
 
         const supabase = createClient(
             Deno.env.get("SUPABASE_URL") ?? "",
@@ -60,7 +60,6 @@ serve(async (req) => {
                     };
 
                     // Only update subscription_type if we have it in metadata
-                    // This prevents overwriting a correct value with a fallback if metadata isn't ready
                     if (plan) {
                         updateData.subscription_type = plan;
                     }
@@ -86,10 +85,7 @@ serve(async (req) => {
                 console.log(`Payment successful for user ${userId}, type ${orderType}`);
 
                 if (orderType === "shipment") {
-                    // Logic for extra shipping payments
-                    // e.g., update the shipment status or create a record
                     console.log("Processing shipment payment logic...");
-                    // Placeholder for future logic
                 }
                 break;
             }
@@ -119,7 +115,7 @@ serve(async (req) => {
             status: 200,
             headers: { "Content-Type": "application/json" },
         });
-    } catch (err) {
+    } catch (err: any) {
         console.error(`Webhook Error: ${err.message}`);
         return new Response(`Webhook Error: ${err.message}`, { status: 400 });
     }

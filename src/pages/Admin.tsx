@@ -7,7 +7,8 @@ import PiecePurchaseManager from "@/components/admin/inventory/PiecePurchaseMana
 import InventoryManager from "@/components/admin/inventory/InventoryManager";
 import InventoryPiecesManager from "@/components/admin/inventory/InventoryPiecesManager";
 import LogisticsManager from "@/components/admin/logistics/LogisticsManager";
-import { ShoppingCart, Package, Boxes, Puzzle, Truck } from "lucide-react";
+import UsersManager from "@/components/admin/users/UsersManager";
+import { ShoppingCart, Package, Boxes, Puzzle, Truck, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -44,8 +45,12 @@ const Admin = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="sets" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[750px]">
+        <Tabs defaultValue="users" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6 lg:w-[900px]">
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Usuarios
+            </TabsTrigger>
             <TabsTrigger value="sets" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Sets
@@ -67,6 +72,10 @@ const Admin = () => {
               Logística
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="users">
+            <UsersManager />
+          </TabsContent>
 
           <TabsContent value="sets">
             <SetsManager />

@@ -63,6 +63,29 @@ serve(async (req) => {
     try {
         const { userId, setRef, setPrice } = await req.json();
 
+        // JWT Verification
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) {
+            return new Response(JSON.stringify({ error: "Unauthorized - Missing header" }), {
+                status: 401,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+        }
+
+        const supabaseUser = createClient(
+            Deno.env.get("SUPABASE_URL") ?? "",
+            Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+            { global: { headers: { Authorization: authHeader } } }
+        );
+
+        const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+        if (userError || !user || user.id !== userId) {
+            return new Response(JSON.stringify({ error: "Unauthorized - ID mismatch or invalid token" }), {
+                status: 401,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+        }
+
         if (!userId || !setRef) {
             return new Response(JSON.stringify({
                 success: false,

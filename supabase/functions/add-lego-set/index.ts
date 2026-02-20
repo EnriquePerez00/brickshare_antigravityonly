@@ -60,7 +60,44 @@ serve(async (req) => {
             throw new Error("Missing Supabase Environment Variables");
         }
 
+        // 1. JWT Verification and Authorization
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) {
+            return new Response(
+                JSON.stringify({ error: 'Missing Authorization header' }),
+                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        const supabaseUserClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+            global: { headers: { Authorization: authHeader } }
+        })
+
+        const { data: { user }, error: userError } = await supabaseUserClient.auth.getUser()
+        if (userError || !user) {
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized' }),
+                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
         const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+        // 2. Role check (Only admins)
+        const { data: roles, error: rolesError } = await supabaseClient
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+
+        if (rolesError) throw rolesError
+
+        const isAdmin = roles.some(r => r.role === 'admin')
+        if (!isAdmin) {
+            return new Response(
+                JSON.stringify({ error: 'Forbidden - Admins only' }),
+                { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
 
         let body;
         try { body = await req.json(); } catch { throw new Error("Invalid JSON"); }
