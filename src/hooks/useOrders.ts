@@ -67,17 +67,36 @@ export const useReturnSet = () => {
 
     return useMutation({
         mutationFn: async (envioId: string) => {
-            const { error } = await supabase
+            // 1. Update status in database
+            const { error: dbError } = await supabase
                 .from("envios")
                 .update({ estado_envio: "ruta_devolucion" })
                 .eq("id", envioId);
 
-            if (error) throw error;
+            if (dbError) throw dbError;
+
+            // 2. Trigger automatic return preregistration (Label-less)
+            // This generates the code and sends the email from the Edge Function
+            const { data, error: functionError } = await supabase.functions.invoke('correos-logistics', {
+                body: {
+                    action: 'return_preregister',
+                    p_envios_id: envioId
+                }
+            });
+
+            if (functionError) {
+                console.error("Function Error:", functionError);
+                // We don't necessarily want to fail the whole mutation if shipping API fails,
+                // but for this specific flow, since it's the core requirement:
+                throw new Error("Error al registrar la devolución en Correos: " + functionError.message);
+            }
+
+            return data;
         },
         onSuccess: () => {
             toast({
                 title: "Devolución iniciada",
-                description: "El estado del envío ha cambiado a 'En Ruta (Devolución)'",
+                description: "Se ha registrado la devolución y recibirás un email con el código de Correos.",
             });
             queryClient.invalidateQueries({ queryKey: ["orders"] });
         },

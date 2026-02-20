@@ -26,3 +26,11 @@ dist-ssr
 *.sw?
 .vercel
 .env*.local
+
+# Test Scripts
+probe_*.js
+test_*.js
+thorough_probe.js
+verify_*.js
+response*.json
+token_*.json
