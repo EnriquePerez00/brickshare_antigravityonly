@@ -155,7 +155,7 @@ const ComoFunciona = () => {
 
   const handleSubscribe = async (plan: any) => {
     if (!user) {
-      navigate("/auth");
+      navigate("/auth?mode=signup&onlySignup=true");
       return;
     }
 
