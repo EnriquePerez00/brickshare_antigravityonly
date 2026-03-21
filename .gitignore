@@ -34,3 +34,8 @@ thorough_probe.js
 verify_*.js
 response*.json
 token_*.json
+
+# Generated/Temporary files
+*.pdf
+label_QR_CODE_GENERATED.pdf
+push_*.log
